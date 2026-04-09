@@ -1,0 +1,3354 @@
+openapi: 3.0.3
+info:
+  title: Arokah API
+  version: 1.0.0
+  description: AI-powered personal stylist — daily looks, trip planning, cultural
+    intelligence.
+paths:
+  /api/agents/conflict-detector/:
+    post:
+      operationId: agents_conflict_detector_create
+      description: Checks calendar events against weather. Pass `date` (YYYY-MM-DD)
+        and optionally `lat`/`lon`.
+      summary: Detect outfit/weather/schedule conflicts
+      tags:
+      - agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConflictDetectorInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConflictDetectorInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConflictDetectorInputRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictDetectorResponse'
+          description: ''
+  /api/agents/cultural-advisor/:
+    post:
+      operationId: agents_cultural_advisor_create
+      description: Returns etiquette rules and local event clothing notes. Pass `country`,
+        optional `city` and `month`.
+      summary: Get cultural clothing advice for a destination
+      tags:
+      - agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CulturalAdvisorInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CulturalAdvisorInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CulturalAdvisorInputRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CulturalAdvisorResponse'
+          description: ''
+  /api/agents/daily-look/:
+    post:
+      operationId: agents_daily_look_create
+      description: Analyses today's calendar events and weather then selects the best
+        outfit from the user's wardrobe. Persists an OutfitRecommendation record.
+      summary: Generate today's daily outfit
+      tags:
+      - agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DailyLookInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DailyLookInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DailyLookInputRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyLookResponse'
+          description: ''
+  /api/agents/outfit-planner/:
+    post:
+      operationId: agents_outfit_planner_create
+      description: Returns a per-day outfit plan. Pass `trip_id` or `start_date`/`end_date`/`destination`.
+      summary: Plan outfits for every day of a trip
+      tags:
+      - agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutfitPlannerInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OutfitPlannerInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OutfitPlannerInputRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutfitPlannerResponse'
+          description: ''
+  /api/agents/packing-list/:
+    post:
+      operationId: agents_packing_list_create
+      description: Uses the 5-4-3-2-1 capsule rule. Pass `days` (int) and `activities`
+        (list).
+      summary: Generate a packing list for a trip
+      tags:
+      - agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackingListInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PackingListInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PackingListInputRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingListResponse'
+          description: ''
+  /api/auth/forgot-password/:
+    post:
+      operationId: auth_forgot_password_create
+      description: Sends a password-reset link to the given email address. Always
+        returns 200 regardless of whether the email is registered (prevents user enumeration).
+      summary: Request a password reset email
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArokahTokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArokahTokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArokahTokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          description: No response body
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: auth_me_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: auth_me_partial_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/auth/me/delete/:
+    delete:
+      operationId: auth_me_delete_destroy
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/auth/me/password/:
+    post:
+      operationId: auth_me_password_create
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/push-token/:
+    post:
+      operationId: auth_push_token_create
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/auth/register/:
+    post:
+      operationId: auth_register_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Register'
+          description: ''
+  /api/auth/resend-verification/:
+    post:
+      operationId: auth_resend_verification_create
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/reset-password/:
+    post:
+      operationId: auth_reset_password_create
+      description: Validates the reset token and sets a new password.
+      summary: Reset password using a token from email
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/verify-email/:
+    post:
+      operationId: auth_verify_email_create
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/apple/connect/:
+    post:
+      operationId: calendar_apple_connect_create
+      description: Validates the provided Apple ID and App-Specific Password by connecting
+        to Apple's CalDAV server. Users must generate an App-Specific Password at
+        appleid.apple.com — their regular Apple ID password will NOT work.
+      summary: Connect Apple Calendar (CalDAV)
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/apple/disconnect/:
+    post:
+      operationId: calendar_apple_disconnect_create
+      description: Removes stored Apple credentials from Arokah.
+      summary: Disconnect Apple Calendar
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/apple/sync/:
+    post:
+      operationId: calendar_apple_sync_create
+      description: Pulls events via CalDAV from the last 7 days and next 60 days.
+      summary: Sync Apple Calendar events
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppleSyncResult'
+          description: ''
+  /api/calendar/google/callback/:
+    get:
+      operationId: calendar_google_callback_retrieve
+      description: |-
+        GET /api/calendar/google/callback/?code=...&state=...
+        Handles the OAuth redirect from Google.
+        In production this redirects the browser to the frontend.
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/google/connect/:
+    get:
+      operationId: calendar_google_connect_retrieve
+      description: Returns a URL the user should open in their browser to grant Arokah
+        read-only access to their Google Calendar. Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
+        to be set.
+      summary: Start Google Calendar OAuth flow
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/google/disconnect/:
+    post:
+      operationId: calendar_google_disconnect_create
+      description: Revokes OAuth tokens and removes the connection.
+      summary: Disconnect Google Calendar
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/google/sync/:
+    post:
+      operationId: calendar_google_sync_create
+      description: Pulls events from the last 7 days and next 60 days into Arokah.
+      summary: Sync Google Calendar events
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleSyncResult'
+          description: ''
+  /api/calendar/google/webhook/:
+    post:
+      operationId: calendar_google_webhook_create
+      description: Receives change notifications from Google and triggers a calendar
+        sync.
+      summary: Google Calendar push notification webhook
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/outlook/callback/:
+    get:
+      operationId: calendar_outlook_callback_retrieve
+      description: GET /api/calendar/outlook/callback/?code=...&state=...
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/outlook/connect/:
+    get:
+      operationId: calendar_outlook_connect_retrieve
+      description: Returns a URL for Microsoft OAuth consent. Requires MICROSOFT_CLIENT_ID
+        and MICROSOFT_CLIENT_SECRET in .env.
+      summary: Start Outlook Calendar OAuth flow
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/outlook/disconnect/:
+    post:
+      operationId: calendar_outlook_disconnect_create
+      description: POST /api/calendar/outlook/disconnect/
+      summary: Disconnect Outlook Calendar
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/outlook/sync/:
+    post:
+      operationId: calendar_outlook_sync_create
+      description: Pulls events via Microsoft Graph API for the last 7 days and next
+        60 days.
+      summary: Sync Outlook Calendar events
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutlookSyncResult'
+          description: ''
+  /api/calendar/status/:
+    get:
+      operationId: calendar_status_retrieve
+      description: Returns connection status for Google and Apple calendars.
+      summary: Calendar connection status
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/cultural/events/:
+    get:
+      operationId: cultural_events_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - cultural
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLocalEventList'
+          description: ''
+  /api/cultural/events/{id}/:
+    get:
+      operationId: cultural_events_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this local event.
+        required: true
+      tags:
+      - cultural
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocalEvent'
+          description: ''
+  /api/cultural/rules/:
+    get:
+      operationId: cultural_rules_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - cultural
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCulturalRuleList'
+          description: ''
+  /api/cultural/rules/{id}/:
+    get:
+      operationId: cultural_rules_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this cultural rule.
+        required: true
+      tags:
+      - cultural
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CulturalRule'
+          description: ''
+  /api/health/:
+    get:
+      operationId: health_retrieve
+      description: Returns service status, DB connectivity, and version. No auth required.
+      summary: Health check
+      tags:
+      - health
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/itinerary/checklist/:
+    get:
+      operationId: itinerary_checklist_list
+      description: |-
+        CRUD for trip packing checklist items.
+        Filter by trip: GET /api/itinerary/checklist/?trip_id=<id>
+        Mark packed: PATCH /api/itinerary/checklist/<id>/ {"is_packed": true}
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPackingChecklistItemList'
+          description: ''
+    post:
+      operationId: itinerary_checklist_create
+      description: |-
+        CRUD for trip packing checklist items.
+        Filter by trip: GET /api/itinerary/checklist/?trip_id=<id>
+        Mark packed: PATCH /api/itinerary/checklist/<id>/ {"is_packed": true}
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackingChecklistItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PackingChecklistItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PackingChecklistItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistItem'
+          description: ''
+  /api/itinerary/checklist/{id}/:
+    get:
+      operationId: itinerary_checklist_retrieve
+      description: |-
+        CRUD for trip packing checklist items.
+        Filter by trip: GET /api/itinerary/checklist/?trip_id=<id>
+        Mark packed: PATCH /api/itinerary/checklist/<id>/ {"is_packed": true}
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistItem'
+          description: ''
+    put:
+      operationId: itinerary_checklist_update
+      description: |-
+        CRUD for trip packing checklist items.
+        Filter by trip: GET /api/itinerary/checklist/?trip_id=<id>
+        Mark packed: PATCH /api/itinerary/checklist/<id>/ {"is_packed": true}
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackingChecklistItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PackingChecklistItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PackingChecklistItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistItem'
+          description: ''
+    patch:
+      operationId: itinerary_checklist_partial_update
+      description: |-
+        CRUD for trip packing checklist items.
+        Filter by trip: GET /api/itinerary/checklist/?trip_id=<id>
+        Mark packed: PATCH /api/itinerary/checklist/<id>/ {"is_packed": true}
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPackingChecklistItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPackingChecklistItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPackingChecklistItemRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistItem'
+          description: ''
+    delete:
+      operationId: itinerary_checklist_destroy
+      description: |-
+        CRUD for trip packing checklist items.
+        Filter by trip: GET /api/itinerary/checklist/?trip_id=<id>
+        Mark packed: PATCH /api/itinerary/checklist/<id>/ {"is_packed": true}
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/itinerary/checklist/from-packing-list/:
+    post:
+      operationId: itinerary_checklist_from_packing_list_create
+      description: |-
+        Auto-populate checklist from an agent packing list result.
+        Body: {"trip_id": 1, "item_ids": [1, 2, 3]}
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackingChecklistItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PackingChecklistItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PackingChecklistItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistItem'
+          description: ''
+  /api/itinerary/events/:
+    get:
+      operationId: itinerary_events_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCalendarEventList'
+          description: ''
+    post:
+      operationId: itinerary_events_create
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarEventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CalendarEventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CalendarEventRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+          description: ''
+  /api/itinerary/events/{id}/:
+    get:
+      operationId: itinerary_events_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+          description: ''
+    put:
+      operationId: itinerary_events_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarEventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CalendarEventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CalendarEventRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+          description: ''
+    patch:
+      operationId: itinerary_events_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarEventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarEventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarEventRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+          description: ''
+    delete:
+      operationId: itinerary_events_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/itinerary/events/sync/:
+    post:
+      operationId: itinerary_events_sync_create
+      description: |-
+        Sync all connected calendars (Google + Apple) for this user.
+        Returns combined results from each provider.
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarEventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CalendarEventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CalendarEventRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+          description: ''
+  /api/itinerary/trips/:
+    get:
+      operationId: itinerary_trips_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTripList'
+          description: ''
+    post:
+      operationId: itinerary_trips_create
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TripRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TripRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+          description: ''
+  /api/itinerary/trips/{id}/:
+    get:
+      operationId: itinerary_trips_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+          description: ''
+    put:
+      operationId: itinerary_trips_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TripRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TripRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+          description: ''
+    patch:
+      operationId: itinerary_trips_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTripRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTripRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTripRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+          description: ''
+    delete:
+      operationId: itinerary_trips_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/outfits/history/:
+    get:
+      operationId: outfits_history_list
+      description: |-
+        GET /api/outfits/history/
+        Past accepted outfit recommendations, newest first.
+        Query params: ?days=30 (default 30), ?source=daily|trip
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - outfits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOutfitRecommendationList'
+          description: ''
+  /api/outfits/recommendations/:
+    get:
+      operationId: outfits_recommendations_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - outfits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOutfitRecommendationList'
+          description: ''
+    post:
+      operationId: outfits_recommendations_create
+      tags:
+      - outfits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutfitRecommendationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OutfitRecommendationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OutfitRecommendationRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutfitRecommendation'
+          description: ''
+  /api/outfits/recommendations/{id}/:
+    get:
+      operationId: outfits_recommendations_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - outfits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutfitRecommendation'
+          description: ''
+    put:
+      operationId: outfits_recommendations_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - outfits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutfitRecommendationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OutfitRecommendationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OutfitRecommendationRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutfitRecommendation'
+          description: ''
+    patch:
+      operationId: outfits_recommendations_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - outfits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOutfitRecommendationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOutfitRecommendationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOutfitRecommendationRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutfitRecommendation'
+          description: ''
+    delete:
+      operationId: outfits_recommendations_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - outfits
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/outfits/recommendations/{id}/feedback/:
+    patch:
+      operationId: outfits_recommendations_feedback_partial_update
+      description: |-
+        Accept or reject a recommendation.
+        Body: {"accepted": true|false}
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - outfits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOutfitRecommendationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOutfitRecommendationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOutfitRecommendationRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutfitRecommendation'
+          description: ''
+  /api/outfits/recommendations/daily/:
+    get:
+      operationId: outfits_recommendations_daily_retrieve
+      description: |-
+        Return today's outfit recommendation.
+        Query params:
+          ?date=YYYY-MM-DD  (defaults to today)
+      tags:
+      - outfits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutfitRecommendation'
+          description: ''
+  /api/sustainability/logs/:
+    get:
+      operationId: sustainability_logs_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - sustainability
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSustainabilityLogList'
+          description: ''
+    post:
+      operationId: sustainability_logs_create
+      tags:
+      - sustainability
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SustainabilityLogRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SustainabilityLogRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SustainabilityLogRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SustainabilityLog'
+          description: ''
+  /api/sustainability/logs/{id}/:
+    get:
+      operationId: sustainability_logs_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - sustainability
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SustainabilityLog'
+          description: ''
+    put:
+      operationId: sustainability_logs_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - sustainability
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SustainabilityLogRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SustainabilityLogRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SustainabilityLogRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SustainabilityLog'
+          description: ''
+    patch:
+      operationId: sustainability_logs_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - sustainability
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSustainabilityLogRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSustainabilityLogRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSustainabilityLogRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SustainabilityLog'
+          description: ''
+    delete:
+      operationId: sustainability_logs_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - sustainability
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/sustainability/tracker/:
+    get:
+      operationId: sustainability_tracker_retrieve
+      tags:
+      - sustainability
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSustainabilityProfile'
+          description: ''
+  /api/wardrobe/background-removal/:
+    post:
+      operationId: wardrobe_background_removal_create
+      description: Upload a garment image; returns URL to background-removed version.
+      summary: Remove background from clothing photo
+      tags:
+      - wardrobe
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BgRemovalResponse'
+          description: ''
+  /api/wardrobe/bulk-upload/:
+    post:
+      operationId: wardrobe_bulk_upload_create
+      description: Create up to 50 wardrobe items in one request.
+      summary: Bulk upload clothing items
+      tags:
+      - wardrobe
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkUploadResponse'
+          description: ''
+  /api/wardrobe/items/:
+    get:
+      operationId: wardrobe_items_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - wardrobe
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedClothingItemList'
+          description: ''
+    post:
+      operationId: wardrobe_items_create
+      tags:
+      - wardrobe
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ClothingItemRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClothingItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClothingItem'
+          description: ''
+  /api/wardrobe/items/{id}/:
+    get:
+      operationId: wardrobe_items_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - wardrobe
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClothingItem'
+          description: ''
+    put:
+      operationId: wardrobe_items_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - wardrobe
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ClothingItemRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClothingItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClothingItem'
+          description: ''
+    patch:
+      operationId: wardrobe_items_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - wardrobe
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedClothingItemRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedClothingItemRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClothingItem'
+          description: ''
+    delete:
+      operationId: wardrobe_items_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - wardrobe
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/wardrobe/luggage-weight/:
+    post:
+      operationId: wardrobe_luggage_weight_create
+      description: Pass item_ids and optional airline. Returns weight, CO₂ saving,
+        and carry-on tip.
+      summary: Calculate luggage weight and carry-on eligibility
+      tags:
+      - wardrobe
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LuggageWeightResponse'
+          description: ''
+  /api/wardrobe/receipt-import/:
+    post:
+      operationId: wardrobe_receipt_import_create
+      description: Parse a shopping receipt email body and create ClothingItem records.
+      summary: Import clothing items from receipt email
+      tags:
+      - wardrobe
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptImportResponse'
+          description: ''
+  /api/weather/:
+    get:
+      operationId: weather_retrieve
+      description: Fetch weather snapshot by ?lat=&lon= or ?location=. Free, no API
+        key.
+      summary: Get live weather forecast
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+        description: Date (defaults to today)
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: float
+        description: Latitude
+      - in: query
+        name: location
+        schema:
+          type: string
+        description: Location name (geocoded)
+      - in: query
+        name: lon
+        schema:
+          type: number
+          format: float
+        description: Longitude
+      tags:
+      - weather
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeatherSnapshot'
+          description: ''
+components:
+  schemas:
+    ActionEnum:
+      enum:
+      - wear_again
+      - carry_on_only
+      - weight_saved
+      - rental
+      - secondhand
+      type: string
+      description: |-
+        * `wear_again` - Re-wore an item
+        * `carry_on_only` - Switched to carry-on
+        * `weight_saved` - Reduced luggage weight
+        * `rental` - Chose rental over purchase
+        * `secondhand` - Bought secondhand
+    AppleSyncResult:
+      type: object
+      properties:
+        created:
+          type: integer
+        updated:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+      required:
+      - created
+      - errors
+      - updated
+    BgRemovalResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+        original_filename:
+          type: string
+      required:
+      - message
+      - original_filename
+      - status
+    BulkUploadResponse:
+      type: object
+      properties:
+        created:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - created
+      - errors
+    CalendarEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+        location:
+          type: string
+          maxLength: 500
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        formality:
+          type: string
+          maxLength: 20
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        all_day:
+          type: boolean
+        source:
+          $ref: '#/components/schemas/CalendarEventSourceEnum'
+        external_id:
+          type: string
+          maxLength: 500
+        raw_data: {}
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+      required:
+      - created_at
+      - end_time
+      - id
+      - start_time
+      - title
+      - user
+    CalendarEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        description:
+          type: string
+        location:
+          type: string
+          maxLength: 500
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        formality:
+          type: string
+          maxLength: 20
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        all_day:
+          type: boolean
+        source:
+          $ref: '#/components/schemas/CalendarEventSourceEnum'
+        external_id:
+          type: string
+          maxLength: 500
+        raw_data: {}
+      required:
+      - end_time
+      - start_time
+      - title
+    CalendarEventSourceEnum:
+      enum:
+      - google
+      - outlook
+      - manual
+      type: string
+      description: |-
+        * `google` - Google Calendar
+        * `outlook` - Outlook
+        * `manual` - Manual Entry
+    CategoryEnum:
+      enum:
+      - top
+      - bottom
+      - dress
+      - outerwear
+      - footwear
+      - accessory
+      - activewear
+      - formal
+      - other
+      type: string
+      description: |-
+        * `top` - Top
+        * `bottom` - Bottom
+        * `dress` - Dress
+        * `outerwear` - Outerwear
+        * `footwear` - Footwear
+        * `accessory` - Accessory
+        * `activewear` - Activewear
+        * `formal` - Formal
+        * `other` - Other
+    ClothingItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        formality:
+          $ref: '#/components/schemas/FormalityEnum'
+        season:
+          $ref: '#/components/schemas/SeasonEnum'
+        colors: {}
+        material:
+          type: string
+          maxLength: 100
+        weight_grams:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        brand:
+          type: string
+          maxLength: 100
+        image:
+          type: string
+          format: uri
+          nullable: true
+        image_clean:
+          type: string
+          format: uri
+          nullable: true
+        tags: {}
+        is_active:
+          type: boolean
+        times_worn:
+          type: integer
+          readOnly: true
+        last_worn:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+      required:
+      - category
+      - created_at
+      - id
+      - last_worn
+      - name
+      - times_worn
+      - updated_at
+      - user
+    ClothingItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        formality:
+          $ref: '#/components/schemas/FormalityEnum'
+        season:
+          $ref: '#/components/schemas/SeasonEnum'
+        colors: {}
+        material:
+          type: string
+          maxLength: 100
+        weight_grams:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        brand:
+          type: string
+          maxLength: 100
+        image:
+          type: string
+          format: binary
+          nullable: true
+        image_clean:
+          type: string
+          format: binary
+          nullable: true
+        tags: {}
+        is_active:
+          type: boolean
+      required:
+      - category
+      - name
+    ConflictDetectorInputRequest:
+      type: object
+      description: Input for POST /api/agents/conflict-detector/
+      properties:
+        lat:
+          type: number
+          format: double
+          description: Latitude for live weather
+        lon:
+          type: number
+          format: double
+          description: Longitude for live weather
+        location:
+          type: string
+          minLength: 1
+          description: Location name (geocoded)
+        weather:
+          type: object
+          additionalProperties: {}
+          description: Weather snapshot dict (overrides live fetch)
+        date:
+          type: string
+          format: date
+          description: Date to check (YYYY-MM-DD, defaults to today)
+    ConflictDetectorResponse:
+      type: object
+      properties:
+        job_id:
+          type: integer
+        status:
+          type: string
+        output:
+          type: object
+          additionalProperties: {}
+      required:
+      - job_id
+      - output
+      - status
+    CulturalAdvisorInputRequest:
+      type: object
+      description: Input for POST /api/agents/cultural-advisor/
+      properties:
+        country:
+          type: string
+          minLength: 1
+          description: Country name
+          maxLength: 100
+        city:
+          type: string
+          minLength: 1
+          default: ''
+          maxLength: 100
+        month:
+          type: integer
+          maximum: 12
+          minimum: 1
+          description: Month number 1-12 (defaults to current month)
+      required:
+      - country
+    CulturalAdvisorResponse:
+      type: object
+      properties:
+        job_id:
+          type: integer
+        status:
+          type: string
+        output:
+          type: object
+          additionalProperties: {}
+      required:
+      - job_id
+      - output
+      - status
+    CulturalRule:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        country:
+          type: string
+          maxLength: 100
+        city:
+          type: string
+          maxLength: 100
+        place_name:
+          type: string
+          maxLength: 200
+        rule_type:
+          $ref: '#/components/schemas/RuleTypeEnum'
+        description:
+          type: string
+        severity:
+          $ref: '#/components/schemas/SeverityEnum'
+        source_url:
+          type: string
+          format: uri
+          maxLength: 200
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - country
+      - created_at
+      - description
+      - id
+      - rule_type
+    DailyLookInputRequest:
+      type: object
+      description: Input for POST /api/agents/daily-look/
+      properties:
+        lat:
+          type: number
+          format: double
+          description: Latitude for live weather
+        lon:
+          type: number
+          format: double
+          description: Longitude for live weather
+        location:
+          type: string
+          minLength: 1
+          description: Location name (geocoded)
+        weather:
+          type: object
+          additionalProperties: {}
+          description: Weather snapshot dict (overrides live fetch)
+    DailyLookResponse:
+      type: object
+      properties:
+        job_id:
+          type: integer
+        status:
+          type: string
+        output:
+          type: object
+          additionalProperties: {}
+      required:
+      - job_id
+      - output
+      - status
+    EventTypeEnum:
+      enum:
+      - external_meeting
+      - internal_meeting
+      - workout
+      - social
+      - travel
+      - free
+      - wedding
+      - interview
+      - date
+      - other
+      type: string
+      description: |-
+        * `external_meeting` - External Meeting / Client
+        * `internal_meeting` - Internal Meeting / Standup
+        * `workout` - Gym / Workout
+        * `social` - Social / Dinner
+        * `travel` - Travel Day
+        * `free` - Nothing Scheduled
+        * `wedding` - Wedding / Ceremony
+        * `interview` - Interview
+        * `date` - Date
+        * `other` - Other
+    FormalityEnum:
+      enum:
+      - casual
+      - casual_smart
+      - smart
+      - formal
+      - activewear
+      type: string
+      description: |-
+        * `casual` - Casual
+        * `casual_smart` - Casual Smart
+        * `smart` - Smart
+        * `formal` - Formal
+        * `activewear` - Activewear
+    ArokahTokenObtainPairRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - email
+      - password
+    GoogleSyncResult:
+      type: object
+      properties:
+        created:
+          type: integer
+        updated:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+      required:
+      - created
+      - errors
+      - updated
+    LocalEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        country:
+          type: string
+          maxLength: 100
+        city:
+          type: string
+          maxLength: 100
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        clothing_note:
+          type: string
+        start_month:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        end_month:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - country
+      - created_at
+      - description
+      - end_month
+      - id
+      - name
+      - start_month
+    LuggageWeightResponse:
+      type: object
+      properties:
+        total_grams:
+          type: integer
+        total_kg:
+          type: number
+          format: double
+        fits_carry_on:
+          type: boolean
+        co2_saved_vs_checked_kg:
+          type: number
+          format: double
+        tip:
+          type: string
+      required:
+      - co2_saved_vs_checked_kg
+      - fits_carry_on
+      - tip
+      - total_grams
+      - total_kg
+    OutfitItem:
+      type: object
+      properties:
+        clothing_item:
+          type: integer
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+      required:
+      - clothing_item
+    OutfitItemRequest:
+      type: object
+      properties:
+        clothing_item:
+          type: integer
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+      required:
+      - clothing_item
+    OutfitPlannerInputRequest:
+      type: object
+      description: Input for POST /api/agents/outfit-planner/
+      properties:
+        lat:
+          type: number
+          format: double
+          description: Latitude for live weather
+        lon:
+          type: number
+          format: double
+          description: Longitude for live weather
+        location:
+          type: string
+          minLength: 1
+          description: Location name (geocoded)
+        weather:
+          type: object
+          additionalProperties: {}
+          description: Weather snapshot dict (overrides live fetch)
+        trip_id:
+          type: integer
+          description: Existing Trip ID
+        start_date:
+          type: string
+          format: date
+          description: Trip start date (YYYY-MM-DD)
+        end_date:
+          type: string
+          format: date
+          description: Trip end date (YYYY-MM-DD)
+        destination:
+          type: string
+          minLength: 1
+          maxLength: 200
+        activities:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+    OutfitPlannerResponse:
+      type: object
+      properties:
+        job_id:
+          type: integer
+        status:
+          type: string
+        output:
+          type: object
+          additionalProperties: {}
+      required:
+      - job_id
+      - output
+      - status
+    OutfitRecommendation:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        date:
+          type: string
+          format: date
+        source:
+          $ref: '#/components/schemas/OutfitRecommendationSourceEnum'
+        event:
+          type: integer
+          nullable: true
+        trip:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+        weather_snapshot: {}
+        accepted:
+          type: boolean
+          nullable: true
+        outfit_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutfitItem'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - date
+      - id
+      - outfit_items
+    OutfitRecommendationRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        source:
+          $ref: '#/components/schemas/OutfitRecommendationSourceEnum'
+        event:
+          type: integer
+          nullable: true
+        trip:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+        weather_snapshot: {}
+        accepted:
+          type: boolean
+          nullable: true
+      required:
+      - date
+    OutfitRecommendationSourceEnum:
+      enum:
+      - daily
+      - trip
+      - manual
+      type: string
+      description: |-
+        * `daily` - Daily Look
+        * `trip` - Trip Planner
+        * `manual` - Manual
+    OutlookSyncResult:
+      type: object
+      properties:
+        created:
+          type: integer
+        updated:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+      required:
+      - created
+      - errors
+      - updated
+    PackingChecklistItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        trip:
+          type: integer
+        clothing_item:
+          type: integer
+          nullable: true
+        custom_name:
+          type: string
+          maxLength: 200
+        display_name:
+          type: string
+          readOnly: true
+        is_packed:
+          type: boolean
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        notes:
+          type: string
+          maxLength: 300
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - display_name
+      - id
+      - trip
+    PackingChecklistItemRequest:
+      type: object
+      properties:
+        trip:
+          type: integer
+        clothing_item:
+          type: integer
+          nullable: true
+        custom_name:
+          type: string
+          maxLength: 200
+        is_packed:
+          type: boolean
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        notes:
+          type: string
+          maxLength: 300
+      required:
+      - trip
+    PackingListInputRequest:
+      type: object
+      description: Input for POST /api/agents/packing-list/
+      properties:
+        lat:
+          type: number
+          format: double
+          description: Latitude for live weather
+        lon:
+          type: number
+          format: double
+          description: Longitude for live weather
+        location:
+          type: string
+          minLength: 1
+          description: Location name (geocoded)
+        weather:
+          type: object
+          additionalProperties: {}
+          description: Weather snapshot dict (overrides live fetch)
+        days:
+          type: integer
+          maximum: 30
+          minimum: 1
+          default: 3
+          description: Trip duration in days
+        activities:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+          description: List of activity types, e.g. ["beach", "hiking", "dinner"]
+    PackingListResponse:
+      type: object
+      properties:
+        job_id:
+          type: integer
+        status:
+          type: string
+        output:
+          type: object
+          additionalProperties: {}
+      required:
+      - job_id
+      - output
+      - status
+    PaginatedCalendarEventList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarEvent'
+    PaginatedClothingItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClothingItem'
+    PaginatedCulturalRuleList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CulturalRule'
+    PaginatedLocalEventList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocalEvent'
+    PaginatedOutfitRecommendationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutfitRecommendation'
+    PaginatedPackingChecklistItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackingChecklistItem'
+    PaginatedSustainabilityLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SustainabilityLog'
+    PaginatedTripList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trip'
+    PatchedCalendarEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        description:
+          type: string
+        location:
+          type: string
+          maxLength: 500
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        formality:
+          type: string
+          maxLength: 20
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        all_day:
+          type: boolean
+        source:
+          $ref: '#/components/schemas/CalendarEventSourceEnum'
+        external_id:
+          type: string
+          maxLength: 500
+        raw_data: {}
+    PatchedClothingItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        formality:
+          $ref: '#/components/schemas/FormalityEnum'
+        season:
+          $ref: '#/components/schemas/SeasonEnum'
+        colors: {}
+        material:
+          type: string
+          maxLength: 100
+        weight_grams:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        brand:
+          type: string
+          maxLength: 100
+        image:
+          type: string
+          format: binary
+          nullable: true
+        image_clean:
+          type: string
+          format: binary
+          nullable: true
+        tags: {}
+        is_active:
+          type: boolean
+    PatchedOutfitRecommendationRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        source:
+          $ref: '#/components/schemas/OutfitRecommendationSourceEnum'
+        event:
+          type: integer
+          nullable: true
+        trip:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+        weather_snapshot: {}
+        accepted:
+          type: boolean
+          nullable: true
+    PatchedPackingChecklistItemRequest:
+      type: object
+      properties:
+        trip:
+          type: integer
+        clothing_item:
+          type: integer
+          nullable: true
+        custom_name:
+          type: string
+          maxLength: 200
+        is_packed:
+          type: boolean
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        notes:
+          type: string
+          maxLength: 300
+    PatchedSustainabilityLogRequest:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+        co2_saved_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,3})?$
+        points:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        notes:
+          type: string
+          maxLength: 300
+    PatchedTripRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        destination:
+          type: string
+          minLength: 1
+          maxLength: 200
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        notes:
+          type: string
+    PatchedUserRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        location_name:
+          type: string
+          maxLength: 200
+        location_lat:
+          type: number
+          format: double
+          nullable: true
+        location_lon:
+          type: number
+          format: double
+          nullable: true
+        push_notifications:
+          type: boolean
+        style_profile: {}
+    ReceiptImportResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        items_created:
+          type: integer
+      required:
+      - items_created
+      - status
+    Register:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        timezone:
+          type: string
+          maxLength: 64
+      required:
+      - email
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+      required:
+      - email
+      - password
+    RoleEnum:
+      enum:
+      - main
+      - layer
+      - shoes
+      - bag
+      - other
+      type: string
+      description: |-
+        * `main` - Main Piece
+        * `layer` - Layer
+        * `shoes` - Shoes
+        * `bag` - Bag
+        * `other` - Other
+    RuleTypeEnum:
+      enum:
+      - cover_head
+      - cover_shoulders
+      - cover_knees
+      - no_bare_feet
+      - modest_dress
+      - remove_shoes
+      - festival_wear
+      - color_warning
+      - general
+      type: string
+      description: |-
+        * `cover_head` - Head Covering Required
+        * `cover_shoulders` - Shoulders Must Be Covered
+        * `cover_knees` - Knees Must Be Covered
+        * `no_bare_feet` - No Bare Feet
+        * `modest_dress` - Modest Dress Required
+        * `remove_shoes` - Remove Shoes
+        * `festival_wear` - Festival / Event Specific
+        * `color_warning` - Colour Significance
+        * `general` - General Etiquette
+    SeasonEnum:
+      enum:
+      - spring
+      - summer
+      - autumn
+      - winter
+      - all
+      type: string
+      description: |-
+        * `spring` - Spring
+        * `summer` - Summer
+        * `autumn` - Autumn
+        * `winter` - Winter
+        * `all` - All Season
+    SeverityEnum:
+      enum:
+      - info
+      - warning
+      - required
+      type: string
+      description: |-
+        * `info` - Info
+        * `warning` - Warning
+        * `required` - Required
+    SustainabilityLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+        co2_saved_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,3})?$
+        points:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        notes:
+          type: string
+          maxLength: 300
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+      required:
+      - action
+      - created_at
+      - id
+      - user
+    SustainabilityLogRequest:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+        co2_saved_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,3})?$
+        points:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        notes:
+          type: string
+          maxLength: 300
+      required:
+      - action
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+    Trip:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        destination:
+          type: string
+          maxLength: 200
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+      required:
+      - created_at
+      - destination
+      - end_date
+      - id
+      - name
+      - start_date
+      - user
+    TripRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        destination:
+          type: string
+          minLength: 1
+          maxLength: 200
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        notes:
+          type: string
+      required:
+      - destination
+      - end_date
+      - name
+      - start_date
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        timezone:
+          type: string
+          maxLength: 64
+        location_name:
+          type: string
+          maxLength: 200
+        location_lat:
+          type: number
+          format: double
+          nullable: true
+        location_lon:
+          type: number
+          format: double
+          nullable: true
+        push_notifications:
+          type: boolean
+        google_calendar_connected:
+          type: boolean
+          readOnly: true
+        apple_calendar_connected:
+          type: boolean
+          readOnly: true
+        outlook_calendar_connected:
+          type: boolean
+          readOnly: true
+        style_profile: {}
+        is_email_verified:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - apple_calendar_connected
+      - created_at
+      - email
+      - google_calendar_connected
+      - id
+      - is_email_verified
+      - outlook_calendar_connected
+    UserRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          maxLength: 100
+        last_name:
+          type: string
+          maxLength: 100
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        location_name:
+          type: string
+          maxLength: 200
+        location_lat:
+          type: number
+          format: double
+          nullable: true
+        location_lon:
+          type: number
+          format: double
+          nullable: true
+        push_notifications:
+          type: boolean
+        style_profile: {}
+    UserSustainabilityProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        total_points:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        total_co2_saved_kg:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+        wear_again_streak:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+      required:
+      - id
+      - updated_at
+      - user
+    WeatherSnapshot:
+      type: object
+      properties:
+        temp_c:
+          type: number
+          format: double
+        condition:
+          type: string
+        precipitation_probability:
+          type: integer
+        is_raining:
+          type: boolean
+        source:
+          type: string
+      required:
+      - condition
+      - is_raining
+      - precipitation_probability
+      - source
+      - temp_c
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,127 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Arokah — local Django stack
+#
+# Services:
+#   migrations  Runs `manage.py migrate`, then exits
+#   api         Django (gunicorn)      → http://localhost:8000
+#   redis       Redis 7                → localhost:6379  (Celery broker/result)
+#   worker      Celery worker (async AI agent jobs, notifications)
+#   beat        Celery beat (scheduled tasks via django-celery-beat)
+#
+# First-time setup:
+#   1. Create ./backend/.env (see backend/README.md for required vars)
+#   2. docker-compose up -d
+#
+# Notes:
+# - Database: SQLite (backend/db.sqlite3), persisted via bind mount.
+#   To switch to Postgres, add psycopg2-binary to requirements and extend
+#   arokah/settings.py DATABASES with USER/PASSWORD/HOST/PORT.
+# - The frontend is NOT in this compose file. Run it with:
+#     cd frontend && npm install && npm run dev   (serves on :5175)
+# ─────────────────────────────────────────────────────────────────────────────
+
+x-django-base: &django-base
+  build:
+    context: ./backend
+  env_file:
+    - ./backend/.env
+  environment:
+    DJANGO_SETTINGS_MODULE: arokah.settings
+    REDIS_URL: redis://:arokah_redis_dev@redis:6379/0
+    WEB_APP_URL: http://localhost:5175
+    FRONTEND_URL: http://localhost:5175
+    ALLOWED_HOSTS: localhost,127.0.0.1,api
+  volumes:
+    - ./backend:/app                 # live reload in dev
+  networks:
+    - arokah-net
+
+services:
+
+  # ── Redis (Celery broker + result backend) ────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: arokah-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --requirepass arokah_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - arokah-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "arokah_redis_dev", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Migrations (runs once, then exits) ────────────────────────────────────
+  migrations:
+    <<: *django-base
+    container_name: arokah-migrations
+    command: python manage.py migrate --noinput
+    restart: "no"
+
+  # ── API (Django via gunicorn) ─────────────────────────────────────────────
+  api:
+    <<: *django-base
+    container_name: arokah-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    command: >
+      gunicorn arokah.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 4
+      --timeout 120
+      --access-logfile -
+      --reload
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Celery worker ─────────────────────────────────────────────────────────
+  worker:
+    <<: *django-base
+    container_name: arokah-worker
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    command: celery -A arokah worker --loglevel=info --concurrency=2
+
+  # ── Celery beat (scheduled tasks) ─────────────────────────────────────────
+  beat:
+    <<: *django-base
+    container_name: arokah-beat
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    command: celery -A arokah beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+volumes:
+  redis_data:
+
+networks:
+  arokah-net:
+    driver: bridge
