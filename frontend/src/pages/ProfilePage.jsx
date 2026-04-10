@@ -116,13 +116,20 @@ export default function ProfilePage() {
   const [appleBusy, setAppleBusy]   = useState(false)
 
   const connectApple = async () => {
-    if (!appleCreds.username || !appleCreds.password) {
+    const username = (appleCreds.username || '').trim().toLowerCase()
+    // Normalise App-Specific Password: strip whitespace, re-insert dashes
+    const rawPw = (appleCreds.password || '').replace(/[\s\-]+/g, '').toLowerCase()
+    const password = rawPw.length === 16
+      ? `${rawPw.slice(0,4)}-${rawPw.slice(4,8)}-${rawPw.slice(8,12)}-${rawPw.slice(12,16)}`
+      : appleCreds.password.trim()
+
+    if (!username || !password) {
       flash('Apple ID and App-Specific Password are required.', 'error')
       return
     }
     setAppleBusy(true)
     try {
-      await calendarApi.apple.connect(appleCreds)
+      await calendarApi.apple.connect({ username, password })
       setCalStatus(await calendarApi.status())
       setAppleModal(false)
       setAppleCreds({ username: '', password: '' })

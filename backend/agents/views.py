@@ -8,7 +8,7 @@ from .throttles import AIAgentThrottle
 from .input_serializers import (
     DailyLookInputSerializer, PackingListInputSerializer,
     OutfitPlannerInputSerializer, ConflictDetectorInputSerializer,
-    CulturalAdvisorInputSerializer,
+    CulturalAdvisorInputSerializer, SmartRecommendInputSerializer,
 )
 from . import services
 
@@ -148,3 +148,25 @@ class CulturalAdvisorView(BaseAgentView):
 
     def run(self, user, data):
         return services.run_cultural_advisor(user, data)
+
+
+class SmartRecommendView(BaseAgentView):
+    agent_type             = 'smart_recommend'
+    input_serializer_class = SmartRecommendInputSerializer
+
+    @extend_schema(
+        summary="Unified smart outfit recommendation",
+        request=SmartRecommendInputSerializer,
+        responses={200: _agent_schema('SmartRecommendResponse')},
+        description=(
+            "Combines the trained fashion ML model, live weather data, and "
+            "Mistral-powered cultural intelligence to produce outfit recommendations. "
+            "Items found in the user's wardrobe are returned directly; gaps include "
+            "shopping links. Pass `destination` (required), optional `date`, `occasion`."
+        ),
+    )
+    def post(self, request):
+        return self._run(request)
+
+    def run(self, user, data):
+        return services.run_smart_recommend(user, data)

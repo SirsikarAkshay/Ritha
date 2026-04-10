@@ -242,3 +242,7 @@ backend/uploads/
 *.bak
 *.backup
 *.orig
+
+# ML data & model artifacts
+backend/data/
+backend/ml/artifacts/

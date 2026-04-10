@@ -1,7 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="cade1bb6-4614-4724-b6b1-3b47eecb83d1" name="Changes" comment="" />
+    <list default="true" id="cade1bb6-4614-4724-b6b1-3b47eecb83d1" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/agents/input_serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/agents/input_serializers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/agents/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/agents/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/agents/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/agents/services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/agents/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/agents/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/agents/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/agents/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/calendar_sync/apple_calendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/calendar_sync/apple_calendar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/calendar_sync/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/calendar_sync/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/App.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/api/client.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/api/config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/api/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/components/ErrorBoundary.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/components/Layout.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/components/Layout.module.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/components/Toast.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/contexts/AuthContext.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/hooks/useAuth.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/hooks/useToast.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/index.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/main.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/Auth.module.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/CalendarPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/CulturalPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/Dashboard.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/Dashboard.module.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/DashboardPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/ForgotPasswordPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/ItineraryPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/Login.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/LoginPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/NotFoundPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/ProfilePage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/Register.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/ResetPasswordPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/SustainabilityPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/TripPlannerPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/VerifyEmailPage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/Wardrobe.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/pages/WardrobePage.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/src/styles/globals.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/frontend/vite.config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Layout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Layout.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/ProfilePage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/ProfilePage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/TripPlannerPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/TripPlannerPage.jsx" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -10,6 +68,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "SirsikarAkshay"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/SirsikarAkshay/Arokah.git",
+    "accountId": "64b92511-8cc6-4d8b-ba38-4f97f9cb3a7e"
+  }
+}]]></component>
   <component name="ProjectColorInfo"><![CDATA[{
   "associatedIndex": 0,
   "fromUser": false
@@ -23,13 +93,25 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/aks/PycharmProjects/arokah",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -45,8 +127,11 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1775756878964</updated>
-      <workItem from="1775756880005" duration="1000" />
+      <workItem from="1775756880005" duration="8808000" />
     </task>
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
 </project>

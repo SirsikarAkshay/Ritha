@@ -9,6 +9,7 @@ class AgentJob(models.Model):
         ('outfit_planner',   'Trip Outfit Planner'),
         ('cultural_advisor', 'Cultural Advisor'),
         ('conflict_detector','Conflict Detector'),
+        ('smart_recommend',  'Smart Recommend'),
     ]
 
     STATUS_CHOICES = [

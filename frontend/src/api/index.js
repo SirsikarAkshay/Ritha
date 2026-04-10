@@ -67,11 +67,12 @@ export const outfits = {
 
 // ── Agents ────────────────────────────────────────────────────────────────
 export const agents = {
-  dailyLook:       (data) => api.post('/agents/daily-look/', data),
-  packingList:     (data) => api.post('/agents/packing-list/', data),
-  outfitPlanner:   (data) => api.post('/agents/outfit-planner/', data),
-  conflictDetector:(data) => api.post('/agents/conflict-detector/', data),
-  culturalAdvisor: (data) => api.post('/agents/cultural-advisor/', data),
+  dailyLook:        (data) => api.post('/agents/daily-look/', data),
+  packingList:      (data) => api.post('/agents/packing-list/', data),
+  outfitPlanner:    (data) => api.post('/agents/outfit-planner/', data),
+  conflictDetector: (data) => api.post('/agents/conflict-detector/', data),
+  culturalAdvisor:  (data) => api.post('/agents/cultural-advisor/', data),
+  smartRecommend:   (data) => api.post('/agents/smart-recommend/', data),
 }
 
 // ── Weather ───────────────────────────────────────────────────────────────

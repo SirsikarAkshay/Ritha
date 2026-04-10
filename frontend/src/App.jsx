@@ -18,6 +18,7 @@ import MessagesPage from './pages/MessagesPage.jsx'
 import SharedWardrobesPage from './pages/SharedWardrobesPage.jsx'
 import SharedWardrobeDetailPage from './pages/SharedWardrobeDetailPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
+import RecommendPage from './pages/RecommendPage.jsx'
 import { useToast } from './hooks/useToast.jsx'
 import { ToastList } from './components/Toast.jsx'
 
@@ -83,6 +84,9 @@ function AppRoutes() {
       } />
       <Route path="/shared-wardrobes/:id" element={
         <ProtectedRoute><Layout><SharedWardrobeDetailPage /></Layout></ProtectedRoute>
+      } />
+      <Route path="/recommend" element={
+        <ProtectedRoute><Layout><RecommendPage /></Layout></ProtectedRoute>
       } />
       <Route path="/profile" element={
         <ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>

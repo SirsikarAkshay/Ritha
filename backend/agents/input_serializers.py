@@ -79,6 +79,27 @@ class CulturalAdvisorInputSerializer(serializers.Serializer):
     )
 
 
+class SmartRecommendInputSerializer(WeatherInputMixin):
+    """Input for POST /api/agents/smart-recommend/"""
+    destination = serializers.CharField(
+        max_length=200,
+        help_text='Destination city or country (e.g. "Tokyo", "Italy")'
+    )
+    date = serializers.DateField(
+        required=False,
+        help_text='Date for the recommendation (YYYY-MM-DD, defaults to today)'
+    )
+    occasion = serializers.ChoiceField(
+        choices=[
+            'casual', 'smart_casual', 'business', 'formal',
+            'activewear', 'travel', 'cultural_visit', 'date',
+            'wedding', 'interview',
+        ],
+        required=False, default='casual',
+        help_text='Occasion type'
+    )
+
+
 class LuggageWeightInputSerializer(serializers.Serializer):
     """Input for POST /api/wardrobe/luggage-weight/"""
     item_ids = serializers.ListField(

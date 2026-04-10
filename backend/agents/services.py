@@ -1080,3 +1080,18 @@ Return JSON:
     result['days']        = days_count
     return result
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. SMART RECOMMEND  (unified: ML + Weather + Cultural AI)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def run_smart_recommend(user, input_data: dict) -> dict:
+    """
+    Unified recommendation agent.  Combines the trained fashion ML model,
+    live weather data, and Mistral-powered cultural intelligence to produce
+    outfit recommendations.  Items found in the user's wardrobe are returned
+    directly; gaps include shopping links.
+    """
+    from arokah.services.recommendation_engine import recommend
+    return recommend(user, input_data)
+

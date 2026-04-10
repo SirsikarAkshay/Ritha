@@ -9,6 +9,7 @@ const NAV = [
   { to: '/wardrobe',       label: 'Wardrobe', icon: '◈' },
   { to: '/itinerary',      label: 'Schedule', icon: '◷' },
   { to: '/trips',          label: 'Trips',    icon: '◎' },
+  { to: '/recommend',      label: 'Recommend', icon: '✧' },
   { to: '/cultural',       label: 'Culture',  icon: '◉' },
   { to: '/sustainability',  label: 'Impact',   icon: '◆' },
   { to: '/people',          label: 'People',   icon: '◐' },

@@ -250,8 +250,8 @@ class AppleConnectView(APIView):
         responses={200: None},
     )
     def post(self, request):
-        username = request.data.get('username', '').strip()
-        password = request.data.get('password', '').strip()
+        username = apple_calendar.normalize_apple_id(request.data.get('username', ''))
+        password = apple_calendar.normalize_app_password(request.data.get('password', ''))
 
         if not username or not password:
             return Response(

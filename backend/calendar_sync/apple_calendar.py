@@ -12,6 +12,8 @@ Flow:
 """
 import logging
 import datetime
+import re
+import socket
 from typing import Optional
 
 from django.conf import settings
@@ -20,6 +22,40 @@ from django.utils import timezone
 logger = logging.getLogger('arokah.calendar.apple')
 
 APPLE_CALDAV_URL = 'https://caldav.icloud.com/'
+APPLE_CALDAV_TIMEOUT = 15  # seconds — never let icloud hang the request
+
+
+def normalize_apple_id(username: str) -> str:
+    """Apple IDs are case-insensitive emails. Trim and lowercase."""
+    return (username or '').strip().lower()
+
+
+def normalize_app_password(password: str) -> str:
+    """
+    Apple App-Specific Passwords are 16 lowercase letters formatted as
+    `xxxx-xxxx-xxxx-xxxx`. Users frequently paste them with spaces, with
+    capital letters, or without the hyphens. iCloud's CalDAV server is
+    strict, so canonicalise to the hyphenated lowercase form.
+    """
+    if not password:
+        return ''
+    # Strip every kind of whitespace and the hyphens, then re-insert them.
+    cleaned = re.sub(r'[\s\-]+', '', password).lower()
+    if len(cleaned) == 16 and cleaned.isalnum():
+        return f'{cleaned[0:4]}-{cleaned[4:8]}-{cleaned[8:12]}-{cleaned[12:16]}'
+    # Not a recognisable app-password shape — pass through trimmed so the
+    # caller can still try, but iCloud will most likely reject it.
+    return password.strip()
+
+
+def _make_client(username: str, password: str):
+    import caldav
+    return caldav.DAVClient(
+        url=APPLE_CALDAV_URL,
+        username=username,
+        password=password,
+        timeout=APPLE_CALDAV_TIMEOUT,
+    )
 
 
 def test_connection(username: str, password: str) -> tuple[bool, str]:
@@ -27,24 +63,39 @@ def test_connection(username: str, password: str) -> tuple[bool, str]:
     Validate Apple ID credentials by attempting a CalDAV connection.
     Returns (success: bool, message: str).
     """
+    username = normalize_apple_id(username)
+    password = normalize_app_password(password)
+
+    if '@' not in username:
+        return False, 'Apple ID must be an email address (e.g. you@icloud.com).'
+    if not password:
+        return False, ('App-Specific Password is required. Generate one at '
+                       'appleid.apple.com → Sign-In and Security → App-Specific Passwords.')
+
     try:
-        import caldav
-        client = caldav.DAVClient(
-            url=APPLE_CALDAV_URL,
-            username=username,
-            password=password,
-        )
+        client = _make_client(username, password)
         principal = client.principal()
         calendars = principal.calendars()
         cal_count = len(calendars)
         return True, f'Connected — {cal_count} calendar{"s" if cal_count != 1 else ""} found.'
+    except socket.timeout:
+        return False, 'Apple servers timed out. Check your internet connection and try again.'
     except Exception as exc:
-        msg = str(exc)
-        if 'Unauthorized' in msg or '401' in msg:
-            return False, ('Authentication failed. Make sure you are using an '
-                           'App-Specific Password from appleid.apple.com, not your Apple ID password.')
-        if 'SSL' in msg or 'certificate' in msg.lower():
+        msg = str(exc) or exc.__class__.__name__
+        lower = msg.lower()
+        if '401' in msg or 'unauthorized' in lower or 'authentication' in lower:
+            return False, ('Authentication failed. Use an App-Specific Password from '
+                           'appleid.apple.com — your regular Apple ID password will not work.')
+        if '403' in msg or 'forbidden' in lower:
+            return False, ('Access forbidden by iCloud. Make sure two-factor auth is enabled '
+                           'on your Apple ID, then generate a fresh App-Specific Password.')
+        if 'timed out' in lower or 'timeout' in lower:
+            return False, 'Apple servers timed out. Check your internet connection and try again.'
+        if 'ssl' in lower or 'certificate' in lower:
             return False, 'SSL error connecting to Apple servers. Please try again.'
+        if 'name or service not known' in lower or 'temporary failure' in lower or 'getaddrinfo' in lower:
+            return False, 'Could not reach caldav.icloud.com. Check your internet connection.'
+        logger.warning('Apple CalDAV connect failed for %s: %s', username, msg)
         return False, f'Connection failed: {msg}'
 
 
@@ -82,8 +133,8 @@ def _decrypt_password(encrypted: str) -> str:
 
 def save_credentials(user, username: str, password: str) -> None:
     """Encrypt and persist Apple credentials on the user."""
-    user.apple_calendar_username  = username
-    user.apple_calendar_password  = _encrypt_password(password)
+    user.apple_calendar_username  = normalize_apple_id(username)
+    user.apple_calendar_password  = _encrypt_password(normalize_app_password(password))
     user.apple_calendar_connected = True
     user.save(update_fields=[
         'apple_calendar_username', 'apple_calendar_password', 'apple_calendar_connected',
@@ -107,10 +158,7 @@ def sync_events(user, days_behind: int = 7, days_ahead: int = 60) -> dict:
         return {'error': 'Apple Calendar not connected. Add credentials first.'}
 
     try:
-        import caldav
-        from caldav.elements import dav
-
-        client    = caldav.DAVClient(url=APPLE_CALDAV_URL, username=username, password=password)
+        client    = _make_client(username, password)
         principal = client.principal()
         calendars = principal.calendars()
 
@@ -124,7 +172,15 @@ def sync_events(user, days_behind: int = 7, days_ahead: int = 60) -> dict:
         for cal in calendars:
             try:
                 cal_name = str(cal.name or 'Calendar')
-                events   = cal.date_search(start=start_dt, end=end_dt, expand=True)
+                # caldav>=1.0 prefers `search`; `date_search` is deprecated and
+                # removed in 2.x. `search(event=True, expand=True)` is the
+                # supported equivalent for VEVENT discovery in a date range.
+                try:
+                    events = cal.search(
+                        start=start_dt, end=end_dt, event=True, expand=True,
+                    )
+                except (AttributeError, TypeError):
+                    events = cal.date_search(start=start_dt, end=end_dt, expand=True)
                 for event in events:
                     try:
                         c, u = _upsert_caldav_event(user, event, cal_name)
