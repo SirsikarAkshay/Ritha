@@ -154,6 +154,10 @@ CORS_ALLOWED_ORIGINS = [
     os.getenv('WEB_APP_URL', 'http://localhost:3000'),
     os.getenv('MOBILE_APP_URL', 'http://localhost:8081'),
 ]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^http://localhost:\d+$',
+    r'^http://127\.0\.0\.1:\d+$',
+]
 CORS_ALLOW_CREDENTIALS = True
 
 # ── Internationalisation ───────────────────────────────────────────────────────
@@ -174,6 +178,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MISTRAL_API_KEY         = os.getenv('MISTRAL_API_KEY', '')
 GOOGLE_CALENDAR_API_KEY = os.getenv('GOOGLE_CALENDAR_API_KEY', '')
 GOOGLE_VISION_API_KEY   = os.getenv('GOOGLE_VISION_API_KEY', '')
+
+# ── Cache ─────────────────────────────────────────────────────────────────────
+# Prefer Redis when REDIS_URL is set; otherwise fall back to in-process LocMem.
+_redis_url = os.getenv('REDIS_URL', '')
+if _redis_url:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': _redis_url,
+            'TIMEOUT': 300,
+        },
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'arokah-default',
+            'TIMEOUT': 300,
+            'OPTIONS': {'MAX_ENTRIES': 2000},
+        },
+    }
 
 # ── Celery ────────────────────────────────────────────────────────────────────
 CELERY_BROKER_URL            = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
