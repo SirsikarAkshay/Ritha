@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, decorators
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework.response import Response
+from django.db.models import Q
 from .models import CalendarEvent, Trip, PackingChecklistItem
 from .serializers import CalendarEventSerializer, TripSerializer, PackingChecklistItemSerializer
 import datetime
@@ -20,6 +21,8 @@ class CalendarEventViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs         = CalendarEvent.objects.filter(user=self.request.user).select_related('user')
+        # Exclude events marked as cross-source duplicates
+        qs = qs.exclude(raw_data__is_duplicate=True)
         date       = self.request.query_params.get('date')
         start_date = self.request.query_params.get('start_date')
         end_date   = self.request.query_params.get('end_date')
@@ -102,9 +105,23 @@ class TripViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Trip.objects.filter(user=self.request.user)
+        user = self.request.user
+        return Trip.objects.filter(
+            Q(user=user) | Q(shared_wardrobe__members__user=user)
+        ).distinct().select_related('shared_wardrobe')
 
     def perform_create(self, serializer):
+        sw_id = self.request.data.get('shared_wardrobe')
+        if sw_id:
+            from shared_wardrobe.models import SharedWardrobe
+            try:
+                sw = SharedWardrobe.objects.get(pk=sw_id)
+            except SharedWardrobe.DoesNotExist:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({'shared_wardrobe': 'Shared wardrobe not found.'})
+            if not sw.is_member(self.request.user):
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied('You are not a member of this shared wardrobe.')
         serializer.save(user=self.request.user)
 
     @decorators.action(detail=True, methods=['post', 'delete'], url_path='save-recommendation')

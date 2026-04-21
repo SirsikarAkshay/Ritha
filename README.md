@@ -226,9 +226,9 @@ MSAL_CLIENT_SECRET=…
 
 ### High Priority
 - [x] Push notifications (morning outfit, trip reminders) — Firebase Cloud Messaging integrated
-- [ ] Receipt-to-closet import — forward shopping emails to auto-populate wardrobe
-- [ ] Outfit history & acceptance feedback — track which suggestions users accept/skip to improve ML model
-- [ ] Apple Calendar (CalDAV) sync completion — backend scaffolded, OAuth flow pending
+- [x] Receipt-to-closet import — paste shopping receipt/confirmation emails to auto-populate wardrobe (Mistral AI parsing)
+- [x] Outfit history & acceptance feedback — outfit-level + item-level feedback, user preference stats, ML-personalized scoring
+- [x] Apple Calendar (CalDAV) sync completion — full CalDAV sync, periodic auto-sync via Celery, cross-source event deduplication
 
 ### Medium Priority
 - [ ] Luggage weight predictor — estimate bag weight from item materials

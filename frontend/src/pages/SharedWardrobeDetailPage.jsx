@@ -16,6 +16,7 @@ export default function SharedWardrobeDetailPage() {
   const [error, setError]       = useState('')
   const [showAddItem, setShowAddItem] = useState(false)
   const [showInvite, setShowInvite]   = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState(null)
   const wsRef = useRef(null)
 
   const loadAll = async () => {
@@ -58,44 +59,52 @@ export default function SharedWardrobeDetailPage() {
     return () => ws.close()
   }, [id, navigate])
 
-  const deleteItem = async (itemId) => {
-    if (!confirm('Remove this item?')) return
-    try {
-      await api.items.delete(id, itemId)
-      setItems(prev => prev.filter(i => i.id !== itemId))
-    } catch (err) {
-      window.__toast?.(err.response?.data?.error?.message || 'Could not remove item.', 'error')
-    }
+  const askConfirm = (message, onConfirm, danger = false) => {
+    setConfirmDialog({ message, onConfirm, danger })
   }
 
-  const deleteWardrobe = async () => {
-    if (!confirm(`Delete "${wardrobe.name}"? This cannot be undone.`)) return
-    try {
-      await api.delete(id)
-      navigate('/shared-wardrobes')
-    } catch (err) {
-      window.__toast?.(err.response?.data?.error?.message || 'Could not delete.', 'error')
-    }
+  const deleteItem = (itemId) => {
+    askConfirm('Remove this item from the wardrobe?', async () => {
+      try {
+        await api.items.delete(id, itemId)
+        setItems(prev => prev.filter(i => i.id !== itemId))
+      } catch (err) {
+        window.__toast?.(err.response?.data?.error?.message || 'Could not remove item.', 'error')
+      }
+    })
   }
 
-  const leaveWardrobe = async () => {
-    if (!confirm('Leave this wardrobe?')) return
-    try {
-      await api.members.remove(id, user.id)
-      navigate('/shared-wardrobes')
-    } catch (err) {
-      window.__toast?.(err.response?.data?.error?.message || 'Could not leave.', 'error')
-    }
+  const deleteWardrobe = () => {
+    askConfirm(`Delete "${wardrobe.name}"? This cannot be undone.`, async () => {
+      try {
+        await api.delete(id)
+        navigate('/shared-wardrobes')
+      } catch (err) {
+        window.__toast?.(err.response?.data?.error?.message || 'Could not delete.', 'error')
+      }
+    }, true)
   }
 
-  const removeMember = async (userId) => {
-    if (!confirm('Remove this member?')) return
-    try {
-      await api.members.remove(id, userId)
-      setWardrobe(prev => ({ ...prev, members: prev.members.filter(m => m.user?.id !== userId) }))
-    } catch (err) {
-      window.__toast?.(err.response?.data?.error?.message || 'Could not remove member.', 'error')
-    }
+  const leaveWardrobe = () => {
+    askConfirm('Leave this wardrobe?', async () => {
+      try {
+        await api.members.remove(id, user.id)
+        navigate('/shared-wardrobes')
+      } catch (err) {
+        window.__toast?.(err.response?.data?.error?.message || 'Could not leave.', 'error')
+      }
+    })
+  }
+
+  const removeMember = (userId) => {
+    askConfirm('Remove this member?', async () => {
+      try {
+        await api.members.remove(id, userId)
+        setWardrobe(prev => ({ ...prev, members: prev.members.filter(m => m.user?.id !== userId) }))
+      } catch (err) {
+        window.__toast?.(err.response?.data?.error?.message || 'Could not remove member.', 'error')
+      }
+    })
   }
 
   if (loading) return <div style={{ color: 'var(--cream-dim)' }}>Loading…</div>
@@ -198,6 +207,7 @@ export default function SharedWardrobeDetailPage() {
             <InviteMemberForm
               wardrobeId={id}
               existingIds={wardrobe.members?.map(m => m.user?.id) || []}
+              pendingIds={wardrobe.pending_invitee_ids || []}
               onDone={() => setShowInvite(false)}
             />
           )}
@@ -248,6 +258,33 @@ export default function SharedWardrobeDetailPage() {
           </div>
         </div>
       </div>
+
+      {confirmDialog && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }} onClick={() => setConfirmDialog(null)}>
+          <div className="card" style={{
+            padding: 24, minWidth: 320, maxWidth: 400, textAlign: 'center',
+          }} onClick={e => e.stopPropagation()}>
+            <p style={{ color: 'var(--cream)', fontSize: '0.95rem', marginBottom: 20 }}>
+              {confirmDialog.message}
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setConfirmDialog(null)}>Cancel</button>
+              <button
+                className="btn btn-sm"
+                style={confirmDialog.danger
+                  ? { background: 'var(--danger, #c66)', color: '#fff' }
+                  : { background: 'var(--terra)', color: '#fff' }}
+                onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(null) }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -367,10 +404,11 @@ function AddItemForm({ wardrobeId, onDone }) {
 
 
 // ── Invite member form ────────────────────────────────────────────────────
-function InviteMemberForm({ wardrobeId, existingIds, onDone }) {
+function InviteMemberForm({ wardrobeId, existingIds, pendingIds = [], onDone }) {
   const [connections, setConnections] = useState([])
   const [loading, setLoading]         = useState(true)
-  const [inviting, setInviting]       = useState(null)  // user_id being invited
+  const [inviting, setInviting]       = useState(null)
+  const [invited, setInvited]         = useState(() => new Set(pendingIds))
 
   useEffect(() => {
     social.connections.list('accepted').then(res => {
@@ -382,7 +420,8 @@ function InviteMemberForm({ wardrobeId, existingIds, onDone }) {
     setInviting(userId)
     try {
       await api.members.add(wardrobeId, userId)
-      window.__toast?.('Invited.', 'success')
+      setInvited(prev => new Set([...prev, userId]))
+      window.__toast?.('Invitation sent.', 'success')
     } catch (err) {
       window.__toast?.(err.response?.data?.error?.message || 'Could not invite.', 'error')
     } finally {
@@ -412,11 +451,11 @@ function InviteMemberForm({ wardrobeId, existingIds, onDone }) {
                 {c.other_user?.display_name || '@' + c.other_user?.handle}
               </div>
               <button
-                className="btn btn-primary btn-sm"
+                className={`btn btn-sm ${invited.has(c.other_user?.id) ? 'btn-ghost' : 'btn-primary'}`}
                 onClick={() => invite(c.other_user?.id)}
-                disabled={inviting === c.other_user?.id}
+                disabled={inviting === c.other_user?.id || invited.has(c.other_user?.id)}
               >
-                {inviting === c.other_user?.id ? '…' : 'Invite'}
+                {inviting === c.other_user?.id ? '…' : invited.has(c.other_user?.id) ? 'Invited' : 'Invite'}
               </button>
             </div>
           ))}

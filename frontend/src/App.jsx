@@ -18,6 +18,7 @@ import MessagesPage from './pages/MessagesPage.jsx'
 import SharedWardrobesPage from './pages/SharedWardrobesPage.jsx'
 import SharedWardrobeDetailPage from './pages/SharedWardrobeDetailPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
+import OutfitHistoryPage from './pages/OutfitHistoryPage.jsx'
 
 import { useToast } from './hooks/useToast.jsx'
 import { ToastList } from './components/Toast.jsx'
@@ -87,6 +88,9 @@ function AppRoutes() {
       } />
 <Route path="/profile" element={
         <ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>
+      } />
+      <Route path="/outfit-history" element={
+        <ProtectedRoute><Layout><OutfitHistoryPage /></Layout></ProtectedRoute>
       } />
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -19,6 +19,8 @@ class CalendarEvent(models.Model):
     SOURCE_CHOICES = [
         ('google',  'Google Calendar'),
         ('outlook', 'Outlook'),
+        ('apple',   'Apple Calendar'),
+        ('device',  'Device Calendar'),
         ('manual',  'Manual Entry'),
     ]
 
@@ -56,6 +58,10 @@ class CalendarEvent(models.Model):
 
 class Trip(models.Model):
     user        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='trips')
+    shared_wardrobe = models.ForeignKey(
+        'shared_wardrobe.SharedWardrobe', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='trips',
+    )
     name        = models.CharField(max_length=200)
     destination = models.CharField(max_length=400)
     # Structured destination. `country` is the trip's country, `cities` is a list

@@ -10,10 +10,18 @@ class CalendarEventSerializer(serializers.ModelSerializer):
 
 
 class TripSerializer(serializers.ModelSerializer):
+    shared_wardrobe_name = serializers.CharField(
+        source='shared_wardrobe.name', read_only=True, default=None,
+    )
+    is_collaborative = serializers.SerializerMethodField()
+
     class Meta:
         model  = Trip
         fields = '__all__'
         read_only_fields = ['user', 'created_at']
+
+    def get_is_collaborative(self, obj):
+        return obj.shared_wardrobe_id is not None
 
 
 class PackingChecklistItemSerializer(serializers.ModelSerializer):

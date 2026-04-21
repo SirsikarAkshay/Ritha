@@ -90,8 +90,10 @@ def get_weather(lat: float, lon: float, date: Optional[datetime.date] = None) ->
     hourly_hum = data.get('hourly', {}).get('relativehumidity_2m', [])
     humidity   = int(sum(hourly_hum) / len(hourly_hum)) if hourly_hum else 60
 
+    feels_like = _feels_like(temp_now, wind, humidity)
     return {
         'temp_c':                   round(temp_now, 1),
+        'feels_like_c':             round(feels_like, 1),
         'temp_min_c':               round(temp_min or temp_now, 1),
         'temp_max_c':               round(temp_max or temp_now, 1),
         'condition':                WMO_CODES.get(int(wmo), 'Unknown'),
@@ -101,8 +103,8 @@ def get_weather(lat: float, lon: float, date: Optional[datetime.date] = None) ->
         'wind_kmh':                 round(float(wind), 1),
         'humidity':                 humidity,
         'is_raining':               int(wmo) in {51,53,55,61,63,65,80,81,82,95,96,99},
-        'is_cold':                  temp_now < 10,
-        'is_hot':                   temp_now > 28,
+        'is_cold':                  feels_like < 10,
+        'is_hot':                   feels_like > 28,
         'date':                     date.isoformat(),
         'source':                   'open-meteo',
     }
@@ -187,6 +189,7 @@ def get_weather_forecast(location_str: str, start_date: datetime.date, end_date:
             'precipitation_sum', 'precipitation_probability_max',
             'weathercode', 'windspeed_10m_max',
         ],
+        'hourly': ['relativehumidity_2m'],
         'timezone': 'auto',
         'start_date': start_date.isoformat(),
         'end_date': end_date.isoformat(),
@@ -202,6 +205,16 @@ def get_weather_forecast(location_str: str, start_date: datetime.date, end_date:
     dates = daily.get('time', [])
     if not dates:
         return get_climatology_forecast(lat, lon, start_date, end_date, loc_name)
+
+    # Extract per-day average humidity from hourly data (24 values per day)
+    hourly_hum = data.get('hourly', {}).get('relativehumidity_2m', [])
+    day_humidities = []
+    for d in range(len(dates)):
+        h_start = d * 24
+        h_end = h_start + 24
+        day_h = [v for v in hourly_hum[h_start:h_end] if v is not None]
+        day_humidities.append(int(sum(day_h) / len(day_h)) if day_h else 60)
+
     forecasts = []
     for i, date_str in enumerate(dates):
         temp_max = (daily.get('temperature_2m_max') or [])[i] if i < len(daily.get('temperature_2m_max', [])) else None
@@ -211,9 +224,12 @@ def get_weather_forecast(location_str: str, start_date: datetime.date, end_date:
         precip = (daily.get('precipitation_sum') or [])[i] if i < len(daily.get('precipitation_sum', [])) else 0
         precip_p = (daily.get('precipitation_probability_max') or [])[i] if i < len(daily.get('precipitation_probability_max', [])) else 0
         wind = (daily.get('windspeed_10m_max') or [])[i] if i < len(daily.get('windspeed_10m_max', [])) else 0
+        humidity = day_humidities[i] if i < len(day_humidities) else 60
 
+        feels = _feels_like(temp_avg, float(wind or 0), humidity)
         forecasts.append({
             'temp_c': temp_avg,
+            'feels_like_c': round(feels, 1),
             'temp_min_c': round(temp_min or temp_avg, 1),
             'temp_max_c': round(temp_max or temp_avg, 1),
             'condition': WMO_CODES.get(int(wmo), 'Unknown'),
@@ -221,10 +237,10 @@ def get_weather_forecast(location_str: str, start_date: datetime.date, end_date:
             'precipitation_mm': round(float(precip), 1),
             'precipitation_probability': int(precip_p or 0),
             'wind_kmh': round(float(wind or 0), 1),
-            'humidity': 60,
+            'humidity': humidity,
             'is_raining': int(wmo) in {51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99},
-            'is_cold': temp_avg < 10,
-            'is_hot': temp_avg > 28,
+            'is_cold': feels < 10,
+            'is_hot': feels > 28,
             'date': date_str,
             'source': 'open-meteo',
             'location_name': loc_name,
@@ -353,6 +369,16 @@ def get_climatology_forecast(lat: float, lon: float, start_date: datetime.date,
             'location_name': loc_name,
         })
     return forecasts
+
+
+def _feels_like(temp: float, wind_kmh: float, humidity: int) -> float:
+    """Approximate feels-like temperature considering wind chill and heat index."""
+    if temp <= 10 and wind_kmh > 5:
+        return 13.12 + 0.6215 * temp - 11.37 * (wind_kmh ** 0.16) + 0.3965 * temp * (wind_kmh ** 0.16)
+    if temp > 26 and humidity > 40:
+        e = 6.105 * 2.7183 ** (17.27 * temp / (237.7 + temp))
+        return temp + 0.33 * (humidity / 100 * e) - 4.0
+    return temp
 
 
 def _first(lst):

@@ -208,6 +208,21 @@ CELERY_TASK_SERIALIZER       = 'json'
 CELERY_RESULT_SERIALIZER     = 'json'
 CELERY_TIMEZONE              = TIME_ZONE
 CELERY_BEAT_SCHEDULER        = 'django_celery_beat.schedulers:DatabaseScheduler'
+from celery.schedules import crontab
+CELERY_BEAT_SCHEDULE         = {
+    'sync-all-calendars': {
+        'task': 'calendar.sync_all_calendars',
+        'schedule': 60 * 30,
+    },
+    'deduplicate-events': {
+        'task': 'calendar.deduplicate_events',
+        'schedule': 60 * 60,
+    },
+    'batch-daily-looks': {
+        'task': 'agents.batch_daily_looks',
+        'schedule': crontab(hour=6, minute=0),
+    },
+}
 
 # ── Sentry (error monitoring) ─────────────────────────────────────────────────
 SENTRY_DSN = os.getenv('SENTRY_DSN', '')

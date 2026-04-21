@@ -44,6 +44,7 @@ class OutfitItem(models.Model):
     outfit       = models.ForeignKey(OutfitRecommendation, on_delete=models.CASCADE)
     clothing_item = models.ForeignKey('wardrobe.ClothingItem', on_delete=models.CASCADE)
     role         = models.CharField(max_length=10, choices=ROLE_CHOICES, default='main')
+    liked        = models.BooleanField(null=True)
 
     class Meta:
         unique_together = ('outfit', 'clothing_item')

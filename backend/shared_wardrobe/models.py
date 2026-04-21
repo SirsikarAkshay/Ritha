@@ -109,3 +109,31 @@ class SharedWardrobeItem(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.wardrobe_id})'
+
+
+class InvitationStatus(models.TextChoices):
+    PENDING  = 'pending',  'Pending'
+    ACCEPTED = 'accepted', 'Accepted'
+    DECLINED = 'declined', 'Declined'
+
+
+class SharedWardrobeInvitation(models.Model):
+    wardrobe   = models.ForeignKey(SharedWardrobe, on_delete=models.CASCADE, related_name='invitations')
+    invited_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_wardrobe_invitations')
+    invitee    = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_wardrobe_invitations')
+    status     = models.CharField(max_length=10, choices=InvitationStatus.choices, default=InvitationStatus.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['wardrobe', 'invitee'],
+                condition=models.Q(status='pending'),
+                name='unique_pending_invitation',
+            ),
+        ]
+
+    def __str__(self):
+        return f'Invite {self.invitee_id} → {self.wardrobe_id} ({self.status})'

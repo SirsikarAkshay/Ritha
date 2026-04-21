@@ -28,11 +28,12 @@ export const wardrobe = {
   luggageWeight: (item_ids, airline = 'default') =>
     api.post('/wardrobe/luggage-weight/', { item_ids, airline }),
   analyzeImage: (file) => {
-    // NB: do not set Content-Type manually — the browser fills in the multipart boundary.
     const fd = new FormData()
     fd.append('image', file)
     return api.post('/wardrobe/analyze-image/', fd)
   },
+  receiptImport: (emailBody, autoSave = false) =>
+    api.post('/wardrobe/receipt-import/', { email_body: emailBody, auto_save: autoSave }),
 }
 
 // ── Itinerary ─────────────────────────────────────────────────────────────
@@ -63,17 +64,27 @@ export const itinerary = {
 // ── Outfits ───────────────────────────────────────────────────────────────
 export const outfits = {
   daily:    (date) => api.get(`/outfits/recommendations/daily/${date ? '?date=' + date : ''}`),
+  weekly:   ()     => api.get('/outfits/recommendations/weekly/'),
   list:     (params = {}) => {
     const q = new URLSearchParams(params).toString()
     return api.get(`/outfits/recommendations/${q ? '?' + q : ''}`)
   },
-  feedback: (id, accepted) =>
-    api.patch(`/outfits/recommendations/${id}/feedback/`, { accepted }),
+  feedback: (id, accepted, itemFeedback = null) =>
+    api.patch(`/outfits/recommendations/${id}/feedback/`, {
+      accepted,
+      ...(itemFeedback ? { item_feedback: itemFeedback } : {}),
+    }),
+  history: (params = {}) => {
+    const q = new URLSearchParams(params).toString()
+    return api.get(`/outfits/history/${q ? '?' + q : ''}`)
+  },
+  preferences: () => api.get('/outfits/preferences/'),
 }
 
 // ── Agents ────────────────────────────────────────────────────────────────
 export const agents = {
   dailyLook:        (data) => api.post('/agents/daily-look/', data),
+  weeklyLooks:      (data) => api.post('/agents/weekly-looks/', data),
   packingList:      (data) => api.post('/agents/packing-list/', data),
   outfitPlanner:    (data) => api.post('/agents/outfit-planner/', data),
   conflictDetector: (data) => api.post('/agents/conflict-detector/', data),
@@ -173,6 +184,10 @@ export const sharedWardrobes = {
   members: {
     add:    (id, user_id)        => api.post(`/shared-wardrobes/${id}/members/`, { user_id }),
     remove: (id, user_id)        => api.delete(`/shared-wardrobes/${id}/members/${user_id}/`),
+  },
+  invitations: {
+    list:    ()                  => api.get('/shared-wardrobes/invitations/'),
+    respond: (id, action)       => api.post(`/shared-wardrobes/invitations/${id}/respond/`, { action }),
   },
   items: {
     list:   (id)                 => api.get(`/shared-wardrobes/${id}/items/`),

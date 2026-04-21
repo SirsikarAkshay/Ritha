@@ -7,23 +7,40 @@ import { sharedWardrobes as api } from '../api/index.js'
 export default function SharedWardrobesPage() {
   const navigate = useNavigate()
   const [wardrobes, setWardrobes] = useState([])
+  const [invitations, setInvitations] = useState([])
   const [loading, setLoading]     = useState(true)
   const [creating, setCreating]   = useState(false)
   const [showForm, setShowForm]   = useState(false)
   const [name, setName]           = useState('')
   const [description, setDescription] = useState('')
+  const [responding, setResponding] = useState(null)
 
   const load = async () => {
     setLoading(true)
     try {
-      const list = await api.list()
+      const [list, invs] = await Promise.all([api.list(), api.invitations.list()])
       setWardrobes(Array.isArray(list) ? list : (list.results || []))
+      setInvitations(Array.isArray(invs) ? invs : [])
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => { load() }, [])
+
+  const respondToInvitation = async (id, action) => {
+    setResponding(id)
+    try {
+      await api.invitations.respond(id, action)
+      setInvitations(prev => prev.filter(inv => inv.id !== id))
+      if (action === 'accept') load()
+      window.__toast?.(action === 'accept' ? 'Joined the wardrobe.' : 'Invitation declined.', 'success')
+    } catch (err) {
+      window.__toast?.(err.response?.data?.error?.message || 'Could not respond.', 'error')
+    } finally {
+      setResponding(null)
+    }
+  }
 
   const create = async (e) => {
     e?.preventDefault()
@@ -89,6 +106,41 @@ export default function SharedWardrobesPage() {
           </form>
         )}
       </div>
+
+      {invitations.length > 0 && (
+        <div className="fade-up fade-up-delay-1" style={{ marginBottom: 20 }}>
+          <h2 style={{ fontSize: '1rem', color: 'var(--cream)', marginBottom: 12 }}>Pending Invitations</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {invitations.map(inv => (
+              <div key={inv.id} className="card" style={{
+                padding: 16, display: 'flex', alignItems: 'center', gap: 14,
+                border: '1px solid var(--terra-dim)', background: 'var(--surface-1)',
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: 'var(--cream)', fontWeight: 500 }}>{inv.wardrobe_name}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--cream-dim)', marginTop: 2 }}>
+                    Invited by {inv.invited_by?.display_name || '@' + inv.invited_by?.handle}
+                  </div>
+                </div>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => respondToInvitation(inv.id, 'decline')}
+                  disabled={responding === inv.id}
+                >
+                  Decline
+                </button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => respondToInvitation(inv.id, 'accept')}
+                  disabled={responding === inv.id}
+                >
+                  {responding === inv.id ? '…' : 'Accept'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="fade-up fade-up-delay-2">
         {loading ? (

@@ -6,7 +6,8 @@ from drf_spectacular.utils import extend_schema, inline_serializer
 from .models import AgentJob
 from .throttles import AIAgentThrottle
 from .input_serializers import (
-    DailyLookInputSerializer, PackingListInputSerializer,
+    DailyLookInputSerializer, WeeklyLooksInputSerializer,
+    PackingListInputSerializer,
     OutfitPlannerInputSerializer, ConflictDetectorInputSerializer,
     CulturalAdvisorInputSerializer, SmartRecommendInputSerializer,
 )
@@ -80,6 +81,26 @@ class DailyLookView(BaseAgentView):
 
     def run(self, user, data):
         return services.run_daily_look(user, data)
+
+
+class WeeklyLooksView(BaseAgentView):
+    agent_type             = 'weekly_looks'
+    input_serializer_class = WeeklyLooksInputSerializer
+
+    @extend_schema(
+        summary="Generate a full week of daily outfits",
+        request=WeeklyLooksInputSerializer,
+        responses={200: _agent_schema('WeeklyLooksResponse')},
+        description=(
+            "Generates 7 days of unique outfits based on weather forecasts and "
+            "calendar events. Tracks used items across days to maximize variety."
+        ),
+    )
+    def post(self, request):
+        return self._run(request)
+
+    def run(self, user, data):
+        return services.run_weekly_looks(user, data)
 
 
 class PackingListView(BaseAgentView):

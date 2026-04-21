@@ -17,8 +17,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from social.models import Connection
-from .models import MemberRole, SharedWardrobe, SharedWardrobeItem, SharedWardrobeMember
+from django.utils import timezone
+from .models import (
+    InvitationStatus, MemberRole, SharedWardrobe, SharedWardrobeInvitation,
+    SharedWardrobeItem, SharedWardrobeMember,
+)
 from .serializers import (
+    SharedWardrobeInvitationSerializer,
     SharedWardrobeItemSerializer,
     SharedWardrobeMemberSerializer,
     SharedWardrobeSerializer,
@@ -128,9 +133,10 @@ class WardrobeDetailView(APIView):
         return Response({'status': 'deleted'})
 
 
-# ── Members ───────────────────────────────────────────────────────────────────
+# ── Members / Invitations ─────────────────────────────────────────────────────
 class MemberAddView(APIView):
-    """POST /api/shared-wardrobes/<pk>/members/  body: { user_id }"""
+    """POST /api/shared-wardrobes/<pk>/members/  body: { user_id }
+    Sends an invitation instead of directly adding. The invitee must accept."""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
@@ -155,7 +161,6 @@ class MemberAddView(APIView):
             return Response({'error': {'code': 'not_found', 'message': 'User not found.'}},
                             status=status.HTTP_404_NOT_FOUND)
 
-        # Owner must be connected with the user they're inviting
         if not Connection.are_connected(request.user, target):
             return Response(
                 {'error': {'code': 'not_connected',
@@ -163,18 +168,79 @@ class MemberAddView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        member, created = SharedWardrobeMember.objects.get_or_create(
-            wardrobe=wardrobe, user=target, defaults={'role': MemberRole.EDITOR},
-        )
-        if not created:
+        if wardrobe.is_member(target):
             return Response(
                 {'error': {'code': 'already_member', 'message': 'User is already a member.'}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        payload = SharedWardrobeMemberSerializer(member, context={'request': request}).data
-        _broadcast(wardrobe.id, 'member_added', payload)
+        existing = SharedWardrobeInvitation.objects.filter(
+            wardrobe=wardrobe, invitee=target, status=InvitationStatus.PENDING,
+        ).first()
+        if existing:
+            return Response(
+                {'error': {'code': 'already_invited', 'message': 'Invitation already pending.'}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        invitation = SharedWardrobeInvitation.objects.create(
+            wardrobe=wardrobe, invited_by=request.user, invitee=target,
+        )
+        payload = SharedWardrobeInvitationSerializer(invitation, context={'request': request}).data
         return Response(payload, status=status.HTTP_201_CREATED)
+
+
+class InvitationListView(APIView):
+    """GET /api/shared-wardrobes/invitations/ — pending invitations for the current user."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        invitations = SharedWardrobeInvitation.objects.filter(
+            invitee=request.user, status=InvitationStatus.PENDING,
+        ).select_related('wardrobe', 'invited_by', 'invitee')
+        data = SharedWardrobeInvitationSerializer(invitations, many=True, context={'request': request}).data
+        return Response(data)
+
+
+class InvitationRespondView(APIView):
+    """POST /api/shared-wardrobes/invitations/<pk>/respond/  body: { action: "accept"|"decline" }"""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            invitation = SharedWardrobeInvitation.objects.select_related('wardrobe').get(
+                pk=pk, invitee=request.user, status=InvitationStatus.PENDING,
+            )
+        except SharedWardrobeInvitation.DoesNotExist:
+            return Response({'error': {'code': 'not_found', 'message': 'Invitation not found.'}},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        action = (request.data.get('action') or '').lower()
+        if action not in ('accept', 'decline'):
+            return Response(
+                {'error': {'code': 'invalid_action', 'message': 'action must be "accept" or "decline".'}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        now = timezone.now()
+        if action == 'decline':
+            invitation.status = InvitationStatus.DECLINED
+            invitation.resolved_at = now
+            invitation.save(update_fields=['status', 'resolved_at'])
+            return Response({'status': 'declined'})
+
+        with transaction.atomic():
+            invitation.status = InvitationStatus.ACCEPTED
+            invitation.resolved_at = now
+            invitation.save(update_fields=['status', 'resolved_at'])
+            member, _ = SharedWardrobeMember.objects.get_or_create(
+                wardrobe=invitation.wardrobe, user=request.user,
+                defaults={'role': MemberRole.EDITOR},
+            )
+
+        payload = SharedWardrobeMemberSerializer(member, context={'request': request}).data
+        _broadcast(invitation.wardrobe_id, 'member_added', payload)
+        return Response({'status': 'accepted', 'member': payload})
 
 
 class MemberRemoveView(APIView):

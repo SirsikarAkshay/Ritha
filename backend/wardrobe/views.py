@@ -173,43 +173,83 @@ class ReceiptImportView(drf_views.APIView):
     )
     def post(self, request):
         email_body = request.data.get('email_body', '')
+        auto_save = request.data.get('auto_save', False)
         if not email_body:
             return Response({'detail': 'email_body is required.'}, status=400)
 
-        from django.conf import settings
         from arokah.services.mistral_client import _has_mistral
         if not _has_mistral():
             return Response({
-                'status':  'stub',
-                'message': 'Receipt parsing requires OpenAI. Add your API key to .env to activate.',
-                'items_created': 0,
+                'error': {
+                    'code': 'not_configured',
+                    'message': 'Receipt parsing requires MISTRAL_API_KEY in .env.',
+                },
+                'items': [],
+            }, status=503)
+
+        from arokah.services.mistral_client import chat_json
+        prompt = (
+            "Extract every clothing or fashion item from this shopping receipt / order confirmation email.\n"
+            "For each item return a JSON object with these keys:\n"
+            f'  - "name":      short descriptive name (e.g. "Navy cotton t-shirt")\n'
+            f'  - "category":  one of {VALID_CATEGORIES}\n'
+            f'  - "formality": one of {VALID_FORMALITIES}\n'
+            f'  - "season":    one of {VALID_SEASONS} (use "all" if unsure)\n'
+            '  - "colors":    list of 1-3 color names (lowercase)\n'
+            '  - "material":  primary fabric if mentioned (e.g. "cotton", "denim"); empty string if unclear\n'
+            '  - "brand":     brand name if mentioned; empty string otherwise\n'
+            '  - "weight_grams": estimated weight in grams (integer); null if unknown\n'
+            '\nIgnore non-clothing items (gift cards, shipping, tax, etc.).\n'
+            f'\nReceipt text:\n{email_body[:4000]}\n'
+            '\nReturn JSON: {"items": [...]}'
+        )
+        try:
+            parsed = chat_json(prompt)
+        except Exception as exc:
+            logger.warning('Receipt parsing failed: %s', exc)
+            return Response({
+                'error': {
+                    'code': 'parse_failed',
+                    'message': 'Could not parse the receipt. Try a cleaner email body.',
+                },
+                'items': [],
+            }, status=500)
+
+        raw_items = parsed.get('items') or []
+        cleaned = []
+        for d in raw_items:
+            cat = d.get('category')
+            form = d.get('formality')
+            seas = d.get('season')
+            cols = d.get('colors')
+            cleaned.append({
+                'name':      str(d.get('name') or 'Unnamed item')[:200],
+                'category':  cat if cat in VALID_CATEGORIES else 'other',
+                'formality': form if form in VALID_FORMALITIES else 'casual',
+                'season':    seas if seas in VALID_SEASONS else 'all',
+                'colors':    [str(c)[:40] for c in cols][:5] if isinstance(cols, list) else [],
+                'material':  str(d.get('material') or '')[:100],
+                'brand':     str(d.get('brand') or '')[:100],
+                'weight_grams': d.get('weight_grams') if isinstance(d.get('weight_grams'), int) else None,
             })
 
-        # Live path: call Mistral to extract item names/categories from receipt text
-        from arokah.services.mistral_client import chat_json
-        prompt = f"""Extract clothing items from this shopping receipt email.
-For each item return: name, category (top/bottom/outerwear/footwear/accessory/activewear/other),
-colors (list), brand (if mentioned), material (if mentioned).
+        if not auto_save:
+            return Response({'status': 'parsed', 'items': cleaned})
 
-Receipt:
-{email_body[:3000]}
-
-Return JSON: {{"items": [{{"name":"...","category":"...","colors":[],"brand":"","material":""}}]}}"""
-        parsed = chat_json(prompt)
-        created = []
         from .models import ClothingItem
-        for item_data in parsed.get('items', []):
-            item = ClothingItem.objects.create(
-                user=request.user,
-                name=item_data.get('name', 'Unnamed item'),
-                category=item_data.get('category', 'other'),
-                colors=item_data.get('colors', []),
-                brand=item_data.get('brand', ''),
-                material=item_data.get('material', ''),
-            )
-            created.append({'id': item.id, 'name': item.name})
+        created = []
+        for item_data in cleaned:
+            wg = item_data.pop('weight_grams', None)
+            item = ClothingItem.objects.create(user=request.user, **item_data)
+            if wg is not None:
+                item.weight_grams = wg
+                item.save(update_fields=['weight_grams'])
+            created.append({
+                'id': item.id, 'name': item.name, 'category': item.category,
+                'brand': item.brand, 'colors': item.colors,
+            })
 
-        return Response({'status': 'success', 'items_created': len(created), 'items': created})
+        return Response({'status': 'created', 'items_created': len(created), 'items': created})
 
 
 class LuggageWeightView(drf_views.APIView):

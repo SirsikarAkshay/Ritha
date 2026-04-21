@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from social.serializers import PublicUserSerializer
-from .models import SharedWardrobe, SharedWardrobeItem, SharedWardrobeMember
+from .models import SharedWardrobe, SharedWardrobeInvitation, SharedWardrobeItem, SharedWardrobeMember
 
 
 class SharedWardrobeItemSerializer(serializers.ModelSerializer):
@@ -27,11 +27,13 @@ class SharedWardrobeSerializer(serializers.ModelSerializer):
     members   = SharedWardrobeMemberSerializer(many=True, read_only=True)
     item_count = serializers.SerializerMethodField()
     my_role   = serializers.SerializerMethodField()
+    pending_invitee_ids = serializers.SerializerMethodField()
 
     class Meta:
         model  = SharedWardrobe
         fields = ['id', 'name', 'description', 'created_by', 'created_at',
-                  'updated_at', 'members', 'item_count', 'my_role']
+                  'updated_at', 'members', 'item_count', 'my_role',
+                  'pending_invitee_ids']
         read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
 
     def get_item_count(self, obj):
@@ -40,3 +42,21 @@ class SharedWardrobeSerializer(serializers.ModelSerializer):
     def get_my_role(self, obj):
         me = self.context['request'].user
         return obj.member_role(me)
+
+    def get_pending_invitee_ids(self, obj):
+        return list(
+            obj.invitations.filter(status='pending').values_list('invitee_id', flat=True)
+        )
+
+
+class SharedWardrobeInvitationSerializer(serializers.ModelSerializer):
+    invited_by = PublicUserSerializer(read_only=True)
+    invitee    = PublicUserSerializer(read_only=True)
+    wardrobe_name = serializers.CharField(source='wardrobe.name', read_only=True)
+
+    class Meta:
+        model  = SharedWardrobeInvitation
+        fields = ['id', 'wardrobe', 'wardrobe_name', 'invited_by', 'invitee',
+                  'status', 'created_at', 'resolved_at']
+        read_only_fields = ['id', 'wardrobe', 'invited_by', 'invitee',
+                            'status', 'created_at', 'resolved_at']

@@ -5,10 +5,12 @@ from .views import (
     GoogleConnectView, GoogleCallbackView, GoogleSyncView, GoogleDisconnectView,
     AppleConnectView, AppleSyncView, AppleDisconnectView,
     OutlookConnectView, OutlookCallbackView, OutlookSyncView, OutlookDisconnectView,
+    DeviceCalendarSyncView,
 )
 
 urlpatterns = [
     path('status/',                   CalendarStatusView.as_view(),    name='calendar-status'),
+    path('device/sync/',              DeviceCalendarSyncView.as_view(), name='device-calendar-sync'),
     path('google/connect/',           GoogleConnectView.as_view(),     name='google-connect'),
     path('google/callback/',          GoogleCallbackView.as_view(),    name='google-callback'),
     path('google/sync/',              GoogleSyncView.as_view(),        name='google-sync'),

@@ -6,6 +6,7 @@ import Logo from './Logo.jsx'
 
 const NAV = [
   { to: '/',               label: 'Today',    icon: '✦' },
+  { to: '/outfit-history', label: 'History',  icon: '◇' },
   { to: '/wardrobe',       label: 'Wardrobe', icon: '◈' },
   { to: '/itinerary',      label: 'Schedule', icon: '◷' },
   { to: '/trips',          label: 'Trips',    icon: '◎' },

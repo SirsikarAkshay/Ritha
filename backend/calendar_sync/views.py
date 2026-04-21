@@ -530,3 +530,90 @@ class GoogleWebhookView(APIView):
                 logger.warning('Google webhook: unknown channel token %s', channel_token)
 
         return Response(status=200)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DEVICE CALENDAR (native iOS/Android — events pushed from the app)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class DeviceCalendarSyncView(APIView):
+    """
+    POST /api/calendar/device/sync/
+
+    Receives events read from the device's native calendar (EventKit on iOS,
+    CalendarProvider on Android). The mobile app reads events locally and
+    pushes them here — no passwords, no OAuth, just OS-level permission.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = None
+
+    @extend_schema(
+        summary="Sync device calendar events",
+        description="Receives events from the mobile device's native calendar.",
+        request=inline_serializer(name='DeviceSyncRequest', fields={
+            'events': serializers.ListField(child=serializers.DictField()),
+        }),
+        responses={200: _sync_schema('DeviceSyncResponse')},
+    )
+    def post(self, request):
+        from itinerary.models import CalendarEvent
+        from arokah.services.event_classifier import classify_event
+
+        events = request.data.get('events', [])
+        if not isinstance(events, list):
+            return Response({'error': 'events must be a list'}, status=400)
+
+        created = 0
+        updated = 0
+        errors = []
+
+        for ev in events:
+            try:
+                ext_id = ev.get('external_id', '')
+                title = ev.get('title', '(No title)')
+                description = ev.get('description', '')
+                location = ev.get('location', '')
+                start_time = ev.get('start_time')
+                end_time = ev.get('end_time')
+                all_day = ev.get('all_day', False)
+                calendar_name = ev.get('calendar_name', '')
+
+                if not start_time or not end_time:
+                    errors.append(f'Missing start/end for: {title}')
+                    continue
+
+                classification = classify_event(title, description)
+
+                obj, was_created = CalendarEvent.objects.update_or_create(
+                    user=request.user,
+                    external_id=ext_id,
+                    source='device',
+                    defaults={
+                        'title': title[:500],
+                        'description': description,
+                        'location': location[:500],
+                        'start_time': start_time,
+                        'end_time': end_time,
+                        'all_day': all_day,
+                        'event_type': classification.get('event_type', 'other'),
+                        'formality': classification.get('formality', ''),
+                        'raw_data': {
+                            'calendar_name': calendar_name,
+                            'device_sync': True,
+                        },
+                    },
+                )
+                if was_created:
+                    created += 1
+                else:
+                    updated += 1
+
+            except Exception as exc:
+                errors.append(f'{ev.get("title", "?")}: {exc}')
+
+        return Response({
+            'created': created,
+            'updated': updated,
+            'total': created + updated,
+            'errors': errors,
+        })

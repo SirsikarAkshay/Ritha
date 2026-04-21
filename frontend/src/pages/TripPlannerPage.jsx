@@ -1,6 +1,6 @@
 // src/pages/TripPlannerPage.jsx
 import { useState, useEffect } from 'react'
-import { itinerary as itineraryApi, agents } from '../api/index.js'
+import { itinerary as itineraryApi, agents, sharedWardrobes as swApi } from '../api/index.js'
 import PlaceAutocomplete from '../components/PlaceAutocomplete.jsx'
 
 export default function TripPlannerPage() {
@@ -14,19 +14,25 @@ export default function TripPlannerPage() {
   const [error,    setError]    = useState('')
   const [confirmDelete, setConfirmDelete] = useState(null) // trip id pending delete
   const [deleting, setDeleting] = useState(false)
+  const [sharedWardrobes, setSharedWardrobes] = useState([])
 
   const [form, setForm] = useState({
     name: '', country: '', countryCode: '', cities: [], start_date: '', end_date: '', activities: '',
+    shared_wardrobe: '',
   })
   const [editForm, setEditForm] = useState({
     name: '', country: '', countryCode: '', cities: [], start_date: '', end_date: '', activities: '',
+    shared_wardrobe: '',
   })
 
   useEffect(() => {
-    itineraryApi.trips.list()
-      .then(d => setTrips(d?.results || []))
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    Promise.all([
+      itineraryApi.trips.list(),
+      swApi.list(),
+    ]).then(([d, sw]) => {
+      setTrips(d?.results || [])
+      setSharedWardrobes(Array.isArray(sw) ? sw : (sw.results || []))
+    }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   const deriveDestination = (country, cities) => {
@@ -42,7 +48,7 @@ export default function TripPlannerPage() {
       return
     }
     try {
-      const trip = await itineraryApi.trips.create({
+      const payload = {
         name: form.name,
         destination: deriveDestination(form.country, form.cities),
         country: form.country,
@@ -50,9 +56,11 @@ export default function TripPlannerPage() {
         start_date: form.start_date,
         end_date: form.end_date,
         notes: form.activities,
-      })
+      }
+      if (form.shared_wardrobe) payload.shared_wardrobe = Number(form.shared_wardrobe)
+      const trip = await itineraryApi.trips.create(payload)
       setTrips(prev => [trip, ...prev])
-      setForm({ name: '', country: '', countryCode: '', cities: [], start_date: '', end_date: '', activities: '' })
+      setForm({ name: '', country: '', countryCode: '', cities: [], start_date: '', end_date: '', activities: '', shared_wardrobe: '' })
       setShowNew(false)
     } catch (err) {
       setError(err.message)
@@ -69,6 +77,7 @@ export default function TripPlannerPage() {
       start_date: trip.start_date,
       end_date: trip.end_date,
       activities: trip.notes || '',
+      shared_wardrobe: trip.shared_wardrobe || '',
     })
   }
 
@@ -79,7 +88,7 @@ export default function TripPlannerPage() {
       return
     }
     try {
-      const updated = await itineraryApi.trips.update(editing, {
+      const editPayload = {
         name: editForm.name,
         destination: deriveDestination(editForm.country, editForm.cities),
         country: editForm.country,
@@ -87,7 +96,9 @@ export default function TripPlannerPage() {
         start_date: editForm.start_date,
         end_date: editForm.end_date,
         notes: editForm.activities,
-      })
+        shared_wardrobe: editForm.shared_wardrobe ? Number(editForm.shared_wardrobe) : null,
+      }
+      const updated = await itineraryApi.trips.update(editing, editPayload)
       setTrips(prev => prev.map(t => t.id === editing ? { ...t, ...updated } : t))
       setEditing(null)
     } catch (err) {
@@ -183,7 +194,7 @@ export default function TripPlannerPage() {
       <div className="page-header fade-up">
         <div className="date-line">Trip Planner</div>
         <h1>Your Travels</h1>
-        <p>Plan outfits for every day of your trip.</p>
+        <p>Plan outfits for every day of your trip. Link a shared wardrobe to plan together.</p>
       </div>
 
       {error && <div className="alert alert-error fade-up" style={{ marginBottom: '20px' }}>⚠ {error}</div>}
@@ -235,6 +246,17 @@ export default function TripPlannerPage() {
               <label className="input-label">Return *</label>
               <input className="input" type="date" required value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
             </div>
+            {sharedWardrobes.length > 0 && (
+              <div className="input-group" style={{ gridColumn: 'span 2' }}>
+                <label className="input-label">Shared wardrobe <span style={{ color: 'var(--cream-dim)', fontWeight: 400 }}>(optional — plan together)</span></label>
+                <select className="input" value={form.shared_wardrobe} onChange={e => setForm(f => ({ ...f, shared_wardrobe: e.target.value }))}>
+                  <option value="">None — personal trip</option>
+                  {sharedWardrobes.map(sw => (
+                    <option key={sw.id} value={sw.id}>{sw.name} ({sw.members?.length || 0} members)</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="input-group" style={{ gridColumn: 'span 2' }}>
               <label className="input-label">Activities <span style={{ color: 'var(--cream-dim)', fontWeight: 400 }}>(optional)</span></label>
               <input className="input" placeholder="e.g. hiking, beach, business meetings" value={form.activities} onChange={e => setForm(f => ({ ...f, activities: e.target.value }))} />
@@ -307,6 +329,17 @@ export default function TripPlannerPage() {
                         <label className="input-label">Return *</label>
                         <input className="input" type="date" required value={editForm.end_date} onChange={e => setEditForm(f => ({ ...f, end_date: e.target.value }))} />
                       </div>
+                      {sharedWardrobes.length > 0 && (
+                        <div className="input-group" style={{ gridColumn: 'span 2' }}>
+                          <label className="input-label">Shared wardrobe <span style={{ color: 'var(--cream-dim)', fontWeight: 400 }}>(optional)</span></label>
+                          <select className="input" value={editForm.shared_wardrobe} onChange={e => setEditForm(f => ({ ...f, shared_wardrobe: e.target.value }))}>
+                            <option value="">None — personal trip</option>
+                            {sharedWardrobes.map(sw => (
+                              <option key={sw.id} value={sw.id}>{sw.name} ({sw.members?.length || 0} members)</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                       <div className="input-group" style={{ gridColumn: 'span 2' }}>
                         <label className="input-label">Activities <span style={{ color: 'var(--cream-dim)', fontWeight: 400 }}>(optional)</span></label>
                         <input className="input" placeholder="e.g. hiking, beach, business meetings" value={editForm.activities} onChange={e => setEditForm(f => ({ ...f, activities: e.target.value }))} />
@@ -329,6 +362,11 @@ export default function TripPlannerPage() {
                         </span>
                       )}
                       {isPast && <span className="badge" style={{ background: 'var(--surface-3)', color: 'var(--cream-dim)' }}>Past</span>}
+                      {trip.is_collaborative && (
+                        <span className="badge" style={{ background: 'var(--terra-dim)', color: 'var(--terra-light)', fontSize: '0.65rem' }}>
+                          {trip.shared_wardrobe_name || 'Shared'}
+                        </span>
+                      )}
                       {hasSaved && <span className="badge badge-sage" style={{ fontSize: '0.65rem' }}>Saved plan</span>}
                     </div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--cream-dim)' }}>
@@ -496,6 +534,7 @@ function CityMultiSelect({ cities, country, countryCode, disabled, disabledHint,
 function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear, saving }) {
   const isMultiCity = !!output?.multi_city && Array.isArray(output?.cities)
   const [cityIdx, setCityIdx] = useState(0)
+  const [showPacking, setShowPacking] = useState(false)
   const cityOutput = isMultiCity ? (output.cities[cityIdx]?.recommendation || {}) : output
   const [activeTab, setActiveTab] = useState('outfits')
 
@@ -503,6 +542,7 @@ function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear
   const shopping = cityOutput.shopping_suggestions || []
   const days     = cityOutput.days || []
   const highlights = cultural.highlights || []
+  const wardrobeSummary = output.wardrobe_summary || []
 
   // Counts for tab badges
   const outfitCount = days.length || (output.wardrobe_matches?.length || 0)
@@ -526,14 +566,14 @@ function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear
             <button
               key={entry.city + i}
               type="button"
-              onClick={() => setCityIdx(i)}
+              onClick={() => { setCityIdx(i); setShowPacking(false) }}
               className="btn btn-ghost btn-sm"
               style={{
                 border: '1px solid var(--border)',
                 borderRadius: 999,
-                background: cityIdx === i ? 'var(--terra)' : 'transparent',
-                color: cityIdx === i ? 'var(--cream)' : 'var(--cream-dim)',
-                fontWeight: cityIdx === i ? 500 : 400,
+                background: !showPacking && cityIdx === i ? 'var(--terra)' : 'transparent',
+                color: !showPacking && cityIdx === i ? 'var(--cream)' : 'var(--cream-dim)',
+                fontWeight: !showPacking && cityIdx === i ? 500 : 400,
                 fontSize: '0.8rem',
                 padding: '5px 14px',
               }}
@@ -541,6 +581,22 @@ function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear
               📍 {entry.city}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setShowPacking(true)}
+            className="btn btn-ghost btn-sm"
+            style={{
+              border: '1px solid var(--border)',
+              borderRadius: 999,
+              background: showPacking ? 'var(--terra)' : 'transparent',
+              color: showPacking ? 'var(--cream)' : 'var(--cream-dim)',
+              fontWeight: showPacking ? 500 : 400,
+              fontSize: '0.8rem',
+              padding: '5px 14px',
+            }}
+          >
+            🧳 Packing List
+          </button>
         </div>
       )}
 
@@ -567,8 +623,57 @@ function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear
         </div>
       </div>
 
+      {/* ── Packing List view (multi-city) ──────────────────────────── */}
+      {showPacking && isMultiCity && (
+        <div>
+          <p style={{ color: 'var(--cream-dim)', fontSize: '0.8125rem', marginBottom: 16 }}>
+            Pack these items — each works across multiple destinations.
+          </p>
+          {wardrobeSummary.length === 0 && (
+            <p style={{ color: 'var(--cream-dim)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+              No wardrobe items were matched across cities.
+            </p>
+          )}
+          {wardrobeSummary.map((m, i) => {
+            const item = m.item || {}
+            const role = m.role || ''
+            const cities = m.suitable_cities || []
+            return (
+              <div key={item.id || i} className="card" style={{ padding: '12px 14px', marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: '1.25rem' }}>
+                    {{ top: '👕', bottom: '👖', outerwear: '🧥', footwear: '👟', accessory: '👜', dress: '👗' }[role] || '👔'}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: 'var(--cream)', fontSize: '0.8125rem', fontWeight: 600 }}>
+                      {item.name || '—'}
+                    </div>
+                    <div style={{ color: 'var(--cream-dim)', fontSize: '0.7rem' }}>
+                      {item.category || ''} · {role}
+                    </div>
+                  </div>
+                  <span className="badge badge-sage" style={{ fontSize: '0.6rem' }}>owned</span>
+                </div>
+                {cities.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                    {cities.map(c => (
+                      <span key={c} style={{
+                        padding: '2px 8px', borderRadius: 999, fontSize: '0.65rem',
+                        background: 'var(--terra-dim)', color: 'var(--cream)', fontWeight: 500,
+                      }}>
+                        📍 {c}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {/* Overall dress code banner */}
-      {cultural.overall_dress_code && (
+      {!showPacking && cultural.overall_dress_code && (
         <div style={{
           padding: '12px 14px', marginBottom: '16px', borderLeft: '3px solid var(--terra)',
           background: 'var(--surface-2)', borderRadius: 'var(--radius-md)',
@@ -580,7 +685,8 @@ function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear
         </div>
       )}
 
-      {/* Tab bar */}
+      {/* Tab bar + panels (hidden when packing list is active) */}
+      {!showPacking && <>
       <div
         role="tablist"
         style={{
@@ -616,25 +722,22 @@ function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear
         })}
       </div>
 
-      {/* ── Tab: Outfit Plan ──────────────────────────────────────────── */}
       {activeTab === 'outfits' && (
         <OutfitPlanTab days={days} output={cityOutput} />
       )}
 
-      {/* ─�� Tab: Items to Buy ──────��──────────────────────────────────── */}
       {activeTab === 'shopping' && (
         <ShoppingTab shopping={shopping} days={days} />
       )}
 
-      {/* ── Tab: Places to Visit ────────────────────────────────────���─── */}
       {activeTab === 'places' && (
         <PlacesTab highlights={highlights} />
       )}
 
-      {/* ── Tab: Cultural Guide ────���───────────────────────────────────�� */}
       {activeTab === 'culture' && (
         <CultureTab cultural={cultural} />
       )}
+      </>}
     </div>
   )
 }
@@ -674,6 +777,9 @@ function OutfitPlanTab({ days, output }) {
                 <span style={{ fontSize: '1.1rem' }}>{weatherIcon(w)}</span>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--cream-dim)' }}>
                   {w?.temp_c != null ? `${Math.round(w.temp_c)}°C` : '?'} · {w?.condition || ''}
+                  {w?.feels_like_c != null && w?.temp_c != null && Math.abs(w.feels_like_c - w.temp_c) >= 2 && (
+                    <span style={{ color: 'var(--terra-light)', fontStyle: 'italic' }}> (feels {Math.round(w.feels_like_c)}°C)</span>
+                  )}
                   {isEstimated(w) && (
                     <span title="Estimated from historical averages — no live forecast available."
                       style={{ color: 'var(--terra-light)', marginLeft: 2, fontWeight: 500 }}>*</span>
@@ -682,6 +788,16 @@ function OutfitPlanTab({ days, output }) {
                 {w?.precipitation_probability > 30 && (
                   <span className="badge badge-sky" style={{ fontSize: '0.6rem' }}>
                     {w.precipitation_probability}% rain
+                  </span>
+                )}
+                {w?.wind_kmh > 20 && (
+                  <span className="badge badge-sky" style={{ fontSize: '0.6rem' }}>
+                    💨 {Math.round(w.wind_kmh)} km/h
+                  </span>
+                )}
+                {w?.humidity > 75 && (
+                  <span className="badge badge-sky" style={{ fontSize: '0.6rem' }}>
+                    💧 {w.humidity}%
                   </span>
                 )}
               </div>

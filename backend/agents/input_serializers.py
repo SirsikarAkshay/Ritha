@@ -24,6 +24,11 @@ class DailyLookInputSerializer(WeatherInputMixin):
     # No additional required fields — calendar + wardrobe are pulled from DB
 
 
+class WeeklyLooksInputSerializer(WeatherInputMixin):
+    """Input for POST /api/agents/weekly-looks/"""
+    # No additional required fields — generates 7 days from today
+
+
 class PackingListInputSerializer(WeatherInputMixin):
     """Input for POST /api/agents/packing-list/"""
     days       = serializers.IntegerField(
