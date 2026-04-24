@@ -373,7 +373,7 @@ export default function ProfilePage() {
                 )
               } note={calStatus?.outlook?.email || 'Microsoft 365 via OAuth'} />
 
-              <Row label="Push notifications" value="Mobile app only" note="Toggle in the Arokah mobile app under Profile" />
+              <Row label="Push notifications" value="Mobile app only" note="Toggle in the Ritha mobile app under Profile" />
             </div>
           </div>
 
@@ -388,7 +388,7 @@ export default function ProfilePage() {
               style={{ color: '#f87171', borderColor: 'rgba(220,70,60,0.3)' }}
               onClick={() => {
                 if (window.confirm('Are you sure? This will permanently delete your account and all your data.')) {
-                  alert('Account deletion coming soon — please contact support@arokah.com')
+                  alert('Account deletion coming soon — please contact support@ritha.com')
                 }
               }}
             >

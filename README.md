@@ -1,4 +1,4 @@
-# Arokah
+# Ritha
 
 AI-powered wardrobe and travel fashion companion. Recommends outfits based on your calendar, weather, wardrobe, and destination — whether that's the office tomorrow or a multi-city trip next month.
 
@@ -96,12 +96,12 @@ Results are cached per signal (cultural 24h, weather 30min, shopping 6h) and I/O
 ## Project Structure
 
 ```
-arokah/
+ritha/
 ├── backend/
 │   ├── agents/             # AI agent views, services, Celery tasks
 │   │   └── services.py     # daily_look, packing_list, conflict_detector,
 │   │                        # cultural_advisor, outfit_planner, smart_recommend
-│   ├── arokah/             # Django project settings, URLs, WSGI
+│   ├── ritha/             # Django project settings, URLs, WSGI
 │   │   └── services/
 │   │       ├── recommendation_engine.py   # Unified rec engine (ML + weather + cultural)
 │   │       ├── weather.py                 # Open-Meteo forecast + climatology fallback

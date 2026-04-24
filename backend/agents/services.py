@@ -11,7 +11,7 @@ from django.conf import settings
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _has_mistral() -> bool:
-    from arokah.services.mistral_client import _has_mistral as _check
+    from ritha.services.mistral_client import _has_mistral as _check
     return _check()
 
 
@@ -28,7 +28,7 @@ def _get_weather(input_data: dict) -> dict:
       3. location string          → geocode then Open-Meteo
       4. fallback to default snapshot
     """
-    from arokah.services.weather import get_weather, get_weather_for_location, _fallback
+    from ritha.services.weather import get_weather, get_weather_for_location, _fallback
 
     if 'weather' in input_data and isinstance(input_data['weather'], dict):
         snap = input_data['weather']
@@ -65,7 +65,7 @@ def run_daily_look(user, input_data: dict) -> dict:
     """
     from outfits.models import OutfitRecommendation, OutfitItem
     from wardrobe.models import ClothingItem
-    from arokah.services.event_classifier import dominant_formality
+    from ritha.services.event_classifier import dominant_formality
     from itinerary.models import CalendarEvent
 
     # Allow cron jobs to generate looks for a specific date
@@ -167,8 +167,8 @@ def _daily_look_stub(wardrobe, weather, required_formality) -> dict:
 
 
 def _daily_look_mistral(user, wardrobe, events, weather, required_formality) -> dict:
-    from arokah.services.mistral_client import chat_json
-    prompt = f"""You are Arokah, a personal AI stylist. Given the user's wardrobe and today's
+    from ritha.services.mistral_client import chat_json
+    prompt = f"""You are Ritha, a personal AI stylist. Given the user's wardrobe and today's
 calendar + weather, recommend the best outfit.
 
 Date       : {_today_str()}
@@ -200,8 +200,8 @@ def run_weekly_looks(user, input_data: dict) -> dict:
     """
     from outfits.models import OutfitRecommendation, OutfitItem
     from wardrobe.models import ClothingItem
-    from arokah.services.event_classifier import dominant_formality
-    from arokah.services.weather import get_weather_forecast, get_weather_for_location, _fallback
+    from ritha.services.event_classifier import dominant_formality
+    from ritha.services.weather import get_weather_forecast, get_weather_for_location, _fallback
     from itinerary.models import CalendarEvent
 
     today = datetime.date.today()
@@ -218,7 +218,7 @@ def run_weekly_looks(user, input_data: dict) -> dict:
     if location:
         forecasts = get_weather_forecast(location, today, end_date)
     elif 'lat' in input_data and 'lon' in input_data:
-        from arokah.services.weather import get_weather
+        from ritha.services.weather import get_weather
         for i in range(7):
             d = today + datetime.timedelta(days=i)
             forecasts.append(get_weather(input_data['lat'], input_data['lon'], d))
@@ -367,9 +367,9 @@ def _weekly_day_stub(wardrobe, weather, required_formality, used_item_ids, day_i
 
 def _weekly_day_mistral(user, wardrobe, events, weather, required_formality,
                         day_date, used_item_ids, day_idx) -> dict:
-    from arokah.services.mistral_client import chat_json
+    from ritha.services.mistral_client import chat_json
     avoid_str = ', '.join(str(i) for i in used_item_ids) if used_item_ids else 'none'
-    prompt = f"""You are Arokah, a personal AI stylist. Pick the best outfit for ONE day.
+    prompt = f"""You are Ritha, a personal AI stylist. Pick the best outfit for ONE day.
 
 Date       : {day_date.isoformat()} ({day_date.strftime('%A')})
 Weather    : {weather}
@@ -442,8 +442,8 @@ def _packing_list_stub(wardrobe, days, activities) -> dict:
 
 
 def _packing_list_mistral(wardrobe, days, activities) -> dict:
-    from arokah.services.mistral_client import chat_json
-    prompt = f"""You are Arokah, a packing expert. Recommend a minimal capsule wardrobe using
+    from ritha.services.mistral_client import chat_json
+    prompt = f"""You are Ritha, a packing expert. Recommend a minimal capsule wardrobe using
 the 5-4-3-2-1 rule for a {days}-day trip with activities: {activities}.
 
 Wardrobe: {wardrobe}
@@ -524,7 +524,7 @@ def run_conflict_detector(user, input_data: dict) -> dict:
 
 def run_cultural_advisor(user, input_data: dict) -> dict:
     from cultural.models import CulturalRule, LocalEvent
-    from arokah.services.weather import get_weather_for_location
+    from ritha.services.weather import get_weather_for_location
 
     country = input_data.get('country', '')
     city    = input_data.get('city', '')
@@ -682,7 +682,7 @@ def _generate_destination_highlights_ai(country: str, city: str,
     for upcoming events while still protecting the rate limit.
     """
     from django.core.cache import cache
-    from arokah.services.mistral_client import chat_json
+    from ritha.services.mistral_client import chat_json
 
     today = datetime.date.today()
     iso_week = today.strftime('%G-W%V')  # stable cache key that refreshes weekly
@@ -879,7 +879,7 @@ def _match_wardrobe_against_rules(user, country: str, city: str,
     """
     from django.core.cache import cache
     from wardrobe.models import ClothingItem
-    from arokah.services.mistral_client import chat_json
+    from ritha.services.mistral_client import chat_json
 
     wardrobe = list(ClothingItem.objects.filter(user=user, is_active=True).values(
         'id', 'name', 'category', 'formality', 'season', 'colors', 'tags'))
@@ -1089,7 +1089,7 @@ def _generate_cultural_brief_ai(country: str, city: str, month: int,
     the Mistral rate limit across rapid repeat queries.
     """
     from django.core.cache import cache
-    from arokah.services.mistral_client import chat_json
+    from ritha.services.mistral_client import chat_json
 
     # Weather bucket: stable across small fluctuations (±3°C) and flips between
     # cold/mild/hot and dry/wet. This keeps the cache useful without pinning
@@ -1175,7 +1175,7 @@ def run_outfit_planner(user, input_data: dict) -> dict:
     Input: trip_id OR (start_date, end_date, destination, activities)
     """
     import datetime as dt
-    from arokah.services.weather import get_weather_for_location
+    from ritha.services.weather import get_weather_for_location
 
     trip_id = input_data.get('trip_id')
     activities = input_data.get('activities', [])
@@ -1257,9 +1257,9 @@ def run_outfit_planner(user, input_data: dict) -> dict:
 
 def _outfit_planner_mistral(wardrobe, start, end, destination, activities, weather) -> dict:
     import datetime as dt
-    from arokah.services.mistral_client import chat_json
+    from ritha.services.mistral_client import chat_json
     days_count = (end - start).days + 1
-    prompt = f"""You are Arokah, an expert travel stylist. Create a day-by-day outfit plan
+    prompt = f"""You are Ritha, an expert travel stylist. Create a day-by-day outfit plan
 for a {days_count}-day trip to {destination}.
 
 Trip dates  : {start.isoformat()} to {end.isoformat()}
@@ -1337,7 +1337,7 @@ def run_smart_recommend(user, input_data: dict) -> dict:
     If `cities` (list[str]) is provided alongside `country`, runs a per-city
     recommendation in parallel and returns an aggregated multi-city response.
     """
-    from arokah.services.recommendation_engine import recommend
+    from ritha.services.recommendation_engine import recommend
     from concurrent.futures import ThreadPoolExecutor
 
     cities  = [c for c in (input_data.get('cities') or []) if isinstance(c, str) and c.strip()]

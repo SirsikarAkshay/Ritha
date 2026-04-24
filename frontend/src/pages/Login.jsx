@@ -57,7 +57,7 @@ export default function Login() {
         </form>
 
         <p className={styles.switchLink}>
-          New to Arokah? <Link to="/register">Create account</Link>
+          New to Ritha? <Link to="/register">Create account</Link>
         </p>
 
         <p className={styles.switchLink}>

@@ -32,7 +32,7 @@ function Spinner() {
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--midnight)' }}>
       <div style={{ textAlign:'center' }}>
         <div style={{ fontFamily:'var(--font-display)', fontSize:'1.75rem', color:'var(--cream)', letterSpacing:'-0.02em', marginBottom:'20px' }}>
-          Arokah
+          Ritha
         </div>
         <div className="spinner" style={{ margin:'0 auto' }} />
       </div>

@@ -28,7 +28,7 @@ from rest_framework.views import APIView
 
 from . import google_calendar, apple_calendar
 
-logger = logging.getLogger('arokah.calendar.views')
+logger = logging.getLogger('ritha.calendar.views')
 
 
 # ── Shared response schema ─────────────────────────────────────────────────
@@ -85,7 +85,7 @@ class GoogleConnectView(APIView):
         summary="Start Google Calendar OAuth flow",
         description=(
             "Returns a URL the user should open in their browser to grant "
-            "Arokah read-only access to their Google Calendar. "
+            "Ritha read-only access to their Google Calendar. "
             "Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to be set."
         ),
         responses={200: None},
@@ -197,7 +197,7 @@ class GoogleSyncView(APIView):
 
     @extend_schema(
         summary="Sync Google Calendar events",
-        description="Pulls events from the last 7 days and next 60 days into Arokah.",
+        description="Pulls events from the last 7 days and next 60 days into Ritha.",
         responses={200: _sync_schema('GoogleSyncResult')},
     )
     def post(self, request):
@@ -327,7 +327,7 @@ class AppleDisconnectView(APIView):
 
     @extend_schema(
         summary="Disconnect Apple Calendar",
-        description="Removes stored Apple credentials from Arokah.",
+        description="Removes stored Apple credentials from Ritha.",
         responses={200: None},
     )
     def post(self, request):
@@ -557,7 +557,7 @@ class DeviceCalendarSyncView(APIView):
     )
     def post(self, request):
         from itinerary.models import CalendarEvent
-        from arokah.services.event_classifier import classify_event
+        from ritha.services.event_classifier import classify_event
 
         events = request.data.get('events', [])
         if not isinstance(events, list):

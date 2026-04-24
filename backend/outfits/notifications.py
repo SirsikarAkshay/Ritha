@@ -10,7 +10,7 @@ No file paths or API keys needed in code.
 """
 import logging
 
-logger = logging.getLogger('arokah.notifications')
+logger = logging.getLogger('ritha.notifications')
 
 _firebase_app = None
 

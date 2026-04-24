@@ -39,7 +39,7 @@ def _analyze_clothing_image(image_file):
     Returns (ok: bool, payload: dict). On failure, payload contains an `error` dict
     suitable for a DRF Response.
     """
-    from arokah.services.mistral_client import _has_mistral, chat_image_json
+    from ritha.services.mistral_client import _has_mistral, chat_image_json
 
     if not _has_mistral():
         return False, {
@@ -177,7 +177,7 @@ class ReceiptImportView(drf_views.APIView):
         if not email_body:
             return Response({'detail': 'email_body is required.'}, status=400)
 
-        from arokah.services.mistral_client import _has_mistral
+        from ritha.services.mistral_client import _has_mistral
         if not _has_mistral():
             return Response({
                 'error': {
@@ -187,7 +187,7 @@ class ReceiptImportView(drf_views.APIView):
                 'items': [],
             }, status=503)
 
-        from arokah.services.mistral_client import chat_json
+        from ritha.services.mistral_client import chat_json
         prompt = (
             "Extract every clothing or fashion item from this shopping receipt / order confirmation email.\n"
             "For each item return a JSON object with these keys:\n"

@@ -55,7 +55,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-CMD ["daphne", "arokah.asgi:application", \
+CMD ["daphne", "ritha.asgi:application", \
      "-b", "0.0.0.0", \
      "-p", "8000", \
      "--proxy-headers", \

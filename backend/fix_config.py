@@ -36,20 +36,20 @@ class ConfigView(APIView):
         })
 '''
 
-with open('arokah/config_view.py', 'w') as f:
+with open('ritha/config_view.py', 'w') as f:
     f.write(config_view)
-print("✅ Created arokah/config_view.py")
+print("✅ Created ritha/config_view.py")
 
 # ── 2. Wire into urls.py ──────────────────────────────────────────────────
-with open('arokah/urls.py') as f:
+with open('ritha/urls.py') as f:
     urls = f.read()
 
 changed = False
 
-if 'from arokah.config_view import ConfigView' not in urls:
+if 'from ritha.config_view import ConfigView' not in urls:
     urls = urls.replace(
-        'from arokah.health import HealthCheckView',
-        'from arokah.health import HealthCheckView\nfrom arokah.config_view import ConfigView'
+        'from ritha.health import HealthCheckView',
+        'from ritha.health import HealthCheckView\nfrom ritha.config_view import ConfigView'
     )
     changed = True
 
@@ -61,7 +61,7 @@ if "path('api/config'" not in urls:
     changed = True
 
 if changed:
-    with open('arokah/urls.py', 'w') as f:
+    with open('ritha/urls.py', 'w') as f:
         f.write(urls)
     print("✅ Added GET /api/config to urls.py")
 else:
@@ -81,7 +81,7 @@ else:
 # ── 4. Quick live test ────────────────────────────────────────────────────
 try:
     import django
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'arokah.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ritha.settings')
     django.setup()
     from django.test import Client
     import json

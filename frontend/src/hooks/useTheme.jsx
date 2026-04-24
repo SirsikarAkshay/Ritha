@@ -4,7 +4,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
 const ThemeContext = createContext(null)
-const STORAGE_KEY = 'arokah-theme'
+const STORAGE_KEY = 'ritha-theme'
 
 function readInitialTheme() {
   if (typeof window === 'undefined') return 'dark'

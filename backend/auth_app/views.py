@@ -19,7 +19,7 @@ User = get_user_model()
 
 
 # ── Login — clear errors + blocks unverified accounts ─────────────────────
-class ArokahTokenObtainPairSerializer(TokenObtainPairSerializer):
+class RithaTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         # Call parent — raises AuthenticationFailed on bad credentials (HTTP 401)
         try:
@@ -39,7 +39,7 @@ class ArokahTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class LoginView(TokenObtainPairView):
-    serializer_class = ArokahTokenObtainPairSerializer
+    serializer_class = RithaTokenObtainPairSerializer
     throttle_classes = [LoginThrottle]
 
     def post(self, request, *args, **kwargs):

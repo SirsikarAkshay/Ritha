@@ -1,9 +1,9 @@
 """
-Production settings for Arokah.
+Production settings for Ritha.
 Inherits from settings.py and overrides for production deployment.
 
 Usage:
-  DJANGO_SETTINGS_MODULE=arokah.settings_production python manage.py ...
+  DJANGO_SETTINGS_MODULE=ritha.settings_production python manage.py ...
 """
 from .settings import *  # noqa: F401, F403
 import os
@@ -95,7 +95,7 @@ LOGGING = {
             'level':    os.environ.get('DJANGO_LOG_LEVEL', 'ERROR'),
             'propagate': False,
         },
-        'arokah': {
+        'ritha': {
             'handlers': ['console'],
             'level':    'INFO',
             'propagate': False,
@@ -106,5 +106,5 @@ LOGGING = {
 # ── CORS ──────────────────────────────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'https://arokah.com,https://app.arokah.com'
+    'https://ritha.com,https://app.ritha.com'
 ).split(',')

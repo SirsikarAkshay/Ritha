@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Arokah — Development Dependencies
+# Ritha — Development Dependencies
 # For production, see requirements_prod.txt
 # ─────────────────────────────────────────────────────────────────────────────
 

@@ -5,7 +5,7 @@ Uses mocked HTTP responses — no real network calls.
 import pytest
 from unittest.mock import patch, MagicMock
 import datetime
-from arokah.services.weather import get_weather, get_weather_for_location, _fallback
+from ritha.services.weather import get_weather, get_weather_for_location, _fallback
 
 
 MOCK_OPEN_METEO_RESPONSE = {
@@ -33,7 +33,7 @@ MOCK_GEO_RESPONSE = {
 
 
 class TestGetWeather:
-    @patch('arokah.services.weather.requests.get')
+    @patch('ritha.services.weather.requests.get')
     def test_returns_snapshot_dict(self, mock_get):
         mock_resp = MagicMock()
         mock_resp.json.return_value = MOCK_OPEN_METEO_RESPONSE
@@ -49,7 +49,7 @@ class TestGetWeather:
         assert isinstance(result['is_raining'], bool)
         assert isinstance(result['is_cold'], bool)
 
-    @patch('arokah.services.weather.requests.get')
+    @patch('ritha.services.weather.requests.get')
     def test_rainy_condition_detected(self, mock_get):
         rainy = {**MOCK_OPEN_METEO_RESPONSE}
         rainy['daily'] = {**rainy['daily'], 'weathercode': [61],
@@ -65,7 +65,7 @@ class TestGetWeather:
         assert result['is_raining'] is True
         assert result['precipitation_probability'] == 90
 
-    @patch('arokah.services.weather.requests.get')
+    @patch('ritha.services.weather.requests.get')
     def test_cold_flag_set(self, mock_get):
         cold = {**MOCK_OPEN_METEO_RESPONSE}
         cold['current_weather'] = {'temperature': 4.0, 'weathercode': 0}
@@ -77,7 +77,7 @@ class TestGetWeather:
         result = get_weather(47.37, 8.54)
         assert result['is_cold'] is True
 
-    @patch('arokah.services.weather.requests.get')
+    @patch('ritha.services.weather.requests.get')
     def test_fallback_on_network_error(self, mock_get):
         import requests as req_lib
         mock_get.side_effect = req_lib.RequestException('timeout')
@@ -88,7 +88,7 @@ class TestGetWeather:
 
 
 class TestGetWeatherForLocation:
-    @patch('arokah.services.weather.requests.get')
+    @patch('ritha.services.weather.requests.get')
     def test_geocodes_and_fetches(self, mock_get):
         geo_resp  = MagicMock()
         geo_resp.json.return_value = MOCK_GEO_RESPONSE
@@ -104,7 +104,7 @@ class TestGetWeatherForLocation:
         assert result['location_name'] == 'Zurich'
         assert result['source'] == 'open-meteo'
 
-    @patch('arokah.services.weather.requests.get')
+    @patch('ritha.services.weather.requests.get')
     def test_unknown_location_returns_fallback(self, mock_get):
         no_results = MagicMock()
         no_results.json.return_value = {'results': []}

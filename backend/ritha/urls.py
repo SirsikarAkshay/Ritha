@@ -2,9 +2,9 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from arokah.services.views import WeatherView
-from arokah.health import HealthCheckView
-from arokah.config_view import ConfigView
+from ritha.services.views import WeatherView
+from ritha.health import HealthCheckView
+from ritha.config_view import ConfigView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [

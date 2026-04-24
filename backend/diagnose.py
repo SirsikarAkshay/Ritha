@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Arokah diagnostic script.
+Ritha diagnostic script.
 Run this if you're getting 500 errors: python diagnose.py
 """
 import sys, os, subprocess
 
 print("=" * 60)
-print("Arokah Diagnostics")
+print("Ritha Diagnostics")
 print("=" * 60)
 
 errors = []
@@ -69,7 +69,7 @@ else:
 # ── Django setup ─────────────────────────────────────────────────────────
 print("\nChecking Django:")
 try:
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'arokah.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ritha.settings')
     import django
     django.setup()
     print("  ✅ Django configured")

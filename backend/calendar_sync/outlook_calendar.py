@@ -22,7 +22,7 @@ from django.conf import settings
 from django.utils import timezone
 from calendar_sync.token_store import load_outlook_tokens, store_outlook_tokens
 
-logger = logging.getLogger('arokah.calendar.outlook')
+logger = logging.getLogger('ritha.calendar.outlook')
 
 GRAPH_BASE   = 'https://graph.microsoft.com/v1.0'
 AUTHORITY    = 'https://login.microsoftonline.com/common'
@@ -199,7 +199,7 @@ def sync_events(user, days_behind: int = 7, days_ahead: int = 60) -> dict:
 
 def _upsert_event(user, raw: dict, calendar_name: str) -> tuple[int, int]:
     from itinerary.models import CalendarEvent
-    from arokah.services.event_classifier import classify_event
+    from ritha.services.event_classifier import classify_event
 
     event_id  = raw.get('id', '')
     cancelled = raw.get('isCancelled', False)

@@ -385,7 +385,7 @@ function Logo() {
   return (
     <div style={{ textAlign:'center', marginBottom:28 }}>
       <div style={{ fontFamily:'Georgia,serif', fontSize:'1.8rem', color:'#F0EAD9', letterSpacing:'-0.02em' }}>
-        Arokah
+        Ritha
       </div>
       <div style={{ fontSize:'0.65rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#D4724A', marginTop:4 }}>
         AI Style Companion

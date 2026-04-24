@@ -1,5 +1,5 @@
 """
-Mistral AI client for Arokah agents.
+Mistral AI client for Ritha agents.
 
 All AI calls go through this module. Switch models by changing DEFAULT_MODEL
 or pass `model=` explicitly to any function.
@@ -10,7 +10,7 @@ Available models (fastest → most capable):
   mistral-large-latest   — complex multi-step reasoning
 
 Usage:
-    from arokah.services.mistral_client import chat_json, _has_mistral
+    from ritha.services.mistral_client import chat_json, _has_mistral
 
     if _has_mistral():
         result = chat_json("Recommend an outfit. Return JSON: {item_ids: [...]}")
@@ -20,7 +20,7 @@ import logging
 import time
 from django.conf import settings
 
-logger = logging.getLogger('arokah.mistral')
+logger = logging.getLogger('ritha.mistral')
 
 DEFAULT_MODEL = 'mistral-small-latest'
 DEFAULT_VISION_MODEL = 'pixtral-12b-latest'

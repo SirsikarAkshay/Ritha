@@ -106,7 +106,7 @@ class TestRegisterSendsEmail:
     @patch('auth_app.views.send_verification_email', return_value=True)
     def test_register_sends_verification_email(self, mock_send, client):
         r = client.post('/api/auth/register/', {
-            'email': 'new@arokah.com', 'password': 'testpass99',
+            'email': 'new@ritha.com', 'password': 'testpass99',
         }, content_type='application/json')
         assert r.status_code == 201
         assert mock_send.called
@@ -115,20 +115,20 @@ class TestRegisterSendsEmail:
     @patch('auth_app.views.send_verification_email', return_value=True)
     def test_registered_user_not_verified_by_default(self, mock_send, client):
         client.post('/api/auth/register/', {
-            'email': 'unverified@arokah.com', 'password': 'testpass99',
+            'email': 'unverified@ritha.com', 'password': 'testpass99',
         }, content_type='application/json')
-        user = User.objects.get(email='unverified@arokah.com')
+        user = User.objects.get(email='unverified@ritha.com')
         assert user.is_email_verified is False
 
     @patch('auth_app.views.send_verification_email', return_value=False)
     def test_register_handles_email_failure_gracefully(self, mock_send, client):
         r = client.post('/api/auth/register/', {
-            'email': 'fail@arokah.com', 'password': 'testpass99',
+            'email': 'fail@ritha.com', 'password': 'testpass99',
         }, content_type='application/json')
         assert r.status_code == 201
         assert r.json()['verification_sent'] is False
         # Account still created
-        assert User.objects.filter(email='fail@arokah.com').exists()
+        assert User.objects.filter(email='fail@ritha.com').exists()
 
 
 # ── Integration: login blocked until verified ─────────────────────────────
@@ -137,11 +137,11 @@ class TestLoginRequiresVerification:
     @patch('auth_app.views.send_verification_email', return_value=True)
     def test_unverified_user_cannot_login(self, mock_send, client):
         client.post('/api/auth/register/', {
-            'email': 'blocked@arokah.com', 'password': 'testpass99',
+            'email': 'blocked@ritha.com', 'password': 'testpass99',
         }, content_type='application/json')
 
         r = client.post('/api/auth/login/', {
-            'email': 'blocked@arokah.com', 'password': 'testpass99',
+            'email': 'blocked@ritha.com', 'password': 'testpass99',
         }, content_type='application/json')
         assert r.status_code == 403
         assert r.json()['error']['code'] == 'email_not_verified'
@@ -220,7 +220,7 @@ class TestVerifyEmailEndpoint:
 
     def test_unknown_email_returns_404(self, client):
         r = client.post('/api/auth/verify-email/', {
-            'token': 'anytoken', 'email': 'ghost@arokah.com',
+            'token': 'anytoken', 'email': 'ghost@ritha.com',
         }, content_type='application/json')
         assert r.status_code == 404
 
@@ -252,7 +252,7 @@ class TestResendVerificationEndpoint:
     def test_resend_for_unknown_email_is_vague(self, client):
         """Security: should not reveal whether email is registered."""
         r = client.post('/api/auth/resend-verification/', {
-            'email': 'nobody@arokah.com',
+            'email': 'nobody@ritha.com',
         }, content_type='application/json')
         assert r.status_code == 200
         assert 'If that email' in r.json()['message']
@@ -355,14 +355,14 @@ class TestSecurityHardening:
         """The 403 error should include the email so the UI can pre-fill resend."""
         with patch('auth_app.views.send_verification_email', return_value=True):
             client.post('/api/auth/register/', {
-                'email': 'ux@arokah.com', 'password': 'testpass99',
+                'email': 'ux@ritha.com', 'password': 'testpass99',
             }, content_type='application/json')
 
         r = client.post('/api/auth/login/', {
-            'email': 'ux@arokah.com', 'password': 'testpass99',
+            'email': 'ux@ritha.com', 'password': 'testpass99',
         }, content_type='application/json')
         assert r.status_code == 403
-        assert r.json()['error']['email'] == 'ux@arokah.com'
+        assert r.json()['error']['email'] == 'ux@ritha.com'
 
     @patch('auth_app.email.send_mail')
     def test_html_email_contains_verify_link(self, mock_send_mail):

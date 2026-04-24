@@ -258,30 +258,30 @@ class TestModelStringRepresentations:
 
 
 class TestExceptionHandlerAllBranches:
-    """Drive every branch in arokah/exceptions.py."""
+    """Drive every branch in ritha/exceptions.py."""
 
     def test_permission_denied_message(self, client):
         """PermissionDenied returns the right message string."""
-        from arokah.exceptions import _human
+        from ritha.exceptions import _human
         from rest_framework.exceptions import PermissionDenied
         msg = _human(PermissionDenied())
         assert 'permission' in msg.lower()
 
     def test_not_found_message(self, client):
-        from arokah.exceptions import _human
+        from ritha.exceptions import _human
         from rest_framework.exceptions import NotFound
         msg = _human(NotFound())
         assert 'not found' in msg.lower()
 
     def test_throttled_with_wait_message(self, client):
-        from arokah.exceptions import _human
+        from ritha.exceptions import _human
         from rest_framework.exceptions import Throttled
         exc = Throttled(wait=30)
         msg = _human(exc)
         assert '30' in msg
 
     def test_throttled_without_wait_message(self, client):
-        from arokah.exceptions import _human
+        from ritha.exceptions import _human
         from rest_framework.exceptions import Throttled
         exc = Throttled()
         exc.wait = None
@@ -289,7 +289,7 @@ class TestExceptionHandlerAllBranches:
         assert 'too many' in msg.lower()
 
     def test_generic_exception_fallback(self, client):
-        from arokah.exceptions import _human
+        from ritha.exceptions import _human
         from rest_framework.exceptions import APIException
         msg = _human(APIException())
         assert 'error' in msg.lower()
@@ -298,7 +298,7 @@ class TestExceptionHandlerAllBranches:
     def test_django_permission_denied_converted(self, client):
         """Django's PermissionDenied (not DRF's) should also produce an error envelope."""
         from django.core.exceptions import PermissionDenied as DjangoPermDenied
-        from arokah.exceptions import custom_exception_handler
+        from ritha.exceptions import custom_exception_handler
         from unittest.mock import MagicMock
 
         exc = DjangoPermDenied("no access")

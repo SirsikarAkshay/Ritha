@@ -10,21 +10,21 @@ pytestmark = pytest.mark.django_db
 
 class TestExportUserData:
     def test_exports_json(self, tmp_path):
-        user = UserFactory(email='export@arokah.com', first_name='Test')
+        user = UserFactory(email='export@ritha.com', first_name='Test')
         ClothingItemFactory(user=user, name='Blue Jacket')
         output_path = str(tmp_path / 'export.json')
-        call_command('export_user_data', email='export@arokah.com', output=output_path)
+        call_command('export_user_data', email='export@ritha.com', output=output_path)
         with open(output_path) as f:
             data = json.load(f)
-        assert data['user']['email'] == 'export@arokah.com'
+        assert data['user']['email'] == 'export@ritha.com'
         assert data['user']['first_name'] == 'Test'
         assert len(data['wardrobe']) == 1
         assert data['wardrobe'][0]['name'] == 'Blue Jacket'
 
     def test_exports_all_sections(self, tmp_path):
-        user = UserFactory(email='full@arokah.com')
+        user = UserFactory(email='full@ritha.com')
         output_path = str(tmp_path / 'full.json')
-        call_command('export_user_data', email='full@arokah.com', output=output_path)
+        call_command('export_user_data', email='full@ritha.com', output=output_path)
         with open(output_path) as f:
             data = json.load(f)
         for key in ['user', 'wardrobe', 'calendar_events', 'trips',
@@ -34,7 +34,7 @@ class TestExportUserData:
     def test_unknown_email_raises(self):
         from django.core.management.base import CommandError
         with pytest.raises(CommandError):
-            call_command('export_user_data', email='nobody@arokah.com', output='/tmp/x.json')
+            call_command('export_user_data', email='nobody@ritha.com', output='/tmp/x.json')
 
 
 class TestGenerateDailyLooks:
@@ -122,11 +122,11 @@ class TestGenerateDailyLooksDateFlag:
 class TestExportUserDataStdout:
     def test_exports_to_stdout_when_no_output_flag(self):
         """When --output not given, data goes to stdout as JSON."""
-        user = UserFactory(email='stdout@arokah.com')
+        user = UserFactory(email='stdout@ritha.com')
         out = StringIO()
-        call_command('export_user_data', email='stdout@arokah.com', stdout=out)
+        call_command('export_user_data', email='stdout@ritha.com', stdout=out)
         data = json.loads(out.getvalue())
-        assert data['user']['email'] == 'stdout@arokah.com'
+        assert data['user']['email'] == 'stdout@ritha.com'
 
 
 class TestGenerateDailyLooksVerbosity:

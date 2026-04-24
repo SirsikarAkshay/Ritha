@@ -3,7 +3,7 @@ Canonical category mappings shared across training and inference.
 
 DATASET_CATEGORIES: the 13 labels in the Kaggle deep-fashion dataset.
 CATEGORY_TO_IDX / IDX_TO_CATEGORY: integer ↔ label lookups.
-WARDROBE_TO_DATASET: maps Arokah wardrobe categories to dataset categories.
+WARDROBE_TO_DATASET: maps Ritha wardrobe categories to dataset categories.
 DATASET_TO_WARDROBE: reverse mapping.
 """
 
@@ -27,7 +27,7 @@ CATEGORY_TO_IDX = {c: i for i, c in enumerate(DATASET_CATEGORIES)}
 IDX_TO_CATEGORY = {i: c for i, c in enumerate(DATASET_CATEGORIES)}
 NUM_CATEGORIES = len(DATASET_CATEGORIES)
 
-# Map Arokah wardrobe categories → closest dataset categories
+# Map Ritha wardrobe categories → closest dataset categories
 WARDROBE_TO_DATASET = {
     'top':        ['short sleeve top', 'long sleeve top'],
     'bottom':     ['trousers', 'shorts', 'skirt'],

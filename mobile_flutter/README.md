@@ -1,4 +1,4 @@
-# arokah_mobile
+# ritha_mobile
 
 A new Flutter project.
 

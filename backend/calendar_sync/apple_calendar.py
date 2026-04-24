@@ -19,7 +19,7 @@ from typing import Optional
 from django.conf import settings
 from django.utils import timezone
 
-logger = logging.getLogger('arokah.calendar.apple')
+logger = logging.getLogger('ritha.calendar.apple')
 
 APPLE_CALDAV_URL = 'https://caldav.icloud.com/'
 APPLE_CALDAV_TIMEOUT = 15  # seconds — never let icloud hang the request
@@ -209,7 +209,7 @@ def sync_events(user, days_behind: int = 7, days_ahead: int = 60) -> dict:
 def _upsert_caldav_event(user, caldav_event, calendar_name: str) -> tuple[int, int]:
     """Parse a CalDAV event object and upsert into CalendarEvent."""
     from itinerary.models import CalendarEvent
-    from arokah.services.event_classifier import classify_event
+    from ritha.services.event_classifier import classify_event
     import icalendar
 
     try:

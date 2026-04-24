@@ -14,10 +14,18 @@ const ACCESS_KEY = 'gg_access'  // Matches the key used elsewhere in the app
 
 function buildUrl(path) {
   const token = localStorage.getItem(ACCESS_KEY) || ''
+
+  // Prod: VITE_WS_BASE_URL (e.g. wss://api.ritha.com) is set at build time.
+  // Dev: fall back to current host on :8000 (Vite doesn't proxy WS).
+  const explicit = import.meta.env?.VITE_WS_BASE_URL
+  if (explicit) {
+    const base = explicit.replace(/\/$/, '')
+    return `${base}${path}?token=${encodeURIComponent(token)}`
+  }
+
   const isHttps = typeof window !== 'undefined' && window.location?.protocol === 'https:'
   const proto = isHttps ? 'wss:' : 'ws:'
-  // Dev: Vite proxies HTTP /api → 8000 but NOT WebSockets. Hit Django directly on 8000.
-  const host = typeof window !== 'undefined' && window.location?.hostname || 'localhost'
+  const host = (typeof window !== 'undefined' && window.location?.hostname) || 'localhost'
   return `${proto}//${host}:8000${path}?token=${encodeURIComponent(token)}`
 }
 

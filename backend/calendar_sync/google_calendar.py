@@ -22,7 +22,7 @@ from django.conf import settings
 from django.utils import timezone
 from calendar_sync.token_store import load_google_tokens, store_google_tokens, encrypt_tokens
 
-logger = logging.getLogger('arokah.calendar.google')
+logger = logging.getLogger('ritha.calendar.google')
 
 # Read-only calendar scope — we never write to the user's calendar.
 # 'openid' is added by Google automatically because userinfo.email implies it;
@@ -212,7 +212,7 @@ def _upsert_event(user, raw_event: dict, calendar_id: str) -> tuple[int, int]:
     Returns (created_count, updated_count).
     """
     from itinerary.models import CalendarEvent
-    from arokah.services.event_classifier import classify_event
+    from ritha.services.event_classifier import classify_event
 
     google_id = raw_event.get('id', '')
     status    = raw_event.get('status', 'confirmed')

@@ -5,14 +5,107 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cade1bb6-4614-4724-b6b1-3b47eecb83d1" name="Changes" comment="Push to the arokah repo">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CONTRIBUTING.md" beforeDir="false" afterPath="$PROJECT_DIR$/CONTRIBUTING.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arokah_black.jpeg" beforeDir="false" afterPath="$PROJECT_DIR$/ritha_black.jpeg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arokah_white.jpeg" beforeDir="false" afterPath="$PROJECT_DIR$/ritha_white.jpeg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/backend/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/arokah/settings_production.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/arokah/settings_production.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/backend/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/backend/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/agents/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/agents/services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/agents/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/agents/tasks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/apps.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/apps.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/asgi.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/asgi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/celery.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/celery.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/config_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/config_view.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/exceptions.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/exceptions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/health.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/health.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/middleware.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/middleware.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/schema_types.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/schema_types.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/services/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/services/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/services/event_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/services/event_classifier.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/services/mistral_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/services/mistral_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/services/recommendation_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/services/recommendation_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/services/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/services/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/services/weather.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/services/weather.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/settings_production.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/settings_production.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/signals.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/signals.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/ws_auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/ws_auth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/arokah/wsgi.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ritha/wsgi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/auth_app/email.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/auth_app/email.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/auth_app/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/auth_app/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/calendar_sync/apple_calendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/calendar_sync/apple_calendar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/calendar_sync/google_calendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/calendar_sync/google_calendar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/calendar_sync/outlook_calendar.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/calendar_sync/outlook_calendar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/calendar_sync/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/calendar_sync/tasks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/calendar_sync/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/calendar_sync/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/diagnose.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/diagnose.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/fix_blank_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/fix_blank_page.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/fix_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/fix_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/fix_frontend.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/fix_frontend.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/itinerary/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/itinerary/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/manage.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/manage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/ml/categories.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ml/categories.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/ml/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/ml/train.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/nginx/conf.d/default.conf" beforeDir="false" afterPath="$PROJECT_DIR$/backend/nginx/conf.d/default.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/nginx/nginx.conf" beforeDir="false" afterPath="$PROJECT_DIR$/backend/nginx/nginx.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/openapi.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/openapi.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/outfits/management/commands/test_push.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/outfits/management/commands/test_push.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/outfits/notifications.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/outfits/notifications.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/pytest.ini" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pytest.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/requirements_prod.txt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/requirements_prod.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/factories.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/factories.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/test_auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/test_auth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/test_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/test_classifier.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/test_email_verification.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/test_email_verification.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/test_error_handling.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/test_error_handling.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/test_management_commands.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/test_management_commands.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/test_mistral_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/test_mistral_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/test_signals.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/test_signals.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/test_wardrobe_extra.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/test_wardrobe_extra.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/test_weather_endpoint.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/test_weather_endpoint.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/tests/test_weather_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/test_weather_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/wardrobe/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/wardrobe/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/features.md" beforeDir="false" afterPath="$PROJECT_DIR$/features.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/client.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/client.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/ws.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/ws.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Logo.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Logo.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/hooks/useTheme.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/hooks/useTheme.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Login.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/LoginPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/LoginPage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/ProfilePage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/ProfilePage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/tests/auth.spec.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/tests/auth.spec.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/vite.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/android/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/android/app/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/android/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/android/app/src/main/kotlin/com/arokah/arokah_mobile/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/android/app/src/main/kotlin/com/ritha/ritha_mobile/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/ios/Runner.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/ios/Runner.xcodeproj/project.pbxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/ios/Runner/Info.plist" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/ios/Runner/Info.plist" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/macos/Runner.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/macos/Runner.xcodeproj/project.pbxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/macos/Runner.xcodeproj/xcshareddata/xcschemes/Runner.xcscheme" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/macos/Runner/Configs/AppInfo.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/macos/Runner/Configs/AppInfo.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/test/widget_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/test/widget_test.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/web/firebase-messaging-sw.js" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/web/firebase-messaging-sw.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/web/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/web/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mobile_flutter/web/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/mobile_flutter/web/manifest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -83,6 +176,7 @@
       <updated>1775756878964</updated>
       <workItem from="1775756880005" duration="30260000" />
       <workItem from="1776156802910" duration="82774000" />
+      <workItem from="1776931128238" duration="21160000" />
     </task>
     <task id="LOCAL-00001" summary="Push to the arokah repo">
       <option name="closed" value="true" />
@@ -140,7 +234,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776776903261</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Push to the arokah repo">
+      <option name="closed" value="true" />
+      <created>1776931152807</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1776931152807</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

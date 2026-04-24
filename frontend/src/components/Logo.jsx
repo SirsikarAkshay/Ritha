@@ -3,10 +3,10 @@
 // Reads the current theme from ThemeContext.
 import { useTheme } from '../hooks/useTheme.jsx'
 
-export default function Logo({ className = '', style = {}, alt = 'Arokah' }) {
+export default function Logo({ className = '', style = {}, alt = 'Ritha' }) {
   const { theme } = useTheme()
-  // Per request: dark mode → arokah_black.jpeg, light mode → arokah_white.jpeg
-  const src = theme === 'dark' ? '/arokah_black.jpeg' : '/arokah_white.jpeg'
+  // Per request: dark mode → ritha_black.jpeg, light mode → ritha_white.jpeg
+  const src = theme === 'dark' ? '/ritha_black.jpeg' : '/ritha_white.jpeg'
 
   // JPEGs can't be transparent. Use mix-blend-mode to drop the background:
   //   - 'screen' in dark mode makes black/near-black pixels transparent,

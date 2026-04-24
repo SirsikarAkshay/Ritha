@@ -1,6 +1,6 @@
-# Arokah Frontend
+# Ritha Frontend
 
-React 18 + Vite web app for the Arokah AI style companion.
+React 18 + Vite web app for the Ritha AI style companion.
 
 ## Tech stack
 - **React 18** with hooks

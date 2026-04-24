@@ -14,9 +14,9 @@ test.describe('Login page', () => {
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
   })
 
-  test('shows branding panel with Arokah name', async ({ page }) => {
+  test('shows branding panel with Ritha name', async ({ page }) => {
     await page.goto('/login')
-    await expect(page.getByText('Arokah')).toBeVisible()
+    await expect(page.getByText('Ritha')).toBeVisible()
     await expect(page.getByText('Your wardrobe assistant')).toBeVisible()
     await expect(page.getByText('Dress for your day.')).toBeVisible()
   })

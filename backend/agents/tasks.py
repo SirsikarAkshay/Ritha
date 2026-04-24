@@ -8,7 +8,7 @@ Instead of blocking the HTTP request, agents can be dispatched as background tas
 from celery import shared_task
 import logging
 
-logger = logging.getLogger('arokah.tasks')
+logger = logging.getLogger('ritha.tasks')
 
 
 @shared_task(

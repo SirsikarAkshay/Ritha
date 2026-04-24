@@ -11,7 +11,7 @@ import datetime
 from celery import shared_task
 from django.utils import timezone
 
-logger = logging.getLogger('arokah.calendar.tasks')
+logger = logging.getLogger('ritha.calendar.tasks')
 
 
 @shared_task(name='calendar.sync_user_calendars')

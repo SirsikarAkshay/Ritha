@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone as dj_timezone
 
-logger = logging.getLogger('arokah.email')
+logger = logging.getLogger('ritha.email')
 
 
 # ── Shared helpers ─────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ def _send(*, to: str, subject: str, text: str, html: str) -> bool:
 
 
 def _email_wrapper(*, title: str, preheader: str, body_html: str, cta_url: str = '', cta_label: str = '') -> str:
-    """Shared HTML shell for all Arokah transactional emails."""
+    """Shared HTML shell for all Ritha transactional emails."""
     cta_block = ''
     if cta_url and cta_label:
         cta_block = f"""
@@ -56,7 +56,7 @@ def _email_wrapper(*, title: str, preheader: str, body_html: str, cta_url: str =
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
         <tr><td style="padding-bottom:32px;">
-          <span style="font-family:Georgia,serif;font-size:24px;color:#F0EAD9;letter-spacing:-0.02em;">Arokah</span>
+          <span style="font-family:Georgia,serif;font-size:24px;color:#F0EAD9;letter-spacing:-0.02em;">Ritha</span>
           <span style="display:block;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#D4724A;margin-top:4px;">AI Style Companion</span>
         </td></tr>
         <tr><td style="background:#111113;border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:40px;">
@@ -67,7 +67,7 @@ def _email_wrapper(*, title: str, preheader: str, body_html: str, cta_url: str =
           <p style="margin:0;font-size:12px;color:rgba(176,160,144,0.5);line-height:1.5;">{preheader}</p>
         </td></tr>
         <tr><td style="padding-top:24px;text-align:center;">
-          <p style="margin:0;font-size:11px;color:rgba(176,160,144,0.3);">Arokah · Dress for your day. Every day. 🌍</p>
+          <p style="margin:0;font-size:11px;color:rgba(176,160,144,0.3);">Ritha · Dress for your day. Every day. 🌍</p>
         </td></tr>
       </table>
     </td></tr>
@@ -93,7 +93,7 @@ def send_verification_email(user) -> bool:
 
     body_html = f"""
     <p style="margin:0 0 24px;font-size:15px;color:#B8B0A0;line-height:1.6;">
-      Hi {name}, welcome to Arokah.<br>
+      Hi {name}, welcome to Ritha.<br>
       Click below to confirm your email address and activate your account.
     </p>
     <p style="margin:0 0 8px;font-size:13px;color:#B8B0A0;">Or copy this link:</p>
@@ -103,22 +103,22 @@ def send_verification_email(user) -> bool:
 
     text = f"""Hi {name},
 
-Welcome to Arokah.
+Welcome to Ritha.
 
 Verify your email: {verify_url}
 
 This link expires in 24 hours.
 
-If you didn't create a Arokah account, ignore this email.
+If you didn't create a Ritha account, ignore this email.
 """
 
     return _send(
         to=user.email,
-        subject="Verify your Arokah email address",
+        subject="Verify your Ritha email address",
         text=text,
         html=_email_wrapper(
             title="Verify your email",
-            preheader="If you didn't create a Arokah account, you can safely ignore this email.",
+            preheader="If you didn't create a Ritha account, you can safely ignore this email.",
             body_html=body_html,
             cta_url=verify_url,
             cta_label="Verify email address",
@@ -167,7 +167,7 @@ def send_password_reset_email(user) -> bool:
     body_html = f"""
     <p style="margin:0 0 16px;font-size:15px;color:#B8B0A0;line-height:1.6;">
       Hi {name},<br>
-      We received a request to reset your Arokah password.
+      We received a request to reset your Ritha password.
       Click below to choose a new one.
     </p>
     <p style="margin:0 0 8px;font-size:13px;color:#B8B0A0;">Or copy this link:</p>
@@ -180,7 +180,7 @@ def send_password_reset_email(user) -> bool:
 
     text = f"""Hi {name},
 
-Reset your Arokah password: {reset_url}
+Reset your Ritha password: {reset_url}
 
 This link expires in 1 hour.
 
@@ -189,7 +189,7 @@ If you didn't request this, ignore this email — your password won't change.
 
     return _send(
         to=user.email,
-        subject="Reset your Arokah password",
+        subject="Reset your Ritha password",
         text=text,
         html=_email_wrapper(
             title="Reset your password",

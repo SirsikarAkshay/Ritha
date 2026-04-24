@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Arokah API
+  title: Ritha API
   version: 1.0.0
   description: AI-powered personal stylist — daily looks, trip planning, cultural
     intelligence.
@@ -171,13 +171,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ArokahTokenObtainPairRequest'
+              $ref: '#/components/schemas/RithaTokenObtainPairRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ArokahTokenObtainPairRequest'
+              $ref: '#/components/schemas/RithaTokenObtainPairRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ArokahTokenObtainPairRequest'
+              $ref: '#/components/schemas/RithaTokenObtainPairRequest'
         required: true
       responses:
         '200':
@@ -390,7 +390,7 @@ paths:
   /api/calendar/apple/disconnect/:
     post:
       operationId: calendar_apple_disconnect_create
-      description: Removes stored Apple credentials from Arokah.
+      description: Removes stored Apple credentials from Ritha.
       summary: Disconnect Apple Calendar
       tags:
       - calendar
@@ -433,7 +433,7 @@ paths:
   /api/calendar/google/connect/:
     get:
       operationId: calendar_google_connect_retrieve
-      description: Returns a URL the user should open in their browser to grant Arokah
+      description: Returns a URL the user should open in their browser to grant Ritha
         read-only access to their Google Calendar. Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
         to be set.
       summary: Start Google Calendar OAuth flow
@@ -459,7 +459,7 @@ paths:
   /api/calendar/google/sync/:
     post:
       operationId: calendar_google_sync_create
-      description: Pulls events from the last 7 days and next 60 days into Arokah.
+      description: Pulls events from the last 7 days and next 60 days into Ritha.
       summary: Sync Google Calendar events
       tags:
       - calendar
@@ -2260,7 +2260,7 @@ components:
         * `smart` - Smart
         * `formal` - Formal
         * `activewear` - Activewear
-    ArokahTokenObtainPairRequest:
+    RithaTokenObtainPairRequest:
       type: object
       properties:
         email:

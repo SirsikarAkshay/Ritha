@@ -20,7 +20,7 @@ from django.http import Http404
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 import logging
 
-logger = logging.getLogger('arokah.api')
+logger = logging.getLogger('ritha.api')
 
 _CODE_MAP = {
     ValidationError:      'validation_error',

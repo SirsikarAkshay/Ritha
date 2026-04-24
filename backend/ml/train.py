@@ -1,5 +1,5 @@
 """
-Training script for the Arokah fashion recommendation model.
+Training script for the Ritha fashion recommendation model.
 
 Trains two artefacts:
   1. A MobileNetV2 classifier (13 clothing categories) — saved as fashion_classifier.pth
@@ -228,7 +228,7 @@ def build_compatibility_matrix():
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description='Train Arokah fashion model')
+    parser = argparse.ArgumentParser(description='Train Ritha fashion model')
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--batch',  type=int, default=32)
     parser.add_argument('--lr',     type=float, default=1e-3)

@@ -13,7 +13,7 @@ if not os.path.exists('manage.py'):
     sys.exit(1)
 
 print("=" * 55)
-print("Arokah — Fix blank page / auth_trusted_header crash")
+print("Ritha — Fix blank page / auth_trusted_header crash")
 print("=" * 55)
 
 # ─────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ print("=" * 55)
 # ─────────────────────────────────────────────────────────
 print("\n[1/4] Adding /api/config endpoint...")
 
-Path('arokah/config_view.py').write_text('''from django.conf import settings
+Path('ritha/config_view.py').write_text('''from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -43,15 +43,15 @@ class ConfigView(APIView):
             "environment":             "development" if settings.DEBUG else "production",
         })
 ''')
-print("   ✅ Created arokah/config_view.py")
+print("   ✅ Created ritha/config_view.py")
 
-urls_path = Path('arokah/urls.py')
+urls_path = Path('ritha/urls.py')
 urls = urls_path.read_text()
 
 if 'ConfigView' not in urls:
     urls = urls.replace(
-        'from arokah.health import HealthCheckView',
-        'from arokah.health import HealthCheckView\nfrom arokah.config_view import ConfigView'
+        'from ritha.health import HealthCheckView',
+        'from ritha.health import HealthCheckView\nfrom ritha.config_view import ConfigView'
     )
     urls = urls.replace(
         "path('api/health/",
@@ -210,7 +210,7 @@ export async function loadConfig() {
     const data = await res.json()
     _config = { ...DEFAULT_CONFIG, ...data }
   } catch (err) {
-    console.warn('[Arokah] Could not load /api/config, using defaults:', err.message)
+    console.warn('[Ritha] Could not load /api/config, using defaults:', err.message)
     _config = { ...DEFAULT_CONFIG }
   }
   return _config
@@ -227,7 +227,7 @@ print("   ✅ Created frontend/src/api/config.js")
 # ─────────────────────────────────────────────────────────
 print("\n[4/4] Verifying and rebuilding...")
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'arokah.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ritha.settings')
 try:
     import django
     django.setup()

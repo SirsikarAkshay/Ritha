@@ -23,7 +23,7 @@ A complete inventory of features currently implemented in the Garbglobe travel g
 | Feature | Description | Key files |
 |---|---|---|
 | Clothing item CRUD | Categories (top, bottom, dress, outerwear, footwear, accessory, activewear, formal), formality, seasons, colors, material, weight, brand. | `backend/wardrobe/models.py`, `views.py` (ClothingItemViewSet); `frontend/src/pages/WardrobePage.jsx` |
-| AI image analysis | Upload photo; Mistral extracts name, category, formality, season, colors, material, brand. | `backend/wardrobe/views.py` (AnalyzeClothingImageView); `backend/arokah/services/mistral_client.py` |
+| AI image analysis | Upload photo; Mistral extracts name, category, formality, season, colors, material, brand. | `backend/wardrobe/views.py` (AnalyzeClothingImageView); `backend/ritha/services/mistral_client.py` |
 | Background removal (stub) | Placeholder endpoint for future bg-removal integration. | `backend/wardrobe/views.py` (BackgroundRemovalView) |
 | Receipt import | Paste a shopping receipt email; Mistral parses it into wardrobe items. | `backend/wardrobe/views.py` (ReceiptImportView); `frontend/src/pages/WardrobePage.jsx` |
 | Bulk upload | Create up to 50 items in a single request. | `backend/wardrobe/views.py` (BulkWardrobeUploadView) |
@@ -48,7 +48,7 @@ A complete inventory of features currently implemented in the Garbglobe travel g
 
 | Feature | Description | Key files |
 |---|---|---|
-| Calendar events | CRUD for events with auto-classification (meeting, workout, travel, wedding, etc.) and formality inference. | `backend/itinerary/views.py` (CalendarEventViewSet); `models.py`; `backend/arokah/services/event_classifier.py`; `frontend/src/pages/ItineraryPage.jsx` |
+| Calendar events | CRUD for events with auto-classification (meeting, workout, travel, wedding, etc.) and formality inference. | `backend/itinerary/views.py` (CalendarEventViewSet); `models.py`; `backend/ritha/services/event_classifier.py`; `frontend/src/pages/ItineraryPage.jsx` |
 | Unified calendar sync | One action syncs Google + Apple + Outlook and returns combined counts. | `backend/itinerary/views.py` (sync action); `frontend/src/pages/ItineraryPage.jsx` |
 | Trips | Create/read/update/delete trips with destination, dates, notes. | `backend/itinerary/views.py` (TripViewSet); `frontend/src/pages/TripPlannerPage.jsx` |
 | Packing checklist | Per-trip packing items linked to wardrobe or free-text, with packed state. | `backend/itinerary/views.py` (PackingChecklistViewSet); `models.py` (PackingChecklistItem); `frontend/src/pages/TripPlannerPage.jsx` |
@@ -120,7 +120,7 @@ All agents run through a common job model (`AgentJob`) with status tracking, inp
 | Conversations | Auto-created 1:1 conversations, normalized to prevent duplicates. | `backend/messaging/models.py` (Conversation); `views.py` (ConversationListView, ConversationOpenView) |
 | Send / history | REST or WebSocket send, full history retrieval. | `backend/messaging/views.py` (SendMessageView, MessageListView); `frontend/src/pages/MessagesPage.jsx` |
 | Read pointers | Per-user read timestamps and unread counts. | `backend/messaging/views.py` (MarkReadView) |
-| Live WebSocket chat | Real-time delivery over `/ws/chat/<conversation_id>/`. | `backend/arokah/asgi.py`; `frontend/src/api/ws.js`, `pages/MessagesPage.jsx` |
+| Live WebSocket chat | Real-time delivery over `/ws/chat/<conversation_id>/`. | `backend/ritha/asgi.py`; `frontend/src/api/ws.js`, `pages/MessagesPage.jsx` |
 
 ---
 
@@ -139,7 +139,7 @@ All agents run through a common job model (`AgentJob`) with status tracking, inp
 
 | Feature | Description | Key files |
 |---|---|---|
-| Forecast by coords or location | Open-Meteo-backed weather with temperature, precipitation, wind, humidity, condition. | `backend/arokah/services/views.py` (WeatherView); `services/weather.py` |
+| Forecast by coords or location | Open-Meteo-backed weather with temperature, precipitation, wind, humidity, condition. | `backend/ritha/services/views.py` (WeatherView); `services/weather.py` |
 | Weather snapshot on outfits | Weather is frozen into each outfit recommendation for context. | `backend/outfits/models.py` (OutfitRecommendation.weather_snapshot) |
 
 ---
@@ -167,12 +167,12 @@ All agents run through a common job model (`AgentJob`) with status tracking, inp
 
 | Feature | Description | Key files |
 |---|---|---|
-| Health check | Liveness endpoint. | `backend/arokah/health.py` |
-| OpenAPI / Swagger / ReDoc | Auto-generated API docs via drf-spectacular. | `backend/arokah/urls.py` |
-| Runtime config endpoint | Exposes env-specific config to clients. | `backend/arokah/config_view.py` |
-| JWT WebSocket auth | Token-authenticated Channels consumers. | `backend/arokah/ws_auth.py` |
-| CORS / logging / exception middleware | Standard cross-cutting middleware. | `backend/arokah/middleware.py`, `exceptions.py` |
-| Celery background tasks | Async queue for calendar sync, AI agents, email, etc. | `backend/arokah/celery.py`, `backend/agents/tasks.py` |
+| Health check | Liveness endpoint. | `backend/ritha/health.py` |
+| OpenAPI / Swagger / ReDoc | Auto-generated API docs via drf-spectacular. | `backend/ritha/urls.py` |
+| Runtime config endpoint | Exposes env-specific config to clients. | `backend/ritha/config_view.py` |
+| JWT WebSocket auth | Token-authenticated Channels consumers. | `backend/ritha/ws_auth.py` |
+| CORS / logging / exception middleware | Standard cross-cutting middleware. | `backend/ritha/middleware.py`, `exceptions.py` |
+| Celery background tasks | Async queue for calendar sync, AI agents, email, etc. | `backend/ritha/celery.py`, `backend/agents/tasks.py` |
 | Admin interfaces | Django admin registrations for all domain apps. | `backend/*/admin.py` |
 | User data export | Management command to export a user's data (privacy / GDPR). | `backend/auth_app/management/commands/export_user_data.py` |
 

@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('email', type=str, help='User email address')
-        parser.add_argument('--title', default='Arokah Test', help='Notification title')
+        parser.add_argument('--title', default='Ritha Test', help='Notification title')
         parser.add_argument('--body', default='Push notifications are working!', help='Notification body')
 
     def handle(self, *args, **options):

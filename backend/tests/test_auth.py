@@ -10,39 +10,39 @@ pytestmark = pytest.mark.django_db
 class TestRegister:
     def test_register_success(self, client):
         r = client.post('/api/auth/register/', {
-            'email': 'new@arokah.com',
+            'email': 'new@ritha.com',
             'password': 'strongpass99',
             'first_name': 'Ada',
         }, content_type='application/json')
         assert r.status_code == 201
-        assert r.json()['email'] == 'new@arokah.com'
-        assert User.objects.filter(email='new@arokah.com').exists()
+        assert r.json()['email'] == 'new@ritha.com'
+        assert User.objects.filter(email='new@ritha.com').exists()
 
     def test_register_duplicate_email(self, client):
-        UserFactory(email='dup@arokah.com')
+        UserFactory(email='dup@ritha.com')
         r = client.post('/api/auth/register/', {
-            'email': 'dup@arokah.com', 'password': 'strongpass99',
+            'email': 'dup@ritha.com', 'password': 'strongpass99',
         }, content_type='application/json')
         assert r.status_code == 400
 
     def test_register_missing_password(self, client):
         r = client.post('/api/auth/register/', {
-            'email': 'nopw@arokah.com',
+            'email': 'nopw@ritha.com',
         }, content_type='application/json')
         assert r.status_code == 400
 
     def test_register_weak_password(self, client):
         r = client.post('/api/auth/register/', {
-            'email': 'weak@arokah.com', 'password': '123',
+            'email': 'weak@ritha.com', 'password': '123',
         }, content_type='application/json')
         assert r.status_code == 400
 
 
 class TestLogin:
     def test_login_returns_tokens(self, client):
-        UserFactory(email='login@arokah.com')
+        UserFactory(email='login@ritha.com')
         r = client.post('/api/auth/login/', {
-            'email': 'login@arokah.com', 'password': 'testpass99',
+            'email': 'login@ritha.com', 'password': 'testpass99',
         }, content_type='application/json')
         assert r.status_code == 200
         data = r.json()
@@ -50,15 +50,15 @@ class TestLogin:
         assert 'refresh' in data
 
     def test_login_wrong_password(self, client):
-        UserFactory(email='wp@arokah.com')
+        UserFactory(email='wp@ritha.com')
         r = client.post('/api/auth/login/', {
-            'email': 'wp@arokah.com', 'password': 'wrongpass',
+            'email': 'wp@ritha.com', 'password': 'wrongpass',
         }, content_type='application/json')
         assert r.status_code == 401
 
     def test_login_unknown_email(self, client):
         r = client.post('/api/auth/login/', {
-            'email': 'ghost@arokah.com', 'password': 'testpass99',
+            'email': 'ghost@ritha.com', 'password': 'testpass99',
         }, content_type='application/json')
         assert r.status_code == 401
 
@@ -102,14 +102,14 @@ class TestUserModel:
     def test_full_name_email_fallback(self):
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        user = User(email='jane@arokah.com')
-        assert user.full_name == 'jane@arokah.com'
+        user = User(email='jane@ritha.com')
+        assert user.full_name == 'jane@ritha.com'
 
     def test_str_returns_email(self):
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        user = User(email='str@arokah.com')
-        assert str(user) == 'str@arokah.com'
+        user = User(email='str@ritha.com')
+        assert str(user) == 'str@ritha.com'
 
     @pytest.mark.django_db
     def test_create_superuser(self):

@@ -1,6 +1,6 @@
 """Tests for the rule-based event type classifier."""
 import pytest
-from arokah.services.event_classifier import classify_event, dominant_formality
+from ritha.services.event_classifier import classify_event, dominant_formality
 
 
 class TestClassifyEvent:

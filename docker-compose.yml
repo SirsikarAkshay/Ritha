@@ -1,7 +1,7 @@
 version: "3.9"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Arokah — local Django stack
+# Ritha — local Django stack
 #
 # Services:
 #   migrations  Runs `manage.py migrate`, then exits
@@ -17,7 +17,7 @@ version: "3.9"
 # Notes:
 # - Database: SQLite (backend/db.sqlite3), persisted via bind mount.
 #   To switch to Postgres, add psycopg2-binary to requirements and extend
-#   arokah/settings.py DATABASES with USER/PASSWORD/HOST/PORT.
+#   ritha/settings.py DATABASES with USER/PASSWORD/HOST/PORT.
 # - The frontend is NOT in this compose file. Run it with:
 #     cd frontend && npm install && npm run dev   (serves on :5175)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -28,36 +28,36 @@ x-django-base: &django-base
   env_file:
     - ./backend/.env
   environment:
-    DJANGO_SETTINGS_MODULE: arokah.settings
-    REDIS_URL: redis://:arokah_redis_dev@redis:6379/0
+    DJANGO_SETTINGS_MODULE: ritha.settings
+    REDIS_URL: redis://:ritha_redis_dev@redis:6379/0
     WEB_APP_URL: http://localhost:5175
     FRONTEND_URL: http://localhost:5175
     ALLOWED_HOSTS: localhost,127.0.0.1,api
   volumes:
     - ./backend:/app                 # live reload in dev
   networks:
-    - arokah-net
+    - ritha-net
 
 services:
 
   # ── Redis (Celery broker + result backend) ────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: arokah-redis
+    container_name: ritha-redis
     restart: unless-stopped
     command: >
       redis-server
       --maxmemory 256mb
       --maxmemory-policy allkeys-lru
-      --requirepass arokah_redis_dev
+      --requirepass ritha_redis_dev
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - arokah-net
+      - ritha-net
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "arokah_redis_dev", "ping"]
+      test: ["CMD", "redis-cli", "-a", "ritha_redis_dev", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -65,14 +65,14 @@ services:
   # ── Migrations (runs once, then exits) ────────────────────────────────────
   migrations:
     <<: *django-base
-    container_name: arokah-migrations
+    container_name: ritha-migrations
     command: python manage.py migrate --noinput
     restart: "no"
 
   # ── API (Django via gunicorn) ─────────────────────────────────────────────
   api:
     <<: *django-base
-    container_name: arokah-api
+    container_name: ritha-api
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -82,7 +82,7 @@ services:
       migrations:
         condition: service_completed_successfully
     command: >
-      gunicorn arokah.wsgi:application
+      gunicorn ritha.wsgi:application
       --bind 0.0.0.0:8000
       --workers 4
       --timeout 120
@@ -98,30 +98,30 @@ services:
   # ── Celery worker ─────────────────────────────────────────────────────────
   worker:
     <<: *django-base
-    container_name: arokah-worker
+    container_name: ritha-worker
     restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
-    command: celery -A arokah worker --loglevel=info --concurrency=2
+    command: celery -A ritha worker --loglevel=info --concurrency=2
 
   # ── Celery beat (scheduled tasks) ─────────────────────────────────────────
   beat:
     <<: *django-base
-    container_name: arokah-beat
+    container_name: ritha-beat
     restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
-    command: celery -A arokah beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: celery -A ritha beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
 volumes:
   redis_data:
 
 networks:
-  arokah-net:
+  ritha-net:
     driver: bridge

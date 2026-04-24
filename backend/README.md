@@ -1,4 +1,4 @@
-# Arokah Backend
+# Ritha Backend
 
 > AI-powered personal stylist — daily outfit looks, trip planning, cultural intelligence.
 > Django 6 · SQLite (dev) / PostgreSQL (prod) · DRF · JWT · OpenAPI
@@ -9,8 +9,8 @@
 
 ```bash
 # 1 — Clone and install
-git clone https://github.com/your-username/arokah.git
-cd arokah
+git clone https://github.com/your-username/ritha.git
+cd ritha
 pip install -r requirements.txt
 
 # 2 — Environment
@@ -163,7 +163,7 @@ MEDIA_URL=/media/
 
 ## AI Behaviour
 
-Arokah uses **Mistral AI** for all agent intelligence. Agents operate in two modes:
+Ritha uses **Mistral AI** for all agent intelligence. Agents operate in two modes:
 
 | Mode | Condition | Behaviour |
 |------|-----------|-----------|
@@ -174,7 +174,7 @@ All endpoints return identical JSON shapes in both modes — stubs are safe for 
 
 ### Mistral models
 
-Configured in `arokah/services/mistral_client.py`:
+Configured in `ritha/services/mistral_client.py`:
 
 | Model | Use case |
 |-------|----------|
@@ -238,11 +238,11 @@ make docker-down
 Add these to your production `.env`:
 
 ```env
-DB_NAME=arokah
-DB_USER=arokah
+DB_NAME=ritha
+DB_USER=ritha
 DB_PASSWORD=your_secure_password
 REDIS_URL=redis://redis:6379/0
-DJANGO_SETTINGS_MODULE=arokah.settings_production
+DJANGO_SETTINGS_MODULE=ritha.settings_production
 ```
 
 ---
@@ -250,8 +250,8 @@ DJANGO_SETTINGS_MODULE=arokah.settings_production
 ## Project Structure
 
 ```
-arokah/
-├── arokah/              # Project config
+ritha/
+├── ritha/              # Project config
 │   ├── settings.py         # Development settings
 │   ├── settings_production.py  # Production overrides
 │   ├── signals.py          # Cross-app signals
@@ -291,4 +291,4 @@ arokah/
 
 ---
 
-**Arokah** — Dress for your day. Every day. 🌍✨
+**Ritha** — Dress for your day. Every day. 🌍✨

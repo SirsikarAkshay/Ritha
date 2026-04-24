@@ -7,7 +7,7 @@ import time
 import logging
 import json
 
-logger = logging.getLogger('arokah.requests')
+logger = logging.getLogger('ritha.requests')
 
 # Paths whose request bodies should never appear in logs
 _REDACT_PATHS = {'/api/auth/login/', '/api/auth/register/', '/api/auth/me/password/'}

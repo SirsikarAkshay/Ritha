@@ -27,9 +27,9 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'django_celery_beat',
     'channels',
-    # Arokah project (for signals)
-    'arokah.apps.ArokahConfig',
-    # Arokah apps
+    # Ritha project (for signals)
+    'ritha.apps.RithaConfig',
+    # Ritha apps
     'auth_app',
     'wardrobe',
     'itinerary',
@@ -44,7 +44,7 @@ INSTALLED_APPS = [
 ]
 
 # ── Channels / WebSockets ──────────────────────────────────────────────────────
-ASGI_APPLICATION = 'arokah.asgi.application'
+ASGI_APPLICATION = 'ritha.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
@@ -58,7 +58,7 @@ CHANNEL_LAYERS = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'arokah.middleware.RequestLoggingMiddleware',
+    'ritha.middleware.RequestLoggingMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -67,7 +67,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'arokah.urls'
+ROOT_URLCONF = 'ritha.urls'
 
 TEMPLATES = [
     {
@@ -85,7 +85,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'arokah.wsgi.application'
+WSGI_APPLICATION = 'ritha.wsgi.application'
 
 # ── Database (SQLite) ──────────────────────────────────────────────────────────
 DATABASES = {
@@ -128,11 +128,11 @@ REST_FRAMEWORK = {
         'password_reset':      '5/hour',
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'EXCEPTION_HANDLER': 'arokah.exceptions.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'ritha.exceptions.custom_exception_handler',
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE':       'Arokah API',
+    'TITLE':       'Ritha API',
     'DESCRIPTION': 'AI-powered personal stylist — daily looks, trip planning, cultural intelligence.',
     'VERSION':     '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
@@ -194,7 +194,7 @@ else:
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'arokah-default',
+            'LOCATION': 'ritha-default',
             'TIMEOUT': 300,
             'OPTIONS': {'MAX_ENTRIES': 2000},
         },
@@ -257,7 +257,7 @@ EMAIL_PORT        = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS     = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER   = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Arokah <noreply@arokah.com>')
+DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Ritha <noreply@ritha.com>')
 
 # Verification token expiry (seconds)
 EMAIL_VERIFICATION_TIMEOUT = int(os.getenv('EMAIL_VERIFICATION_TIMEOUT', str(60 * 60 * 24)))  # 24h

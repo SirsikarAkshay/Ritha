@@ -18,7 +18,7 @@ from typing import Optional
 from django.conf import settings
 from django.core.cache import cache
 
-logger = logging.getLogger('arokah.recommendation')
+logger = logging.getLogger('ritha.recommendation')
 
 # Cache TTLs (seconds)
 _CULTURAL_TTL = 60 * 60 * 24       # 24h — cultural context is stable
@@ -29,7 +29,7 @@ _SHOPPING_TTL = 60 * 60 * 6        # 6h — shopping suggestions
 def _cache_key(prefix: str, *parts) -> str:
     raw = '|'.join(str(p).strip().lower() for p in parts)
     digest = hashlib.md5(raw.encode('utf-8')).hexdigest()[:16]
-    return f'arokah:rec:{prefix}:{digest}'
+    return f'ritha:rec:{prefix}:{digest}'
 
 
 # ── Public entry point ───────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ def _recommend_multi_day(user, destination, start_date, end_date, occasion, inpu
     Fetches weather forecast for all days in one call, cultural context once.
     Each day gets a unique outfit — already-assigned wardrobe items are deprioritised.
     """
-    from arokah.services.weather import get_weather_forecast
+    from ritha.services.weather import get_weather_forecast
 
     num_days = (end_date - start_date).days + 1
 
@@ -246,7 +246,7 @@ def _deduplicate_gaps(gaps: list) -> list:
 # ── Signal 1: Weather ────────────────────────────────────────────────────────
 
 def _fetch_weather(input_data: dict, destination: str) -> dict:
-    from arokah.services.weather import get_weather, get_weather_for_location, _fallback
+    from ritha.services.weather import get_weather, get_weather_for_location, _fallback
 
     if 'weather' in input_data and isinstance(input_data['weather'], dict) and input_data['weather']:
         return input_data['weather']
@@ -348,7 +348,7 @@ def _occasion_category_boosts(occasion: str, formalities: list) -> dict:
 
 def _fetch_cultural_context(destination: str, date_str: str, weather: dict, occasion: str) -> dict:
     """Use Mistral to get cultural rules, events, etiquette, and places."""
-    from arokah.services.mistral_client import _has_mistral
+    from ritha.services.mistral_client import _has_mistral
 
     if not _has_mistral():
         return _cultural_fallback(destination)
@@ -387,11 +387,11 @@ def _weather_bucket(weather: dict) -> str:
 
 
 def _cultural_context_ai(destination: str, date_str: str, weather: dict, occasion: str) -> dict:
-    from arokah.services.mistral_client import chat_json
+    from ritha.services.mistral_client import chat_json
 
     temp_desc = f"{weather.get('temp_c', 'unknown')}°C, {weather.get('condition', 'unknown')}"
 
-    prompt = f"""You are Arokah, a culturally-aware travel fashion advisor.
+    prompt = f"""You are Ritha, a culturally-aware travel fashion advisor.
 
 Destination: {destination}
 Date: {date_str}
@@ -779,7 +779,7 @@ def _build_shopping_suggestions(gaps: list, destination: str, weather: dict, cul
         # Re-stamp the cached suggestions with per-call `why` text from live gaps.
         return _restamp_shopping(hit, gaps)
 
-    from arokah.services.mistral_client import _has_mistral
+    from ritha.services.mistral_client import _has_mistral
     if _has_mistral():
         try:
             result = _shopping_suggestions_ai(gaps, destination, weather, cultural, occasion)
@@ -807,7 +807,7 @@ def _restamp_shopping(cached: list, gaps: list) -> list:
 def _shopping_suggestions_ai(gaps: list, destination: str, weather: dict, cultural: dict, occasion: str) -> list:
     """Use Mistral to generate specific, relevant product recommendations."""
     import urllib.parse
-    from arokah.services.mistral_client import chat_json
+    from ritha.services.mistral_client import chat_json
 
     gap_descriptions = [
         f"- {g['role']}: need a {g['ideal_category']} ({g.get('wardrobe_category', '')})"
@@ -819,7 +819,7 @@ def _shopping_suggestions_ai(gaps: list, destination: str, weather: dict, cultur
     tips = cultural.get('general_tips', [])
     tips_text = '; '.join(tips[:3]) if tips else 'none'
 
-    prompt = f"""You are Arokah, a fashion shopping advisor.
+    prompt = f"""You are Ritha, a fashion shopping advisor.
 
 A user is traveling to {destination} for a {occasion} occasion.
 Weather: {temp}°C, {condition}

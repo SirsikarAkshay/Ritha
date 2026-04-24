@@ -45,7 +45,7 @@ class CalendarEvent(models.Model):
     def save(self, *args, **kwargs):
         # Auto-classify if event_type is still 'other' and title is provided
         if self.title and self.event_type == 'other':
-            from arokah.services.event_classifier import classify_event
+            from ritha.services.event_classifier import classify_event
             result = classify_event(self.title, self.description)
             self.event_type = result['event_type']
             if not self.formality:

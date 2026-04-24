@@ -1,13 +1,13 @@
 """
-Celery application for Arokah.
+Celery application for Ritha.
 Workers handle async AI agent jobs, push notifications, and scheduled tasks.
 """
 import os
 from celery import Celery
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'arokah.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ritha.settings')
 
-app = Celery('arokah')
+app = Celery('ritha')
 
 # Read config from Django settings, using the CELERY_ namespace
 app.config_from_object('django.conf:settings', namespace='CELERY')

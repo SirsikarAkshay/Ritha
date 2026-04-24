@@ -1,6 +1,8 @@
 // src/api/client.js — fetch-based HTTP client with JWT auto-refresh
 
-const BASE = '/api'
+// VITE_API_BASE_URL is injected at build time. Defaults to '/api' so dev
+// (Vite proxy) and same-origin prod deploys keep working without config.
+const BASE = (import.meta.env?.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
 
 // ── Token helpers ─────────────────────────────────────────────────────────
 const getToken    = ()      => localStorage.getItem('gg_access')

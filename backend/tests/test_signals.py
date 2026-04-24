@@ -12,10 +12,10 @@ class TestSustainabilityProfileSignal:
     def test_profile_created_on_user_register(self, client):
         """Registering a user automatically creates a sustainability profile."""
         client.post('/api/auth/register/', {
-            'email': 'signal@arokah.com', 'password': 'testpass99',
+            'email': 'signal@ritha.com', 'password': 'testpass99',
         }, content_type='application/json')
         from django.contrib.auth import get_user_model
-        user = get_user_model().objects.get(email='signal@arokah.com')
+        user = get_user_model().objects.get(email='signal@ritha.com')
         assert UserSustainabilityProfile.objects.filter(user=user).exists()
 
     def test_profile_not_duplicated(self):

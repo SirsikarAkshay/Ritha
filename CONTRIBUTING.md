@@ -1,6 +1,6 @@
-# Contributing to Arokah
+# Contributing to Ritha
 
-Thank you for considering contributing to Arokah! We welcome contributions from everyone.
+Thank you for considering contributing to Ritha! We welcome contributions from everyone.
 
 ## 🤝 How to Contribute
 
@@ -9,8 +9,8 @@ Click the "Fork" button at the top right of this repository to create your own c
 
 ### 2. Clone Your Fork
 ```bash
-git clone https://github.com/YOUR_USERNAME/arokah-travel-guide.git
-cd arokah-travel-guide
+git clone https://github.com/YOUR_USERNAME/ritha-travel-guide.git
+cd ritha-travel-guide
 ```
 
 ### 3. Create a Feature Branch
@@ -189,7 +189,7 @@ For new features, please:
 
 - **Discussions**: Use GitHub Discussions for questions
 - **Issues**: Report bugs and feature requests
-- **Email**: dev@arokah.com
+- **Email**: dev@ritha.com
 - **Slack**: Join our developer community
 
 ## 🙏 Code of Conduct
@@ -202,4 +202,4 @@ By contributing to this project, you agree that your contributions will be licen
 
 ---
 
-**Thank you for contributing to Arokah!** 🎉
+**Thank you for contributing to Ritha!** 🎉

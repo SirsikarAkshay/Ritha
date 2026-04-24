@@ -205,6 +205,8 @@ cypress/screenshots/
 .env.*
 !.env.example
 !.env.sample
+!.env.production.example
+!.env.development
 *.pem
 *.key
 *.crt

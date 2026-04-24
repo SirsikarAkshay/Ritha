@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.arokah.arokah_mobile"
+    namespace = "com.ritha.ritha_mobile"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -24,7 +24,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.arokah.arokah_mobile"
+        applicationId = "com.ritha.ritha_mobile"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

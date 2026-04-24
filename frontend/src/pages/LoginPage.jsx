@@ -62,7 +62,7 @@ export default function LoginPage() {
       }}>
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', color: 'var(--cream)', letterSpacing: '-0.02em' }}>
-            Arokah
+            Ritha
           </div>
           <div style={{ fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--terra)', marginTop: '4px' }}>
             Your wardrobe assistant

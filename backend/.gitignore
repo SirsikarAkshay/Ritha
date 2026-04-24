@@ -92,6 +92,7 @@ dmypy.json
 .ruff_cache/
 
 # Virtual environments
+.env.example
 .env
 .venv
 env/

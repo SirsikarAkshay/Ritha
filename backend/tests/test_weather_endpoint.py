@@ -30,7 +30,7 @@ def auth(client, user):
 
 
 class TestWeatherEndpoint:
-    @patch('arokah.services.weather.requests.get')
+    @patch('ritha.services.weather.requests.get')
     def test_fetch_by_latlon(self, mock_get, client):
         user = UserFactory()
         mock_resp = MagicMock()
@@ -46,7 +46,7 @@ class TestWeatherEndpoint:
         assert 'is_raining' in data
         assert data['source'] == 'open-meteo'
 
-    @patch('arokah.services.weather.requests.get')
+    @patch('ritha.services.weather.requests.get')
     def test_fetch_by_location_name(self, mock_get, client):
         user = UserFactory()
         geo_resp = MagicMock()
@@ -77,7 +77,7 @@ class TestWeatherEndpoint:
         r = client.get('/api/weather/?lat=47.37&lon=8.54')
         assert r.status_code == 401
 
-    @patch('arokah.services.weather.requests.get')
+    @patch('ritha.services.weather.requests.get')
     def test_with_specific_date(self, mock_get, client):
         user = UserFactory()
         mock_resp = MagicMock()

@@ -1,6 +1,6 @@
 """
 Project-wide Django signals.
-Registered in ArokahConfig.ready().
+Registered in RithaConfig.ready().
 """
 from django.db.models.signals import post_save
 from django.dispatch import receiver

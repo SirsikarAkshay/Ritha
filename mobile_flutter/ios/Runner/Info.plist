@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Arokah Mobile</string>
+	<string>Ritha Mobile</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>arokah_mobile</string>
+	<string>ritha_mobile</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -48,9 +48,9 @@
 		</dict>
 	</dict>
 	<key>NSCalendarsUsageDescription</key>
-	<string>Arokah reads your calendar events to suggest outfits for your schedule.</string>
+	<string>Ritha reads your calendar events to suggest outfits for your schedule.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Arokah reads your calendar events to suggest outfits for your schedule.</string>
+	<string>Ritha reads your calendar events to suggest outfits for your schedule.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

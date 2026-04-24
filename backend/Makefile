@@ -1,4 +1,4 @@
-# Arokah — Developer Makefile
+# Ritha — Developer Makefile
 # Usage: make <target>
 
 .PHONY: help install run test migrate seed shell lint fmt docker-up docker-down docker-logs export-data
@@ -9,7 +9,7 @@ PIP        := pip install --break-system-packages
 
 help:
 	@echo ""
-	@echo "Arokah Backend — Available Commands"
+	@echo "Ritha Backend — Available Commands"
 	@echo "────────────────────────────────────────"
 	@echo "  make install        Install all Python dependencies"
 	@echo "  make run            Start development server on :8000"

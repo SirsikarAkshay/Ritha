@@ -133,7 +133,7 @@ class TestReceiptImportLivePath:
         # Activate live path by setting a real-looking key
         settings.MISTRAL_API_KEY = 'test-key-live'
 
-        with patch('arokah.services.mistral_client.chat_json',
+        with patch('ritha.services.mistral_client.chat_json',
                    return_value={'items': [
                        {'name': 'Blue Denim Jacket', 'category': 'outerwear',
                         'colors': ['blue'], 'brand': "Levi's", 'material': 'denim'},
@@ -159,7 +159,7 @@ class TestReceiptImportLivePath:
 
         settings.MISTRAL_API_KEY = 'test-mistral-key'
 
-        with patch('arokah.services.mistral_client.chat_json',
+        with patch('ritha.services.mistral_client.chat_json',
                    return_value={'items': [
                        {'name': 'Silk Blouse', 'category': 'top',
                         'colors': ['white'], 'brand': 'Zara', 'material': 'silk'},
