@@ -9,8 +9,8 @@ Click the "Fork" button at the top right of this repository to create your own c
 
 ### 2. Clone Your Fork
 ```bash
-git clone https://github.com/YOUR_USERNAME/ritha-travel-guide.git
-cd ritha-travel-guide
+git clone https://github.com/YOUR_USERNAME/ritha.git
+cd ritha
 ```
 
 ### 3. Create a Feature Branch
@@ -24,18 +24,38 @@ git checkout -b feature/amazing-feature
 - Add tests for new features
 - Update documentation as needed
 
+#### If your change touches the public API
+The `backend/openapi.yaml` schema feeds typed clients on web (TypeScript) and
+mobile (Dart). After changing any DRF serializer or view, regenerate everything
+with one command from `backend/`:
+
+```bash
+make codegen
+```
+
+This runs three steps:
+1. `manage.py spectacular --file openapi.yaml` — refreshes the schema
+2. `npm run gen:api` in `frontend/` — writes `src/api/generated/schema.d.ts`
+3. `tool/gen_api.sh` in `mobile_flutter/` — writes Dart models to `lib/api/generated/`
+
+**Commit all three** outputs together. CI does not regenerate; reviewers should
+see the API surface diff in the PR.
+
+To type-check the frontend against the new schema: `cd frontend && npm run check:api`.
+
 ### 5. Test Your Changes
 ```bash
 # Run backend tests
 cd backend
 python -m pytest
 
-# Run frontend tests
-cd ../frontend/web
+# Run web frontend tests (Playwright)
+cd ../frontend
 npm test
 
-cd ../mobile
-npm test
+# Run mobile tests
+cd ../mobile_flutter
+flutter test
 ```
 
 ### 6. Commit and Push
@@ -122,13 +142,15 @@ For new features, please:
 - `utils/` - Utility functions
 
 ### Frontend (`/frontend`)
-- `mobile/` - React Native mobile app
-- `web/` - React web app
+- React 18 + Vite web app
 
-### Testing (`/tests`)
-- `backend/` - Backend test suites
-- `frontend/` - Frontend test suites
-- `integration/` - Integration tests
+### Mobile (`/mobile_flutter`)
+- Flutter 3 / Dart 3 mobile app
+
+### Testing
+- `/backend/tests` — pytest suites for the Django backend
+- `/frontend/tests` — Playwright end-to-end tests for the web app
+- `/mobile_flutter/test` — Dart widget/unit tests
 
 ## 🔧 Setting Up for Development
 
@@ -145,13 +167,14 @@ For new features, please:
    # Backend
    cd backend
    pip install -r requirements.txt
-   
-   # Frontend
-   cd ../frontend/web
+
+   # Web frontend
+   cd ../frontend
    npm install
-   
-   cd ../mobile
-   npm install
+
+   # Mobile app
+   cd ../mobile_flutter
+   flutter pub get
    ```
 3. Set up environment variables (see `.env.example`)
 4. Run database migrations
@@ -160,9 +183,9 @@ For new features, please:
 ## 🤖 AI Development Guidelines
 
 ### Agent Development
-- Follow the existing agent patterns
-- Use LangChain for orchestration
-- Implement proper error handling
+- Follow the existing agent patterns in `backend/agents/services.py`
+- Call Mistral via `backend/ritha/services/mistral_client.py`
+- Implement proper error handling and stub fallbacks for missing API keys
 - Add logging for debugging
 
 ### Model Integration
@@ -189,7 +212,7 @@ For new features, please:
 
 - **Discussions**: Use GitHub Discussions for questions
 - **Issues**: Report bugs and feature requests
-- **Email**: dev@ritha.com
+- **Email**: dev@getritha.com
 - **Slack**: Join our developer community
 
 ## 🙏 Code of Conduct

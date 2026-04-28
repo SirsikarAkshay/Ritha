@@ -1,6 +1,6 @@
-# Garbglobe — Implemented Features
+# Ritha — Implemented Features
 
-A complete inventory of features currently implemented in the Garbglobe travel guide application. Backend is Django + DRF + Channels (with a small FastAPI `app/` side module); frontend is React + Vite.
+A complete inventory of features currently implemented in Ritha. Backend is Django + DRF + Channels; web frontend is React + Vite; mobile is Flutter.
 
 ---
 
