@@ -19,6 +19,84 @@ def _today_str() -> str:
     return datetime.date.today().isoformat()
 
 
+# ── Outfit reasoning ──────────────────────────────────────────────────────────
+# Produces a list of one-line "why" bullets that explain a recommendation.
+# Runs *after* item selection so it works for both Mistral- and stub-picked
+# outfits. The frontend can render these in a "Why this outfit?" panel.
+#
+# Each reasoning entry is a dict so the UI can group / icon by type:
+#   {"type": "weather"|"calendar"|"formality"|"wear_balance"|"culture", "text": "..."}
+#
+# Bullets are deterministic — same inputs produce the same explanation. No LLM
+# call here; that would defeat the cost win from §1.5.
+
+def _explain_outfit(picks_ids: list, wardrobe: list, weather: dict | None,
+                    events: list, required_formality: str) -> list[dict]:
+    if not picks_ids:
+        return []
+
+    by_id = {w['id']: w for w in (wardrobe or [])}
+    chosen = [by_id[i] for i in picks_ids if i in by_id]
+    if not chosen:
+        return []
+
+    bullets: list[dict] = []
+    weather = weather or {}
+
+    # ── Weather rationale ─────────────────────────────────────────────────────
+    temp = weather.get('temperature_c')
+    if weather.get('is_raining'):
+        bullets.append({'type': 'weather',
+                        'text': f"Rain expected — picked layers you can shed indoors."})
+    elif weather.get('is_cold'):
+        if temp is not None:
+            bullets.append({'type': 'weather',
+                            'text': f"Cold day ({round(temp)}°C) — chose warmer fabrics and outerwear."})
+        else:
+            bullets.append({'type': 'weather',
+                            'text': "Cold day — chose warmer fabrics and outerwear."})
+    elif weather.get('is_hot'):
+        if temp is not None:
+            bullets.append({'type': 'weather',
+                            'text': f"Warm day ({round(temp)}°C) — kept it light and breathable."})
+        else:
+            bullets.append({'type': 'weather',
+                            'text': "Warm day — kept it light and breathable."})
+
+    # ── Calendar / formality rationale ───────────────────────────────────────
+    formal_event = next(
+        (e for e in (events or []) if (e.get('formality') or '') in ('formal', 'smart', 'casual_smart')),
+        None,
+    )
+    if formal_event and required_formality in ('formal', 'smart', 'casual_smart'):
+        title = (formal_event.get('title') or 'a meeting').strip()
+        bullets.append({'type': 'calendar',
+                        'text': f"\"{title}\" on your calendar — chose pieces that read {required_formality.replace('_', ' ')}."})
+    elif required_formality and required_formality != 'casual':
+        bullets.append({'type': 'formality',
+                        'text': f"Today's plan calls for {required_formality.replace('_', ' ')} — selected accordingly."})
+
+    # ── Wear-balance rationale ───────────────────────────────────────────────
+    # Surface the least-worn item among the picks. Reactivates dormant wardrobe.
+    with_counts = [c for c in chosen if c.get('times_worn') is not None]
+    if with_counts:
+        least = min(with_counts, key=lambda c: c.get('times_worn') or 0)
+        worn = least.get('times_worn') or 0
+        if worn <= 2:
+            name = least.get('name') or least.get('category', 'this item')
+            bullets.append({'type': 'wear_balance',
+                            'text': f"Featured your {name} — you've only worn it {worn}× recently."})
+
+    # ── Wardrobe completeness ────────────────────────────────────────────────
+    cats = {c.get('category') for c in chosen}
+    has_outerwear = 'outerwear' in cats
+    if (weather.get('is_cold') or weather.get('is_raining')) and not has_outerwear:
+        bullets.append({'type': 'weather',
+                        'text': "No outerwear in your wardrobe matched today — consider adding a jacket."})
+
+    return bullets
+
+
 def _get_weather(input_data: dict) -> dict:
     """
     Return a WeatherSnapshot.
@@ -47,7 +125,168 @@ def _get_weather(input_data: dict) -> dict:
 def _wardrobe_for_user(user):
     from wardrobe.models import ClothingItem
     return list(ClothingItem.objects.filter(user=user, is_active=True).values(
-        'id', 'name', 'category', 'formality', 'season', 'colors', 'tags', 'weight_grams'))
+        'id', 'name', 'category', 'formality', 'season', 'colors', 'tags',
+        'weight_grams', 'times_worn', 'last_worn',
+    ))
+
+
+# ── Recency penalty (§1.1) ────────────────────────────────────────────────────
+# Items worn very recently get a sliding score penalty so the recommender stops
+# suggesting the same outfit two days running. The penalty is multiplicative on
+# the item's selection score (1.0 = no change, 0.0 = exclude).
+
+_RECENCY_PENALTY_DAYS = {0: 0.15, 1: 0.30, 2: 0.55, 3: 0.80}
+_RECENCY_DEFAULT      = 1.00   # 4+ days ago → no penalty
+
+
+def _recency_factor(item: dict, today: datetime.date | None = None) -> float:
+    last = item.get('last_worn')
+    if not last:
+        return _RECENCY_DEFAULT
+    today = today or datetime.date.today()
+    if isinstance(last, str):
+        try:
+            last = datetime.date.fromisoformat(last)
+        except ValueError:
+            return _RECENCY_DEFAULT
+    delta = (today - last).days
+    if delta < 0:
+        return _RECENCY_DEFAULT
+    return _RECENCY_PENALTY_DAYS.get(delta, _RECENCY_DEFAULT)
+
+
+def _wear_balance_factor(item: dict, wardrobe: list[dict]) -> float:
+    """Boost items worn ≤2× recently. Reactivates dormant wardrobe items."""
+    worn = item.get('times_worn') or 0
+    if worn <= 2:
+        return 1.15
+    if worn <= 5:
+        return 1.05
+    return 1.00
+
+
+def _recently_worn_ids(wardrobe: list[dict], days: int = 3, today: datetime.date | None = None) -> list[int]:
+    today = today or datetime.date.today()
+    out = []
+    for item in wardrobe:
+        last = item.get('last_worn')
+        if not last:
+            continue
+        if isinstance(last, str):
+            try:
+                last = datetime.date.fromisoformat(last)
+            except ValueError:
+                continue
+        if (today - last).days < days:
+            out.append(item['id'])
+    return out
+
+
+# ── Multi-context day solver (§1.5) ──────────────────────────────────────────
+# When the day's calendar spans multiple distinct formality buckets (gym at 6,
+# office at 10, dinner at 7), a single base outfit cannot cover all contexts.
+# This builder produces a list of `transitions` — small, actionable swaps the
+# user can do mid-day without re-dressing entirely.
+#
+# The output is intentionally minimal: each transition names a time, a swap
+# (item to put on / take off), and the formality target it satisfies. The
+# frontend renders this as a timeline below the base outfit.
+
+_FORMALITY_RANK_INTERNAL = {
+    'activewear':   0,
+    'casual':       1,
+    'casual_smart': 2,
+    'smart':        3,
+    'formal':       4,
+}
+
+# Two formalities are "distinct" if their rank differs by ≥2 (e.g. activewear
+# vs. smart). Rank-1 differences (smart vs. formal, casual vs. casual_smart)
+# are usually handleable with the same outfit + minor accessory swap, not a
+# full transition.
+_TRANSITION_THRESHOLD = 2
+
+
+def _build_outfit_transitions(events: list[dict], wardrobe: list[dict],
+                              weather: dict | None) -> list[dict]:
+    if not events:
+        return []
+
+    # Sort events chronologically and bucket by formality.
+    def _start(e):
+        return e.get('start_time') or ''
+
+    events_sorted = sorted(events, key=_start)
+
+    formalities_present = {e.get('formality') or 'casual' for e in events_sorted}
+    if len(formalities_present) < 2:
+        return []
+
+    ranks = [_FORMALITY_RANK_INTERNAL.get(f, 1) for f in formalities_present]
+    if (max(ranks) - min(ranks)) < _TRANSITION_THRESHOLD:
+        return []
+
+    # Index wardrobe by category for swap lookups.
+    by_category: dict[str, list[dict]] = {}
+    for item in wardrobe:
+        by_category.setdefault(item.get('category'), []).append(item)
+
+    def _best_for(formality: str, category: str) -> dict | None:
+        pool = by_category.get(category, [])
+        if not pool:
+            return None
+        # Prefer exact formality match, then nearest formality.
+        target_rank = _FORMALITY_RANK_INTERNAL.get(formality, 1)
+        ranked = sorted(pool, key=lambda i: (
+            0 if (i.get('formality') == formality) else 1,
+            abs(_FORMALITY_RANK_INTERNAL.get(i.get('formality'), 1) - target_rank),
+            -1 * _wear_balance_factor(i, wardrobe),  # tie-break: under-worn first
+        ))
+        return ranked[0]
+
+    transitions: list[dict] = []
+    seen_formalities: set[str] = set()
+    for ev in events_sorted:
+        formality = ev.get('formality') or 'casual'
+        if formality in seen_formalities:
+            continue
+        seen_formalities.add(formality)
+
+        # First event sets the baseline outfit; transitions are subsequent
+        # contexts that don't fit it.
+        if len(seen_formalities) == 1:
+            continue
+
+        picks: dict[str, dict] = {}
+        for cat in ('top', 'bottom', 'footwear', 'outerwear'):
+            best = _best_for(formality, cat)
+            if best:
+                picks[cat] = best
+
+        if not picks:
+            continue
+
+        when = (ev.get('start_time') or '')[11:16] or '—'
+        title = (ev.get('title') or formality.replace('_', ' ')).strip()
+
+        # Build a human-readable swap description.
+        swap_parts = []
+        for cat, item in picks.items():
+            swap_parts.append(f"{cat}: {item.get('name', cat)}")
+
+        transitions.append({
+            'time':                when,
+            'event_title':         title,
+            'target_formality':    formality,
+            'formalities_covered': [formality],
+            'swap_to':              [
+                {'category': cat, 'item_id': item['id'], 'item_name': item.get('name', cat)}
+                for cat, item in picks.items()
+            ],
+            'description':         f"At {when} for \"{title}\": switch to {', '.join(swap_parts)}",
+        })
+
+    return transitions
 
 
 def _today_events(user):
@@ -92,10 +331,14 @@ def run_daily_look(user, input_data: dict) -> dict:
     event_objs = CalendarEvent.objects.filter(user=user, start_time__date=today)
     required_formality = dominant_formality(list(event_objs))
 
+    # §2.1 — load the user's learned style profile (None if not yet built).
+    from outfits.style_profile import get_or_empty as _get_style_profile
+    style_profile = _get_style_profile(user)
+
     if _has_mistral():
         output = _daily_look_mistral(user, wardrobe, events, weather, required_formality)
     else:
-        output = _daily_look_stub(wardrobe, weather, required_formality)
+        output = _daily_look_stub(wardrobe, weather, required_formality, style_profile=style_profile)
 
     # Persist OutfitRecommendation
     rec, _created = OutfitRecommendation.objects.get_or_create(
@@ -119,37 +362,99 @@ def run_daily_look(user, input_data: dict) -> dict:
             OutfitItem(outfit=rec, clothing_item=item, role='main') for item in items
         ])
 
-    output['recommendation_id'] = rec.id
-    output['required_formality'] = required_formality
-    output['weather']            = weather
+    output['recommendation_id']   = rec.id
+    output['required_formality']  = required_formality
+    output['weather']             = weather
+    output['reasoning']           = _explain_outfit(
+        item_ids, wardrobe, weather, events, required_formality,
+    )
+    output['outfit_transitions']  = _build_outfit_transitions(events, wardrobe, weather)
     return output
 
 
-def _daily_look_stub(wardrobe, weather, required_formality) -> dict:
-    """Pick best-matching items without calling OpenAI."""
-    is_cold   = weather.get('is_cold', False)
-    is_hot    = weather.get('is_hot', False)
+def _daily_look_stub(wardrobe, weather, required_formality, style_profile=None) -> dict:
+    """Pick best-matching items deterministically (no LLM call).
+
+    Scoring layers (each multiplies the item's score):
+        - formality match            (1.5 if exact, 0.6 otherwise)
+        - season match               (1.3 if seasonal or 'all', 0.5 otherwise)
+        - recency penalty (§1.1)     — items worn in last 3 days down-ranked
+        - wear-balance boost (§1.2)  — under-worn items lifted slightly
+        - per-user style profile (§2.1) — category-pair / item-pair / color
+          biases applied during slot selection
+    """
+    is_cold    = weather.get('is_cold', False)
+    is_hot     = weather.get('is_hot', False)
     is_raining = weather.get('is_raining', False)
 
     season_hint = 'winter' if is_cold else ('summer' if is_hot else 'all')
+    today = datetime.date.today()
 
-    # Filter by formality match
-    matched = [i for i in wardrobe if i['formality'] == required_formality]
-    if not matched:
-        matched = wardrobe  # fall back to full wardrobe
+    def _score(item):
+        s = 1.0
+        s *= 1.5 if item.get('formality') == required_formality else 0.6
+        s *= 1.3 if item.get('season') in (season_hint, 'all') else 0.5
+        s *= _recency_factor(item, today)
+        s *= _wear_balance_factor(item, wardrobe)
+        return s
 
-    # Prefer season-appropriate items
-    seasonal = [i for i in matched if i['season'] in (season_hint, 'all')]
-    pool = seasonal or matched
+    # Score every item, then assemble an outfit by category slots so the
+    # core (top + bottom + footwear OR dress + footwear) is always covered
+    # before secondary slots (outerwear, activewear, accessory) compete.
+    scored = sorted(wardrobe, key=_score, reverse=True)
 
-    # Pick up to 3 items across categories
-    seen_cats, picks = set(), []
-    for item in pool:
-        if item['category'] not in seen_cats:
+    # Profile biases (§2.1) are applied per-slot, not in the base score,
+    # so they only kick in once we know what's already been picked.
+    _apply_profile = None
+    if style_profile is not None:
+        from outfits.style_profile import apply_to_score as _apply_profile
+
+    def _slot_score(it, current_picks):
+        s = _score(it)
+        if _apply_profile and current_picks:
+            s = _apply_profile(s, it, current_picks, style_profile)
+        return s
+
+    def _best_in(current_picks, *categories) -> dict | None:
+        ranked = sorted(
+            (it for it in scored if it.get('category') in categories),
+            key=lambda it: _slot_score(it, current_picks),
+            reverse=True,
+        )
+        for it in ranked:
+            if _slot_score(it, current_picks) >= 0.15:
+                return it
+        return ranked[0] if ranked else None
+
+    picks: list[dict] = []
+    seen_ids: set = set()
+
+    def _add(item):
+        if item and item['id'] not in seen_ids:
             picks.append(item)
-            seen_cats.add(item['category'])
-        if len(picks) == 3:
-            break
+            seen_ids.add(item['id'])
+
+    # Prefer a dress over top+bottom when one fits the day's formality/weather.
+    dress = _best_in(picks, 'dress')
+    if dress and _score(dress) >= 1.5:   # only if it's a strong fit
+        _add(dress)
+    else:
+        _add(_best_in(picks, 'top'))
+        _add(_best_in(picks, 'bottom'))
+
+    _add(_best_in(picks, 'footwear'))
+
+    # Cold / wet day → outerwear is part of the core outfit, not a bonus.
+    if (is_cold or is_raining) and len(picks) < 4:
+        _add(_best_in(picks, 'outerwear'))
+
+    # If the day's events specifically need an extra (e.g. activewear for a
+    # gym block), the multi-context transitions builder handles it. Don't
+    # double up here.
+
+    # Final fallback: tiny wardrobe couldn't fill core slots → take whatever.
+    if not picks:
+        picks = scored[:3]
 
     notes = f"Outfit for a {required_formality} day"
     if is_cold:
@@ -168,20 +473,27 @@ def _daily_look_stub(wardrobe, weather, required_formality) -> dict:
 
 def _daily_look_mistral(user, wardrobe, events, weather, required_formality) -> dict:
     from ritha.services.mistral_client import chat_json
+    avoid_ids = _recently_worn_ids(wardrobe, days=3)
+    underworn_ids = [i['id'] for i in wardrobe if (i.get('times_worn') or 0) <= 2]
+
     prompt = f"""You are Ritha, a personal AI stylist. Given the user's wardrobe and today's
 calendar + weather, recommend the best outfit.
 
-Date       : {_today_str()}
-Weather    : {weather}
-Formality  : {required_formality}
-Calendar   : {events}
-Wardrobe   : {wardrobe}
+Date           : {_today_str()}
+Weather        : {weather}
+Formality      : {required_formality}
+Calendar       : {events}
+Wardrobe       : {wardrobe}
+Recently worn  : {avoid_ids}    # avoid these — user wore them in the last 3 days
+Under-worn     : {underworn_ids}    # prefer these when otherwise tied — they need rotation
 
 Rules:
 - Only use item IDs from the wardrobe list above
 - Pick 2-4 items across different categories (top, bottom, outerwear, footwear)
 - Prefer season-appropriate, weather-appropriate items
 - Match the required formality level
+- AVOID items in `Recently worn` unless no alternative exists in the right category
+- When two items would both work, prefer ones in `Under-worn`
 - Give a concise, friendly explanation (max 2 sentences)
 
 Return JSON: {{"item_ids": [1, 2, 3], "notes": "...", "layer_swap": "optional tip"}}"""
