@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:862960610034:android:7e3b8f2dc46025544efe6b",
+        "mobilesdk_app_id": "1:862960610034:android:04c54850358921e44efe6b",
         "android_client_info": {
-          "package_name": "com.arokah.arokah_mobile"
+          "package_name": "com.ritha.app"
         }
       },
       "oauth_client": [],
