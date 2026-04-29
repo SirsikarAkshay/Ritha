@@ -301,3 +301,10 @@ backend/ml/artifacts/
 
 # Claude Code skill workspaces
 *-workspace/
+
+PROSPECT.md
+frontend/.env.development
+frontend/.env.production.example
+
+backend/.env.example
+backend/.env

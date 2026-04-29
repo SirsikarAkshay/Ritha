@@ -52,6 +52,17 @@ const CAT_ICON = {
   formal: '🤵', other: '📦',
 }
 
+// Categories with a bundled default SVG at /wardrobe-defaults/<cat>.svg.
+// Anything outside this set falls back to /wardrobe-defaults/other.svg.
+const SVG_CATEGORIES = new Set([
+  'top', 'bottom', 'dress', 'outerwear', 'footwear',
+  'accessory', 'activewear', 'formal', 'other',
+])
+
+function categoryDefaultImage(category) {
+  return `/wardrobe-defaults/${SVG_CATEGORIES.has(category) ? category : 'other'}.svg`
+}
+
 export default function OnboardingPage() {
   const navigate = useNavigate()
   const { user, reload } = useAuth()
@@ -269,10 +280,18 @@ export default function OnboardingPage() {
               return (
                 <div key={it.id} style={{ ...itemCard, ...(removed ? itemCardRemoved : {}) }}>
                   <div style={imageWrap}>
-                    {it.preview_image_url
-                      ? <img src={it.preview_image_url} alt={it.display_name} loading="lazy"
-                             style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <div style={iconFallback}>{CAT_ICON[it.category] || '📦'}</div>}
+                    <img
+                      src={it.preview_image_url || categoryDefaultImage(it.category)}
+                      alt={it.display_name}
+                      loading="lazy"
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 16 }}
+                      onError={(e) => {
+                        // Bad/dead URL — fall back to the bundled category SVG.
+                        const fallback = categoryDefaultImage(it.category)
+                        if (e.currentTarget.src.endsWith(fallback)) return
+                        e.currentTarget.src = fallback
+                      }}
+                    />
                     <button onClick={() => toggleRemove(it.id)}
                             title={removed ? 'Add back' : 'Remove'}
                             style={removeBtn}>

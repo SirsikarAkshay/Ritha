@@ -9,7 +9,6 @@ The YAML file is the single source of truth. Re-run this command after editing
 the YAML; existing rows are upserted by (region_cluster, gender, subcategory).
 """
 from pathlib import Path
-from urllib.parse import quote_plus
 
 import yaml
 from django.core.management.base import BaseCommand
@@ -20,13 +19,24 @@ from wardrobe.models import RegionCluster, StarterPackItem
 
 DATA_PATH = Path(__file__).resolve().parents[2] / 'data' / 'starter_packs.yaml'
 
+# ClothingItem.CATEGORY_CHOICES values that have a matching default SVG bundled
+# at frontend/public/wardrobe-defaults/<category>.svg. Categories outside this
+# set fall back to 'other.svg'.
+_CATEGORY_SVG_AVAILABLE = {
+    'top', 'bottom', 'dress', 'outerwear', 'footwear',
+    'accessory', 'activewear', 'formal', 'other',
+}
 
-def unsplash_url(keywords: str) -> str:
-    """Phase 1 placeholder: Unsplash Source returns a random matching photo.
-    Replace with curated CDN URLs in Phase 2 via this same field."""
-    if not keywords:
-        return ''
-    return f'https://source.unsplash.com/400x400/?{quote_plus(keywords)}'
+
+def category_default_image(category: str) -> str:
+    """Return the path to the bundled default SVG for a given category.
+
+    The SVGs live under frontend/public/wardrobe-defaults/ and are served from
+    the SPA origin, so the URL is path-relative (no scheme/host). This avoids
+    any external CDN dependency.
+    """
+    cat = category if category in _CATEGORY_SVG_AVAILABLE else 'other'
+    return f'/wardrobe-defaults/{cat}.svg'
 
 
 class Command(BaseCommand):
@@ -94,7 +104,7 @@ class Command(BaseCommand):
                 'is_default':       it.get('is_default', True),
                 'is_opt_in':        it.get('is_opt_in', False),
                 'opt_in_group':     it.get('opt_in_group', ''),
-                'preview_image_url': unsplash_url(it.get('image_keywords', '')),
+                'preview_image_url': category_default_image(it['category']),
                 'sort_order':       it.get('sort_order', 0),
             }
 

@@ -2,7 +2,9 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.jsx'
+import { useTheme } from '../hooks/useTheme.jsx'
 import { auth as authApi } from '../api/index.js'
+import Logo from '../components/Logo.jsx'
 
 export default function LoginPage() {
   const [mode,     setMode]     = useState('login')   // 'login' | 'register'
@@ -13,6 +15,7 @@ export default function LoginPage() {
   const [loading,  setLoading]  = useState(false)
 
   const { login } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const navigate  = useNavigate()
 
   const submit = async (e) => {
@@ -50,7 +53,36 @@ export default function LoginPage() {
       display: 'grid',
       gridTemplateColumns: '1fr 1fr',
       background: 'var(--midnight)',
+      position: 'relative',
     }}>
+      {/* Theme toggle — fixed top-right of the login screen */}
+      <button
+        type="button"
+        onClick={toggleTheme}
+        aria-label="Toggle theme"
+        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        style={{
+          position: 'absolute',
+          top: '24px',
+          right: '24px',
+          zIndex: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 14px',
+          borderRadius: '999px',
+          background: 'var(--surface-2)',
+          border: '1px solid var(--border)',
+          color: 'var(--cream)',
+          cursor: 'pointer',
+          fontSize: '0.85rem',
+          letterSpacing: '0.02em',
+        }}
+      >
+        <span style={{ fontSize: '1rem', lineHeight: 1 }}>{theme === 'dark' ? '☾' : '☀'}</span>
+        <span>{theme === 'dark' ? 'Dark' : 'Light'}</span>
+      </button>
+
       {/* Left — branding panel */}
       <div style={{
         background: 'var(--surface-1)',
@@ -61,10 +93,8 @@ export default function LoginPage() {
         padding: '48px',
       }}>
         <div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', color: 'var(--cream)', letterSpacing: '-0.02em' }}>
-            Ritha
-          </div>
-          <div style={{ fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--terra)', marginTop: '4px' }}>
+          <Logo style={{ height: '140px', width: 'auto', display: 'block' }} />
+          <div style={{ fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--terra)', marginTop: '8px' }}>
             Your wardrobe assistant
           </div>
         </div>
