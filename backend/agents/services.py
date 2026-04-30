@@ -31,7 +31,8 @@ def _today_str() -> str:
 # call here; that would defeat the cost win from §1.5.
 
 def _explain_outfit(picks_ids: list, wardrobe: list, weather: dict | None,
-                    events: list, required_formality: str) -> list[dict]:
+                    events: list, required_formality: str,
+                    trip: dict | None = None) -> list[dict]:
     if not picks_ids:
         return []
 
@@ -42,6 +43,12 @@ def _explain_outfit(picks_ids: list, wardrobe: list, weather: dict | None,
 
     bullets: list[dict] = []
     weather = weather or {}
+
+    # ── Trip context (highest-priority bullet) ───────────────────────────────
+    if trip:
+        dest = trip.get('destination') or trip.get('name') or 'your trip'
+        bullets.append({'type': 'trip',
+                        'text': f"You're traveling — pulled this outfit from your saved plan for {dest}."})
 
     # ── Weather rationale ─────────────────────────────────────────────────────
     temp = weather.get('temperature_c')
@@ -298,9 +305,43 @@ def _today_events(user):
 
 # ── Daily Look ────────────────────────────────────────────────────────────────
 
+def _active_trip_day_plan(user, target_date: datetime.date):
+    """If `target_date` falls inside an active trip with a saved recommendation,
+    return (trip, day_plan_dict). Otherwise (None, None).
+
+    A "day plan" is the per-day entry inside Trip.saved_recommendation['day_plans']
+    produced by run_outfit_planner. If the trip exists but has no matching day
+    in its plan (e.g. plan was generated before dates were extended), we still
+    return the trip with a None day_plan so the caller can include trip context
+    in the response without forcing the items.
+
+    Multiple overlapping trips are unusual but possible (e.g. a long trip with
+    a side trip): the trip with the latest start_date wins so the more-specific
+    plan takes priority.
+    """
+    from itinerary.models import Trip
+    trips = (Trip.objects
+             .filter(user=user, start_date__lte=target_date, end_date__gte=target_date)
+             .exclude(saved_recommendation__isnull=True)
+             .order_by('-start_date'))
+    for trip in trips:
+        rec = trip.saved_recommendation or {}
+        for plan in (rec.get('day_plans') or []):
+            if plan.get('date') == target_date.isoformat():
+                return trip, plan
+        # Trip exists but no exact day match — surface the trip anyway so the
+        # daily-look output can show "you're on a trip" context.
+        return trip, None
+    return None, None
+
+
 def run_daily_look(user, input_data: dict) -> dict:
     """
     Generate today's outfit and persist an OutfitRecommendation record.
+
+    Trip override: if `today` falls inside a saved trip plan, the items from
+    that trip's day plan win over the wardrobe-based algorithm. The dashboard
+    can then show "From your Paris trip" instead of a generic daily look.
     """
     from outfits.models import OutfitRecommendation, OutfitItem
     from wardrobe.models import ClothingItem
@@ -331,26 +372,77 @@ def run_daily_look(user, input_data: dict) -> dict:
     event_objs = CalendarEvent.objects.filter(user=user, start_time__date=today)
     required_formality = dominant_formality(list(event_objs))
 
-    # §2.1 — load the user's learned style profile (None if not yet built).
-    from outfits.style_profile import get_or_empty as _get_style_profile
-    style_profile = _get_style_profile(user)
+    # ── Trip override ────────────────────────────────────────────────────────
+    # If today is inside an active trip with a saved day plan, use that plan's
+    # items as the daily look. Drop items the user has since deleted from
+    # wardrobe so a stale plan doesn't surface ghost item IDs.
+    trip, day_plan = _active_trip_day_plan(user, today)
+    output = None
+    rec_source = 'daily'
+    rec_trip = None
 
-    if _has_mistral():
-        output = _daily_look_mistral(user, wardrobe, events, weather, required_formality)
-    else:
-        output = _daily_look_stub(wardrobe, weather, required_formality, style_profile=style_profile)
+    if trip and day_plan:
+        plan_ids = list(day_plan.get('item_ids') or [])
+        if plan_ids:
+            valid_ids = list(
+                ClothingItem.objects.filter(id__in=plan_ids, user=user, is_active=True)
+                .values_list('id', flat=True)
+            )
+            if valid_ids:
+                day_label = day_plan.get('day') or '?'
+                notes = (
+                    f"From your trip to {trip.destination or trip.name} "
+                    f"(day {day_label} of {(trip.end_date - trip.start_date).days + 1})."
+                )
+                if day_plan.get('notes'):
+                    notes = f"{notes} {day_plan['notes']}"
+                output = {
+                    'status':       'trip',
+                    'item_ids':     valid_ids,
+                    'notes':        notes,
+                    'trip_id':      trip.id,
+                    'trip_name':    trip.name,
+                    'destination':  trip.destination,
+                }
+                rec_source = 'trip'
+                rec_trip = trip
 
-    # Persist OutfitRecommendation
+    # ── Standard daily-look path ─────────────────────────────────────────────
+    if output is None:
+        # §2.1 — load the user's learned style profile (None if not yet built).
+        from outfits.style_profile import get_or_empty as _get_style_profile
+        style_profile = _get_style_profile(user)
+
+        if _has_mistral():
+            output = _daily_look_mistral(user, wardrobe, events, weather, required_formality)
+        else:
+            output = _daily_look_stub(wardrobe, weather, required_formality, style_profile=style_profile)
+
+        # If a trip exists for today but had no day-plan match, surface it
+        # as context so the dashboard can show "you're on a trip" without
+        # overriding the recommendation.
+        if trip is not None:
+            output['trip_id']     = trip.id
+            output['trip_name']   = trip.name
+            output['destination'] = trip.destination
+
+    # Persist OutfitRecommendation. (date, source) is the natural key — a user
+    # could have BOTH a 'daily' and a 'trip' record for the same day if they
+    # generate the daily look before AND after saving a trip recommendation,
+    # so we look up by both fields not just by date.
     rec, _created = OutfitRecommendation.objects.get_or_create(
-        user=user, date=today, source='daily',
+        user=user, date=today, source=rec_source,
         defaults={
             'notes':            output.get('notes', ''),
             'weather_snapshot': weather,
+            'trip':             rec_trip,
         }
     )
     if not _created:
         rec.notes            = output.get('notes', '')
         rec.weather_snapshot = weather
+        if rec.trip_id != (rec_trip.id if rec_trip else None):
+            rec.trip = rec_trip
         rec.save()
 
     # Attach clothing items
@@ -363,10 +455,12 @@ def run_daily_look(user, input_data: dict) -> dict:
         ])
 
     output['recommendation_id']   = rec.id
+    output['source']              = rec_source
     output['required_formality']  = required_formality
     output['weather']             = weather
     output['reasoning']           = _explain_outfit(
         item_ids, wardrobe, weather, events, required_formality,
+        trip={'destination': trip.destination, 'name': trip.name} if trip else None,
     )
     output['outfit_transitions']  = _build_outfit_transitions(events, wardrobe, weather)
     return output

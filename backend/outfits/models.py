@@ -74,7 +74,12 @@ class UserStyleProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='style_profile',
+        # NOTE: NOT 'style_profile' — User already has a JSONField named
+        # `style_profile` (free-form preferences set by signals.py and
+        # wardrobe/views.py). Using the same related_name made Django
+        # try to assign the JSONField's default `{}` through the reverse
+        # one-to-one descriptor at startup and crash check_user_model.
+        related_name='learned_style',
     )
     category_pair_weights  = models.JSONField(default=dict, blank=True)
     item_pair_negatives    = models.JSONField(default=list, blank=True)

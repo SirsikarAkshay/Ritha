@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('feedback_count',         models.PositiveIntegerField(default=0)),
                 ('last_rebuilt',           models.DateTimeField(blank=True, null=True)),
                 ('user', models.OneToOneField(on_delete=models.deletion.CASCADE,
-                                              related_name='style_profile',
+                                              related_name='learned_style',
                                               to=settings.AUTH_USER_MODEL)),
             ],
         ),

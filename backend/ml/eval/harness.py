@@ -140,6 +140,19 @@ def score_outfit(picks: list[dict], expected: dict, full_outfit: dict | None = N
         if ok:
             soft_passed += 1
 
+    # ── Trip-day override: must_include_item_ids / must_exclude_item_ids ─────
+    pick_ids = {p.get('id') for p in picks}
+    for required_id in expected.get('must_include_item_ids', []):
+        ok = required_id in pick_ids
+        rubric[f'must_include_item_id:{required_id}'] = ok
+        if not ok:
+            failures.append(f"missing required item id {required_id} (got {sorted(pick_ids)})")
+    for forbidden_id in expected.get('must_exclude_item_ids', []):
+        ok = forbidden_id not in pick_ids
+        rubric[f'must_exclude_item_id:{forbidden_id}'] = ok
+        if not ok:
+            failures.append(f"forbidden item id {forbidden_id} was picked")
+
     # ── §3.3 cultural hard filter: forbidden tagged items ────────────────────
     forbidden_tags = expected.get('forbid_tagged_items') or []
     if forbidden_tags:

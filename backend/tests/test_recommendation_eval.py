@@ -54,7 +54,19 @@ def test_persona_recommendation(persona):
         hf = _cultural_hard_filters({'rules': cultural_rules})
         wardrobe = [w for w in wardrobe if _wardrobe_passes_cultural_filter(w, hf)]
 
-    output = _daily_look_stub(wardrobe, persona.weather, required_formality)
+    # Trip override: emulate run_daily_look's trip-day-plan branch. Real path
+    # reads Trip.saved_recommendation from the DB; the eval injects the plan
+    # directly so this can run pure-function.
+    trip_plan = persona.expected.get('__trip_day_plan')
+    if trip_plan:
+        output = {
+            'status':      'trip',
+            'item_ids':    list(trip_plan['item_ids']),
+            'notes':       f"From your trip to {trip_plan.get('destination', 'destination')}.",
+            'destination': trip_plan.get('destination'),
+        }
+    else:
+        output = _daily_look_stub(wardrobe, persona.weather, required_formality)
 
     # Tier 1.5: multi-context personas exercise the transitions builder.
     if persona.expected.get('must_have_transitions'):
@@ -86,7 +98,12 @@ def test_eval_summary(capsys):
     score_sum = 0.0
     for persona in personas:
         rf = _persona_required_formality(persona)
-        out = _daily_look_stub(persona.wardrobe, persona.weather, rf)
+        trip_plan = persona.expected.get('__trip_day_plan')
+        if trip_plan:
+            out = {'status': 'trip', 'item_ids': list(trip_plan['item_ids']),
+                   'notes': '', 'destination': trip_plan.get('destination')}
+        else:
+            out = _daily_look_stub(persona.wardrobe, persona.weather, rf)
         if persona.expected.get('must_have_transitions'):
             out['outfit_transitions'] = _build_outfit_transitions(
                 persona.events, persona.wardrobe, persona.weather,

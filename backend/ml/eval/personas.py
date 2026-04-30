@@ -249,6 +249,45 @@ def modest_dress_required() -> Persona:
     )
 
 
+def trip_day_overrides_daily() -> Persona:
+    """User is mid-trip; saved trip plan must override the wardrobe-based daily look.
+
+    The persona's wardrobe contains items the daily-look stub would naturally
+    pick (sneakers + jeans + tee) AND items the trip plan saved (linen shirt
+    + chinos + loafers). The expected outcome: the trip's items appear, not
+    the wardrobe-default ones.
+    """
+    wardrobe = [
+        # Items that would win the wardrobe-only path
+        _item(1, 'Cotton T-shirt',  'top',     formality='casual', season='all', colors=['white'],   times_worn=10),
+        _item(2, 'Indigo jeans',    'bottom',  formality='casual', season='all', colors=['indigo'],  times_worn=8),
+        _item(3, 'White sneakers',  'footwear', formality='casual', season='all', colors=['white'],  times_worn=15),
+        # Items the trip plan picked
+        _item(4, 'Linen shirt',     'top',     formality='casual_smart', season='summer', colors=['cream']),
+        _item(5, 'Beige chinos',    'bottom',  formality='casual_smart', season='all',    colors=['beige']),
+        _item(6, 'Brown loafers',   'footwear', formality='smart',  season='all',    colors=['brown']),
+    ]
+    return Persona(
+        name='trip_day_overrides_daily',
+        description='Mid-trip — saved plan items must surface, not generic daily-look picks',
+        wardrobe=wardrobe,
+        events=[],
+        weather={'temperature_c': 24, 'is_cold': False, 'is_hot': False, 'is_raining': False, 'condition': 'clear'},
+        expected={
+            # Items 4, 5, 6 must appear; 1, 2, 3 must NOT.
+            'must_include_item_ids': [4, 5, 6],
+            'must_exclude_item_ids': [1, 2, 3],
+            # Synthetic trip plan consumed by the test runner.
+            '__trip_day_plan': {
+                'destination': 'Lisbon',
+                'day':         2,
+                'item_ids':    [4, 5, 6],
+                'notes':       'Day 2: city walk + dinner.',
+            },
+        },
+    )
+
+
 def all_personas() -> list[Persona]:
     return [
         cold_business_day(),
@@ -257,4 +296,5 @@ def all_personas() -> list[Persona]:
         formal_wedding(),
         mixed_context_day(),
         modest_dress_required(),
+        trip_day_overrides_daily(),
     ]
