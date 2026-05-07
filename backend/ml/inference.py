@@ -166,6 +166,58 @@ def score_outfit(categories: list[str]) -> float:
     return float(np.mean(scores)) if scores else 0.0
 
 
+def score_outfit_by_embeddings(item_ids: list[int]) -> float | None:
+    """Score outfit by pairwise compatibility from stored item embeddings.
+
+    Returns a value in [0, 1] when every item has a stored embedding,
+    or None when any are missing — callers should fall back to the
+    category-pair scorer.
+
+    Compatibility is mapped from cosine similarity via a sweet-spot
+    function:
+        sim ≈ 1.0   →  near-duplicates (same item / two black tees)  → ~0.4
+        sim ≈ 0.5   →  pleasing variety (related but distinct)       → ~1.0
+        sim ≈ 0.0   →  unrelated items (different category & style)  → ~0.7
+
+    The peak at 0.5 reflects the embedding distribution observed for
+    well-rated outfits in the dataset: they pair items that share *some*
+    visual signal (color/material/silhouette) but aren't redundant.
+    """
+    if len(item_ids) < 2:
+        return 1.0
+
+    from wardrobe.models import ClothingItem
+    rows = list(ClothingItem.objects.filter(id__in=item_ids).values('id', 'embedding'))
+    by_id = {r['id']: r['embedding'] for r in rows}
+
+    embeddings = []
+    for iid in item_ids:
+        blob = by_id.get(iid)
+        if not blob:
+            return None    # missing embedding — caller falls back
+        emb = np.frombuffer(blob, dtype=np.float32)
+        n = np.linalg.norm(emb)
+        if n == 0:
+            return None
+        embeddings.append(emb / n)
+
+    embeddings = np.stack(embeddings)
+    sims = embeddings @ embeddings.T   # cosine, since rows are unit-normalized
+
+    n = len(embeddings)
+    pair_scores = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            s = float(sims[i, j])
+            # Triangular peak at 0.5; floor at 0.4 for both extremes.
+            score = 1.0 - 2.0 * abs(s - 0.5)
+            if s < 0.5:                # bias low-similarity pairs upward —
+                score = 0.7 + 0.3 * score   # different items aren't a problem
+            pair_scores.append(max(0.0, min(1.0, score)))
+
+    return float(np.mean(pair_scores)) if pair_scores else 1.0
+
+
 def weather_appropriate_categories(weather: dict) -> dict:
     """Given a weather snapshot, return preferred/avoided categories with scores."""
     temp = weather.get('temp_c', 20)

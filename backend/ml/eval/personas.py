@@ -288,6 +288,44 @@ def trip_day_overrides_daily() -> Persona:
     )
 
 
+def compound_cultural_rules() -> Persona:
+    """Three simultaneous required cultural rules — shoulders + knees + feet.
+
+    Wardrobe contains both compliant and non-compliant items for each rule.
+    Tests that the hard filter unions tags across rule types correctly. The
+    compliant subset (long-sleeve linen, linen trousers, closed-toe loafers)
+    is sufficient for a complete outfit.
+    """
+    cultural_rules = [
+        {'type': 'cover_shoulders', 'severity': 'required',
+         'description': 'Shoulders must be covered in religious sites.'},
+        {'type': 'cover_knees', 'severity': 'required',
+         'description': 'Knees must be covered.'},
+        {'type': 'no_bare_feet', 'severity': 'required',
+         'description': 'No open-toe footwear in temples.'},
+    ]
+    wardrobe = [
+        _item(1, 'Sleeveless tank',     'top',     formality='casual', season='summer', colors=['white'], tags=['sleeveless', 'tank']),
+        _item(2, 'Long-sleeve linen',   'top',     formality='casual_smart', season='summer', colors=['beige']),
+        _item(3, 'Cotton shorts',       'bottom',  formality='casual', season='summer', colors=['khaki'], tags=['shorts']),
+        _item(4, 'Linen trousers',      'bottom',  formality='casual_smart', season='summer', colors=['cream']),
+        _item(5, 'Open-toe sandals',    'footwear', formality='casual', season='summer', colors=['tan'], tags=['sandal']),
+        _item(6, 'Closed-toe loafers',  'footwear', formality='casual_smart', season='all', colors=['brown']),
+    ]
+    return Persona(
+        name='compound_cultural_rules',
+        description='Three stacked required cultural rules — filter must compose',
+        wardrobe=wardrobe,
+        events=[],
+        weather={'temperature_c': 26, 'is_cold': False, 'is_hot': True, 'is_raining': False, 'condition': 'sunny'},
+        expected={
+            'must_include_category': ['top', 'bottom'],
+            'forbid_tagged_items':   ['sleeveless', 'tank', 'shorts', 'sandal'],
+            '__cultural_rules':      cultural_rules,
+        },
+    )
+
+
 def all_personas() -> list[Persona]:
     return [
         cold_business_day(),
@@ -297,4 +335,120 @@ def all_personas() -> list[Persona]:
         mixed_context_day(),
         modest_dress_required(),
         trip_day_overrides_daily(),
+        compound_cultural_rules(),
+    ]
+
+
+# ── Adversarial personas ──────────────────────────────────────────────────────
+# These cases are EXPECTED to fail today. They exist to surface gaps in what
+# the recommender can communicate to the user. None of these are wrong code —
+# they are missing capabilities. As we ship gap-signaling features (e.g.
+# "you don't own anything formal enough — here's what to buy"), the
+# corresponding persona moves into `all_personas()` and starts gating CI.
+#
+# Excluded from `all_personas()` so pytest stays green; the
+# `manage.py eval_recommender` command runs them under a separate header.
+
+
+def freezing_with_summer_wardrobe() -> Persona:
+    """Adversarial — wardrobe is entirely summer items, weather is -8°C.
+
+    The engine will pick the warmest available items, but cannot satisfy
+    the warm-layer soft check because no warm layer exists. Today this
+    fails silently; the user shows up underdressed. Right behavior:
+    surface "you're unprepared for this weather" before recommending.
+    """
+    wardrobe = [
+        _item(1, 'White cotton tee', 'top',      formality='casual', season='summer', colors=['white'],  tags=['short sleeve']),
+        _item(2, 'Linen shorts',     'bottom',   formality='casual', season='summer', colors=['beige'],  tags=['shorts']),
+        _item(3, 'Flat sandals',     'footwear', formality='casual', season='summer', colors=['tan'],    tags=['sandal']),
+        _item(4, 'Tank dress',       'dress',    formality='casual', season='summer', colors=['floral'], tags=['sleeveless']),
+        _item(5, 'Linen blouse',     'top',      formality='casual_smart', season='summer', colors=['cream']),
+    ]
+    return Persona(
+        name='freezing_with_summer_wardrobe',
+        description='-8°C and snowing, but wardrobe has no winter clothing',
+        wardrobe=wardrobe,
+        events=[],
+        weather={'temperature_c': -8, 'is_cold': True, 'is_hot': False, 'is_raining': False, 'condition': 'snow'},
+        expected={
+            'must_include_category':     ['top', 'bottom'],
+            'should_include_warm_layer': True,
+        },
+    )
+
+
+def formality_floor_breach() -> Persona:
+    """Adversarial — black-tie wedding but wardrobe is casual-only.
+
+    The engine will pick the closest casual items and the user shows up
+    underdressed. The right behavior is to flag the gap before the event
+    so the user can rent or buy. Today no such signal exists.
+    """
+    wardrobe = [
+        _item(1, 'White t-shirt',   'top',       formality='casual', season='all',    colors=['white']),
+        _item(2, 'Indigo jeans',    'bottom',    formality='casual', season='all',    colors=['indigo']),
+        _item(3, 'Cotton hoodie',   'outerwear', formality='casual', season='all',    colors=['grey']),
+        _item(4, 'White sneakers',  'footwear',  formality='casual', season='all',    colors=['white']),
+        _item(5, 'Cargo shorts',    'bottom',    formality='casual', season='summer', colors=['olive']),
+    ]
+    return Persona(
+        name='formality_floor_breach',
+        description='Black-tie wedding event, wardrobe is casual-only',
+        wardrobe=wardrobe,
+        events=[{
+            'title':      'Black-tie wedding',
+            'event_type': 'wedding',
+            'formality':  'formal',
+            'start_time': '2026-04-29T17:00:00',
+            'location':   'Venue',
+        }],
+        weather={'temperature_c': 18, 'is_cold': False, 'is_hot': False, 'is_raining': False, 'condition': 'clear'},
+        expected={
+            'must_include_category':           ['top', 'bottom'],
+            'must_include_formality_at_least': 'formal',
+        },
+    )
+
+
+def cultural_filter_eliminates_wardrobe() -> Persona:
+    """Adversarial — every wardrobe item violates a required cultural rule.
+
+    After the hard filter runs, the candidate pool is empty. Today the
+    engine returns `item_ids: []` with no signaling. Right behavior:
+    surface "you cannot dress within local rules with what you own —
+    here's what to buy on arrival."
+    """
+    cultural_rules = [{
+        'type': 'modest_dress',
+        'severity': 'required',
+        'description': 'Local custom requires shoulders and knees covered.',
+    }]
+    wardrobe = [
+        _item(1, 'Sleeveless tank', 'top',      formality='casual',       season='summer', colors=['white'], tags=['sleeveless', 'tank']),
+        _item(2, 'Crop top',        'top',      formality='casual',       season='summer', colors=['black'], tags=['crop']),
+        _item(3, 'Mini skirt',      'bottom',   formality='casual',       season='summer', colors=['denim'], tags=['mini']),
+        _item(4, 'Cotton shorts',   'bottom',   formality='casual',       season='summer', colors=['khaki'], tags=['shorts']),
+        _item(5, 'Strapless dress', 'dress',    formality='casual_smart', season='summer', colors=['red'],   tags=['strapless']),
+        _item(6, 'Flip-flops',      'footwear', formality='casual',       season='summer', colors=['black'], tags=['flip-flop']),
+    ]
+    return Persona(
+        name='cultural_filter_eliminates_wardrobe',
+        description='Modest-dress destination but every owned item is non-compliant',
+        wardrobe=wardrobe,
+        events=[],
+        weather={'temperature_c': 26, 'is_cold': False, 'is_hot': True, 'is_raining': False, 'condition': 'sunny'},
+        expected={
+            'must_include_category': ['top', 'bottom'],
+            'forbid_tagged_items':   ['sleeveless', 'tank', 'crop', 'shorts', 'mini', 'strapless', 'flip-flop'],
+            '__cultural_rules':      cultural_rules,
+        },
+    )
+
+
+def adversarial_personas() -> list[Persona]:
+    return [
+        freezing_with_summer_wardrobe(),
+        formality_floor_breach(),
+        cultural_filter_eliminates_wardrobe(),
     ]

@@ -251,18 +251,21 @@ def _build_outfit_transitions(events: list[dict], wardrobe: list[dict],
         ))
         return ranked[0]
 
+    # The base outfit is built for the day's dominant (highest) formality,
+    # not the chronologically first one. Anything else needs a transition,
+    # whether it occurs before or after the dominant event.
+    base_formality = max(
+        (e.get('formality') or 'casual' for e in events_sorted),
+        key=lambda f: _FORMALITY_RANK_INTERNAL.get(f, 1),
+    )
+
     transitions: list[dict] = []
     seen_formalities: set[str] = set()
     for ev in events_sorted:
         formality = ev.get('formality') or 'casual'
-        if formality in seen_formalities:
+        if formality == base_formality or formality in seen_formalities:
             continue
         seen_formalities.add(formality)
-
-        # First event sets the baseline outfit; transitions are subsequent
-        # contexts that don't fit it.
-        if len(seen_formalities) == 1:
-            continue
 
         picks: dict[str, dict] = {}
         for cat in ('top', 'bottom', 'footwear', 'outerwear'):
@@ -413,10 +416,17 @@ def run_daily_look(user, input_data: dict) -> dict:
         from outfits.style_profile import get_or_empty as _get_style_profile
         style_profile = _get_style_profile(user)
 
+        # Cultural rules for the user's home location, if set. The trip path
+        # (above) doesn't need this — saved trip plans were already generated
+        # with cultural filtering at trip time.
+        cultural = _daily_look_cultural(user, today, weather)
+
         if _has_mistral():
-            output = _daily_look_mistral(user, wardrobe, events, weather, required_formality)
+            output = _daily_look_mistral(user, wardrobe, events, weather, required_formality,
+                                         cultural=cultural)
         else:
-            output = _daily_look_stub(wardrobe, weather, required_formality, style_profile=style_profile)
+            output = _daily_look_stub(wardrobe, weather, required_formality,
+                                      style_profile=style_profile, cultural=cultural)
 
         # If a trip exists for today but had no day-plan match, surface it
         # as context so the dashboard can show "you're on a trip" without
@@ -466,7 +476,36 @@ def run_daily_look(user, input_data: dict) -> dict:
     return output
 
 
-def _daily_look_stub(wardrobe, weather, required_formality, style_profile=None) -> dict:
+def _daily_look_cultural(user, today: datetime.date, weather: dict) -> dict | None:
+    """Fetch cultural rules for the user's home location, or None if unset.
+
+    The result is cached for 30 days inside `_fetch_cultural_context`, so a
+    given user/location/month tuple costs at most one Mistral call. Without a
+    location we can't ask sensibly — return None and let callers behave as
+    if no cultural constraints apply.
+    """
+    destination = (
+        getattr(user, 'location_name', None)
+        or (
+            f"{user.location_lat},{user.location_lon}"
+            if getattr(user, 'location_lat', None) and getattr(user, 'location_lon', None)
+            else None
+        )
+    )
+    if not destination:
+        return None
+
+    from ritha.services.recommendation_engine import _fetch_cultural_context
+    try:
+        return _fetch_cultural_context(destination, today.isoformat(), weather, 'casual')
+    except Exception:
+        # Cultural context is best-effort. A failure here must not break the
+        # daily look — proceed without rules rather than 500 the request.
+        return None
+
+
+def _daily_look_stub(wardrobe, weather, required_formality, style_profile=None,
+                     cultural: dict | None = None) -> dict:
     """Pick best-matching items deterministically (no LLM call).
 
     Scoring layers (each multiplies the item's score):
@@ -476,7 +515,19 @@ def _daily_look_stub(wardrobe, weather, required_formality, style_profile=None) 
         - wear-balance boost (§1.2)  — under-worn items lifted slightly
         - per-user style profile (§2.1) — category-pair / item-pair / color
           biases applied during slot selection
+
+    `cultural` (optional): same shape as in `recommendation_engine.recommend()`.
+    Items violating any `severity == 'required'` rule are removed from the
+    candidate pool before scoring (§3.3 — hard filter, not a scoring penalty).
     """
+    if cultural:
+        from ritha.services.recommendation_engine import (
+            _cultural_hard_filters, _wardrobe_passes_cultural_filter,
+        )
+        hf = _cultural_hard_filters(cultural)
+        if hf.get('wardrobe_tags'):
+            wardrobe = [w for w in wardrobe if _wardrobe_passes_cultural_filter(w, hf)]
+
     is_cold    = weather.get('is_cold', False)
     is_hot     = weather.get('is_hot', False)
     is_raining = weather.get('is_raining', False)
@@ -507,6 +558,20 @@ def _daily_look_stub(wardrobe, weather, required_formality, style_profile=None) 
         s = _score(it)
         if _apply_profile and current_picks:
             s = _apply_profile(s, it, current_picks, style_profile)
+        if current_picks:
+            from ritha.services.color_harmony import (
+                candidate_color_score, extract_colors,
+            )
+            used = set()
+            for p in current_picks:
+                used |= extract_colors(p)
+            cand = extract_colors(it)
+            if used and cand:
+                harmony = candidate_color_score(cand, used)
+                if harmony is None:
+                    s *= 1.1 if not (cand & used) else 0.85
+                else:
+                    s *= 1.0 + harmony
         return s
 
     def _best_in(current_picks, *categories) -> dict | None:
@@ -565,35 +630,104 @@ def _daily_look_stub(wardrobe, weather, required_formality, style_profile=None) 
     }
 
 
-def _daily_look_mistral(user, wardrobe, events, weather, required_formality) -> dict:
+def _daily_look_mistral(user, wardrobe, events, weather, required_formality,
+                        cultural: dict | None = None) -> dict:
+    """LLM-driven outfit selection.
+
+    `cultural` (optional) is the same shape as the cultural-context dict used
+    by `recommendation_engine.recommend()` — `{'rules': [{type, severity, ...}]}`.
+    When present, items violating any `severity == 'required'` rule are pruned
+    from the wardrobe *before* the prompt is built (defense in depth — the
+    prompt also forbids them in plain English).
+    """
     from ritha.services.mistral_client import chat_json
-    avoid_ids = _recently_worn_ids(wardrobe, days=3)
+    from ritha.services.recommendation_engine import (
+        _cultural_hard_filters, _wardrobe_passes_cultural_filter,
+    )
+
+    hard = _cultural_hard_filters(cultural or {})
+    forbidden_tags = hard.get('wardrobe_tags') or set()
+    if forbidden_tags:
+        wardrobe = [w for w in wardrobe if _wardrobe_passes_cultural_filter(w, hard)]
+
+    avoid_ids     = _recently_worn_ids(wardrobe, days=3)
     underworn_ids = [i['id'] for i in wardrobe if (i.get('times_worn') or 0) <= 2]
 
-    prompt = f"""You are Ritha, a personal AI stylist. Given the user's wardrobe and today's
-calendar + weather, recommend the best outfit.
+    events_summary = _summarize_events_for_prompt(events)
+    multi_context  = _has_multi_context_day(events)
 
-Date           : {_today_str()}
-Weather        : {weather}
-Formality      : {required_formality}
-Calendar       : {events}
-Wardrobe       : {wardrobe}
-Recently worn  : {avoid_ids}    # avoid these — user wore them in the last 3 days
-Under-worn     : {underworn_ids}    # prefer these when otherwise tied — they need rotation
+    cultural_block = ''
+    cultural_inline = ''
+    if forbidden_tags or hard.get('reasons'):
+        rule_lines = '\n'.join(
+            f"- {r.get('description', r.get('rule_type', 'rule'))}"
+            for r in hard.get('reasons', [])
+        ) or '- (cultural rules apply)'
+        cultural_block = (
+            f"\nCultural constraints — REQUIRED, not optional:\n{rule_lines}\n"
+            f"The Wardrobe below is already filtered to remove violating items; "
+            f"trust the list and do not invent IDs.\n"
+        )
+        if forbidden_tags:
+            cultural_inline = (
+                f"- Hard rule: never pick an item whose name or tags contain any of: "
+                f"{sorted(forbidden_tags)}"
+            )
 
-Rules:
-- Only use item IDs from the wardrobe list above
-- Pick 2-4 items across different categories (top, bottom, outerwear, footwear)
-- Prefer season-appropriate, weather-appropriate items
-- Match the required formality level
-- AVOID items in `Recently worn` unless no alternative exists in the right category
-- When two items would both work, prefer ones in `Under-worn`
-- Give a concise, friendly explanation (max 2 sentences)
+    multi_context_guidance = ''
+    if multi_context:
+        multi_context_guidance = (
+            f"- The day has events at different formality levels. The system handles "
+            f"activewear/workout transitions separately — focus on ONE outfit for the "
+            f"highest-formality event ({required_formality}). Do NOT include gym or "
+            f"workout items; they are added by a separate transitions builder."
+        )
+
+    prompt = f"""You are Ritha, a personal AI stylist.
+
+Date              : {_today_str()}
+Weather           : {weather}
+Required formality: {required_formality}   (the day's highest-formality event)
+Today's events    : {events_summary}
+Wardrobe          : {wardrobe}
+Recently worn     : {avoid_ids}        # avoid — worn in the last 3 days
+Under-worn        : {underworn_ids}        # prefer when otherwise tied
+{cultural_block}
+Pick ONE outfit:
+
+- Use only item IDs from the Wardrobe above
+- 2-4 items spanning top + bottom + footwear (or dress + footwear), optional outerwear
+- Match the required formality ({required_formality})
+- Prefer season- and weather-appropriate items
+- Avoid items in `Recently worn` unless no alternative exists
+- Prefer `Under-worn` items when otherwise tied
+{multi_context_guidance}
+{cultural_inline}
+- Give a concise explanation (max 2 sentences)
 
 Return JSON: {{"item_ids": [1, 2, 3], "notes": "...", "layer_swap": "optional tip"}}"""
     result = chat_json(prompt)
     result['status'] = 'ai'
     return result
+
+
+def _summarize_events_for_prompt(events: list[dict]) -> str:
+    if not events:
+        return '(no events)'
+    lines = []
+    for e in events:
+        t = (e.get('start_time') or '')[11:16] or '?'
+        title = e.get('title', '')
+        formality = e.get('formality', '?')
+        lines.append(f"{t} {title} ({formality})")
+    return '; '.join(lines)
+
+
+def _has_multi_context_day(events: list[dict]) -> bool:
+    if len(events or []) < 2:
+        return False
+    ranks = {_FORMALITY_RANK_INTERNAL.get(e.get('formality', 'casual'), 1) for e in events}
+    return (max(ranks) - min(ranks)) >= _TRANSITION_THRESHOLD
 
 
 # ── Weekly Looks ─────────────────────────────────────────────────────────────

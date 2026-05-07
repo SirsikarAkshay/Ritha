@@ -57,6 +57,13 @@ class ClothingItem(models.Model):
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
 
+    # Visual feature vector from ml.inference.get_embedding (MobileNetV2,
+    # 1280 dims, float32). Stored as raw bytes (~5KB / item) and round-
+    # tripped via numpy.frombuffer. Computed asynchronously by the
+    # `compute_embeddings` management command — never blocking on upload.
+    # When None, scorers fall back to the coarser 13×13 category matrix.
+    embedding   = models.BinaryField(null=True, blank=True, editable=False)
+
     class Meta:
         ordering = ['-created_at']
 

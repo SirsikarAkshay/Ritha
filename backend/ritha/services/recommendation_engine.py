@@ -634,7 +634,11 @@ _HARD_FILTER_BY_RULE_TYPE = {
 _HARD_FILTER_WARDROBE = {
     'cover_shoulders': {'tags': ['sleeveless', 'tank', 'spaghetti', 'strapless']},
     'cover_knees':     {'categories': set(), 'tags': ['shorts', 'mini', 'short skirt']},
-    'modest_dress':    {'categories': set(), 'tags': ['sleeveless', 'tank', 'shorts', 'mini', 'crop']},
+    # `modest_dress` is the union of cover_shoulders + cover_knees; if the
+    # tag isn't blocked here it will be picked despite the required rule.
+    'modest_dress':    {'categories': set(),
+                        'tags': ['sleeveless', 'tank', 'spaghetti', 'strapless',
+                                 'shorts', 'mini', 'short skirt', 'crop']},
     'no_bare_feet':    {'tags': ['sandal', 'flip-flop', 'slipper']},
 }
 
@@ -733,7 +737,7 @@ def _get_wardrobe(user) -> list:
     from wardrobe.models import ClothingItem
     return list(ClothingItem.objects.filter(user=user, is_active=True).values(
         'id', 'name', 'category', 'formality', 'season', 'colors',
-        'tags', 'weight_grams', 'material', 'brand', 'image',
+        'tags', 'weight_grams', 'material', 'brand', 'image', 'embedding',
     ))
 
 
@@ -759,6 +763,7 @@ def _match_wardrobe(wardrobe_items: list, ideal_outfit: list, weather: dict,
     matches = []
     gaps = []
     used_colors = set()
+    picked_items: list[dict] = []
 
     for ideal in ideal_outfit:
         target_wardrobe_cat = ideal.get('wardrobe_category', 'other')
@@ -781,13 +786,15 @@ def _match_wardrobe(wardrobe_items: list, ideal_outfit: list, weather: dict,
         if candidates:
             best = _pick_best_candidate(candidates, weather, ideal,
                                         used_colors=used_colors, day_index=day_index,
-                                        user_prefs=user_prefs)
+                                        user_prefs=user_prefs,
+                                        picked_items=picked_items)
             # Track colors used in this outfit for variety
             raw_colors = best.get('colors') or ''
             if isinstance(raw_colors, list):
                 used_colors.update(c.lower().strip() for c in raw_colors if isinstance(c, str) and c.strip())
             elif isinstance(raw_colors, str) and raw_colors:
                 used_colors.update(c.strip() for c in raw_colors.lower().split(',') if c.strip())
+            picked_items.append(best)
             matches.append({
                 'item': best,
                 'role': role,
@@ -812,13 +819,25 @@ def _match_wardrobe(wardrobe_items: list, ideal_outfit: list, weather: dict,
 
 def _pick_best_candidate(candidates: list, weather: dict, ideal: dict,
                          used_colors: set = None, day_index: int = 0,
-                         user_prefs: dict = None) -> dict:
-    """Score wardrobe candidates and pick the best fit, favoring variety and user preferences."""
+                         user_prefs: dict = None,
+                         picked_items: list[dict] | None = None) -> dict:
+    """Score wardrobe candidates and pick the best fit, favoring variety and user preferences.
+
+    `picked_items` is the list of items already selected for this outfit
+    (in slot order). When their embeddings are stored, each candidate gets
+    a small bonus for being a coherent visual match and a penalty for
+    being a near-duplicate of an already-picked item.
+    """
     temp = weather.get('temp_c', 20)
     wind = weather.get('wind_kmh', 0) or 0
     humidity = weather.get('humidity', 60) or 60
     is_raining = weather.get('is_raining', False)
     used_colors = used_colors or set()
+
+    # Pre-normalize picked items' embeddings once so the per-candidate inner
+    # loop is just dot products. Items without stored embeddings are silently
+    # excluded — the per-candidate signal degrades to 0 rather than failing.
+    picked_embs = _normalized_embeddings(picked_items or [])
 
     def score(item):
         s = 0.0
@@ -851,19 +870,19 @@ def _pick_best_candidate(candidates: list, weather: dict, ideal: dict,
         elif material:
             s += 0.2
 
-        # Color variety — penalize colors already used in this day's outfit
-        raw_c = item.get('colors') or ''
-        if isinstance(raw_c, list):
-            colors = {c.lower().strip() for c in raw_c if isinstance(c, str)}
-        elif isinstance(raw_c, str):
-            colors = {c.strip() for c in raw_c.lower().split(',') if c.strip()}
-        else:
-            colors = set()
+        # Color harmony in CIELAB. Replaces the prior set-equality check.
+        # Falls back to set-equality only when neither the candidate's nor
+        # the outfit's colors are in our Lab table (truly unknown names).
+        from ritha.services.color_harmony import (
+            candidate_color_score, extract_colors,
+        )
+        colors = extract_colors(item)
         if used_colors and colors:
-            if colors & used_colors:
-                s -= 0.3
+            harmony = candidate_color_score(colors, used_colors)
+            if harmony is None:
+                s += -0.3 if (colors & used_colors) else 0.2
             else:
-                s += 0.2
+                s += harmony
 
         # Wear count — prefer less-worn items for freshness
         wear_count = item.get('wear_count', 0) or 0
@@ -881,19 +900,101 @@ def _pick_best_candidate(candidates: list, weather: dict, ideal: dict,
             pref = user_prefs.get(item.get('id'), 0.0)
             s += max(min(pref, 0.8), -0.6)
 
+        # Visual compatibility against already-picked items (Tier 4 — embedding
+        # signal in selection, not just post-hoc scoring). Capped at ±0.20 to
+        # stay comparable to the existing season/material weights; nothing
+        # happens for items without stored embeddings, so this is safe to ship
+        # before backfill completes.
+        if picked_embs:
+            s += _embedding_pair_delta(item, picked_embs)
+
         return s
 
     candidates.sort(key=score, reverse=True)
     return candidates[0]
 
 
+def _normalized_embeddings(items: list[dict]) -> list:
+    """Return unit-norm float32 embeddings for items that have one."""
+    import numpy as np
+    out = []
+    for it in items:
+        blob = it.get('embedding')
+        if not blob:
+            continue
+        try:
+            v = np.frombuffer(blob, dtype=np.float32)
+        except Exception:
+            continue
+        n = float(np.linalg.norm(v))
+        if n == 0.0:
+            continue
+        out.append(v / n)
+    return out
+
+
+def _embedding_pair_delta(item: dict, picked_embs: list) -> float:
+    """Score `item` against already-picked items via embedding cosine similarity.
+
+    Mean cosine sim across picks is mapped through a sweet-spot function:
+        sim ≈ 0.5  →  +0.20  (pleasing variety — different but related vibe)
+        sim < 0.4  →  ~0.0   (unrelated — no signal either way)
+        sim > 0.85 →  -0.20  (near-duplicate — penalize)
+
+    Returns 0.0 when the candidate has no stored embedding.
+    """
+    import numpy as np
+    blob = item.get('embedding')
+    if not blob:
+        return 0.0
+    try:
+        v = np.frombuffer(blob, dtype=np.float32)
+    except Exception:
+        return 0.0
+    n = float(np.linalg.norm(v))
+    if n == 0.0:
+        return 0.0
+    v = v / n
+
+    sims = [float(np.dot(v, p)) for p in picked_embs]
+    if not sims:
+        return 0.0
+    mean_sim = sum(sims) / len(sims)
+
+    if mean_sim < 0.40:
+        return 0.0
+    if mean_sim > 0.85:
+        return -0.20
+    # Triangular peak at 0.5; max +0.20.
+    return 0.20 * (1.0 - 2.0 * abs(mean_sim - 0.5))
+
+
 # ── Outfit scoring ───────────────────────────────────────────────────────────
 
 def _score_matched_outfit(matches: list) -> float:
-    """Score the final matched outfit using the compatibility matrix."""
-    categories = [m.get('ideal_category', '') for m in matches if m.get('in_wardrobe')]
-    if len(categories) < 2:
-        return 1.0 if categories else 0.0
+    """Score the final matched outfit.
+
+    Prefers item-level embedding compatibility (`score_outfit_by_embeddings`)
+    when every picked item has a stored visual feature vector. Falls back to
+    the 13×13 category co-occurrence matrix when any embedding is missing —
+    the typical case for a freshly-onboarded user whose `compute_embeddings`
+    backfill hasn't run yet.
+    """
+    in_wardrobe = [m for m in matches if m.get('in_wardrobe')]
+    if len(in_wardrobe) < 2:
+        return 1.0 if in_wardrobe else 0.0
+
+    item_ids = [m['item']['id'] for m in in_wardrobe if m.get('item', {}).get('id')]
+    if len(item_ids) == len(in_wardrobe):
+        try:
+            from ml.inference import score_outfit_by_embeddings
+            score = score_outfit_by_embeddings(item_ids)
+            if score is not None:
+                return round(score, 3)
+        except Exception as exc:
+            logger.warning('embedding scorer failed (%s); falling back to category matrix', exc)
+
+    categories = [m.get('ideal_category', '') for m in in_wardrobe]
     try:
         from ml.inference import score_outfit
         return round(score_outfit(categories), 3)
