@@ -5,7 +5,9 @@ from .models import ClothingItem, RegionCluster, StarterPackItem, StarterPackApp
 class ClothingItemSerializer(serializers.ModelSerializer):
     class Meta:
         model  = ClothingItem
-        fields = '__all__'
+        # `embedding` is an internal binary feature vector — never expose it in
+        # the API (it would bloat every response as base64 and leaks internals).
+        exclude = ['embedding']
         read_only_fields = ['user', 'times_worn', 'last_worn', 'created_at', 'updated_at']
 
 
