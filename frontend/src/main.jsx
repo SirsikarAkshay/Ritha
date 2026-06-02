@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './styles/globals.css'
-import { initObservability, Sentry } from './lib/observability.js'
+import { initObservability, Sentry } from './observability.js'
 
 initObservability()
 

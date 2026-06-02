@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { auth as authApi } from '../api/index.js'
 import { api } from '../api/client.js'
-import { analytics } from '../lib/observability.js'
+import { analytics } from '../observability.js'
 
 const AuthContext = createContext(null)
 
