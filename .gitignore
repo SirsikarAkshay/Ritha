@@ -314,3 +314,6 @@ frontend/.env.production.example
 
 backend/.env.example
 backend/.env
+
+# Mistral response cache (eval/dev artifact — not source)
+_mistral_cache/
