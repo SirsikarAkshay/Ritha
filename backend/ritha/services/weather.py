@@ -80,14 +80,20 @@ def get_weather(lat: float, lon: float, date: Optional[datetime.date] = None) ->
 
     temp_max  = _first(daily.get('temperature_2m_max'))
     temp_min  = _first(daily.get('temperature_2m_min'))
-    temp_now  = current.get('temperature', (temp_max + temp_min) / 2 if temp_max is not None else 15)
+    if current.get('temperature') is not None:
+        temp_now = current['temperature']
+    elif temp_max is not None and temp_min is not None:
+        temp_now = (temp_max + temp_min) / 2
+    else:
+        temp_now = temp_max if temp_max is not None else (temp_min if temp_min is not None else 15)
     wmo       = _first(daily.get('weathercode')) or current.get('weathercode', 0)
     precip    = _first(daily.get('precipitation_sum')) or 0.0
     precip_p  = _first(daily.get('precipitation_probability_max')) or 0
     wind      = _first(daily.get('windspeed_10m_max')) or 0.0
 
-    # Average hourly humidity for the day
-    hourly_hum = data.get('hourly', {}).get('relativehumidity_2m', [])
+    # Average hourly humidity for the day. Open-Meteo can return null entries in
+    # the hourly array (esp. for non-forecast dates), so drop them before summing.
+    hourly_hum = [h for h in data.get('hourly', {}).get('relativehumidity_2m', []) if h is not None]
     humidity   = int(sum(hourly_hum) / len(hourly_hum)) if hourly_hum else 60
 
     feels_like = _feels_like(temp_now, wind, humidity)

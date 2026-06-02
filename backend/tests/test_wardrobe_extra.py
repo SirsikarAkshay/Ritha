@@ -47,15 +47,17 @@ class TestReceiptImport:
                         content_type='application/json', **h)
         assert r.status_code == 400
 
-    def test_without_openai_key_returns_stub(self, client):
+    def test_without_mistral_key_returns_503(self, client):
+        # With no MISTRAL_API_KEY (blanked by the autouse fixture), receipt
+        # parsing is unavailable and the view returns a 503 error envelope.
         user = UserFactory()
         h = auth_header(client, user)
         r = client.post('/api/wardrobe/receipt-import/',
                         {'email_body': 'Your order: 1x Blue Denim Jacket - £49.99'},
                         content_type='application/json', **h)
-        assert r.status_code == 200
-        assert r.json()['status'] == 'stub'
-        assert r.json()['items_created'] == 0
+        assert r.status_code == 503
+        assert r.json()['error']['code'] == 'not_configured'
+        assert r.json()['items'] == []
 
 
 class TestLuggageWeight:
@@ -141,12 +143,13 @@ class TestReceiptImportLivePath:
                         'colors': ['white'], 'brand': '', 'material': 'cotton'},
                    ]}):
             r = client.post('/api/wardrobe/receipt-import/',
-                            {'email_body': 'Order confirmed: 1x Blue Denim Jacket, 1x White T-Shirt'},
+                            {'email_body': 'Order confirmed: 1x Blue Denim Jacket, 1x White T-Shirt',
+                             'auto_save': True},
                             content_type='application/json', **h)
 
         assert r.status_code == 200
         data = r.json()
-        assert data['status'] == 'success'
+        assert data['status'] == 'created'
         assert data['items_created'] == 2
         names = [i['name'] for i in data['items']]
         assert 'Blue Denim Jacket' in names
@@ -165,7 +168,7 @@ class TestReceiptImportLivePath:
                         'colors': ['white'], 'brand': 'Zara', 'material': 'silk'},
                    ]}):
             client.post('/api/wardrobe/receipt-import/',
-                        {'email_body': 'Your order: 1x Silk Blouse'},
+                        {'email_body': 'Your order: 1x Silk Blouse', 'auto_save': True},
                         content_type='application/json', **h)
 
         assert ClothingItem.objects.filter(user=user, name='Silk Blouse').exists()

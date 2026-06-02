@@ -14,9 +14,10 @@ test.describe('Login page', () => {
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
   })
 
-  test('shows branding panel with Ritha name', async ({ page }) => {
+  test('shows branding panel with logo and tagline', async ({ page }) => {
     await page.goto('/login')
-    await expect(page.getByText('Ritha')).toBeVisible()
+    // The wordmark text was removed; the logo carries the accessible name 'Ritha'.
+    await expect(page.getByRole('img', { name: 'Ritha' })).toBeVisible()
     await expect(page.getByText('Your wardrobe assistant')).toBeVisible()
     await expect(page.getByText('Dress for your day.')).toBeVisible()
   })

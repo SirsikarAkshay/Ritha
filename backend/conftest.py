@@ -31,3 +31,18 @@ def disable_throttling_and_cache(settings):
             'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         }
     }
+
+
+@pytest.fixture(autouse=True)
+def _isolate_external_keys(settings, monkeypatch):
+    """
+    Keep the suite deterministic regardless of the developer's local .env.
+
+    A real MISTRAL_API_KEY in .env would flip _has_mistral() to True and route
+    agents/views down the live-API path instead of the deterministic stub the
+    tests assert. Blank it by default so local runs match CI (which has no .env).
+    Tests that need the live path set settings.MISTRAL_API_KEY themselves, which
+    overrides this fixture for that test.
+    """
+    settings.MISTRAL_API_KEY = ''
+    monkeypatch.delenv('GOOGLE_APPLICATION_CREDENTIALS', raising=False)

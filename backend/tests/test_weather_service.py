@@ -50,6 +50,23 @@ class TestGetWeather:
         assert isinstance(result['is_cold'], bool)
 
     @patch('ritha.services.weather.requests.get')
+    def test_null_entries_in_hourly_humidity_do_not_crash(self, mock_get):
+        """Open-Meteo can return null humidity entries (esp. for non-forecast
+        dates); summing them must not raise. Regression for a 500 in get_weather."""
+        payload = {**MOCK_OPEN_METEO_RESPONSE}
+        payload['hourly'] = {'relativehumidity_2m': [None, 60, None, 80]}
+        payload['current_weather'] = {'temperature': None, 'weathercode': 2}
+        payload['daily'] = {**payload['daily'], 'temperature_2m_max': [None]}
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = payload
+        mock_resp.raise_for_status = MagicMock()
+        mock_get.return_value = mock_resp
+
+        result = get_weather(47.37, 8.54)
+        assert result['source'] == 'open-meteo'
+        assert result['humidity'] == 70  # mean of the two non-null entries
+
+    @patch('ritha.services.weather.requests.get')
     def test_rainy_condition_detected(self, mock_get):
         rainy = {**MOCK_OPEN_METEO_RESPONSE}
         rainy['daily'] = {**rainy['daily'], 'weathercode': [61],
@@ -83,8 +100,8 @@ class TestGetWeather:
         mock_get.side_effect = req_lib.RequestException('timeout')
 
         result = get_weather(47.37, 8.54)
-        assert result['source'] == 'fallback'
-        assert 'error' in result
+        assert result['source'] == 'estimated'
+        assert 'note' in result
 
 
 class TestGetWeatherForLocation:
@@ -112,13 +129,13 @@ class TestGetWeatherForLocation:
         mock_get.return_value = no_results
 
         result = get_weather_for_location('NonexistentPlace12345')
-        assert result['source'] == 'fallback'
+        assert result['source'] == 'estimated'
 
 
 class TestFallback:
     def test_fallback_structure(self):
         result = _fallback('test error', datetime.date(2026, 3, 14))
-        assert result['source'] == 'fallback'
-        assert result['error'] == 'test error'
+        assert result['source'] == 'estimated'
+        assert result['note'] == 'test error'
         assert result['date'] == '2026-03-14'
         assert 'temp_c' in result

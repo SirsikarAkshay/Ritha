@@ -8,6 +8,7 @@ export const TEST_USER = {
   last_name: 'Doe',
   timezone: 'Europe/Zurich',
   created_at: '2025-01-15T10:00:00Z',
+  has_completed_onboarding: true,  // skip the /onboarding redirect in ProtectedRoute
 }
 
 export const TEST_TOKENS = {

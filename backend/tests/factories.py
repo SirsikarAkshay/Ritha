@@ -50,6 +50,9 @@ class CalendarEventFactory(factory.django.DjangoModelFactory):
     start_time = factory.LazyFunction(lambda: datetime.datetime(2026, 3, 14, 10, 0, tzinfo=datetime.timezone.utc))
     end_time   = factory.LazyFunction(lambda: datetime.datetime(2026, 3, 14, 11, 0, tzinfo=datetime.timezone.utc))
     source     = 'manual'
+    # CalendarEventViewSet excludes raw_data__is_duplicate=True; a missing key
+    # makes the JSON exclude drop the row, so set it explicitly to False.
+    raw_data   = factory.LazyFunction(lambda: {'is_duplicate': False})
 
 
 class TripFactory(factory.django.DjangoModelFactory):

@@ -1,7 +1,8 @@
-"""Tests for push notification scaffold."""
+"""Tests for the push notification service (Firebase Admin SDK / FCM v1)."""
 import pytest
 import datetime
 from unittest.mock import patch, MagicMock
+import firebase_admin.messaging  # registers `messaging` as an attribute so patch() can find it
 from .factories import UserFactory, ClothingItemFactory
 from outfits.models import OutfitRecommendation, OutfitItem
 from outfits.notifications import send_daily_look_notification
@@ -19,49 +20,50 @@ class TestPushNotifications:
         OutfitItem.objects.create(outfit=rec, clothing_item=item, role='main')
         return rec
 
-    def test_stub_when_no_key(self):
+    def test_stub_when_no_device_token(self):
+        """No registered device token → stub, no send attempted."""
         user = UserFactory()
+        user.device_push_token = ''
+        rec  = self._make_recommendation(user)
+        result = send_daily_look_notification(user, rec)
+        assert result['status'] == 'stub'
+        assert 'no device token' in result['message'].lower()
+
+    @patch('outfits.notifications._init_firebase', return_value=False)
+    def test_stub_when_firebase_not_configured(self, _mock_init):
+        """Device token present but Firebase isn't initialised → stub."""
+        user = UserFactory()
+        user.device_push_token = 'fake-device-token-abc123'
         rec  = self._make_recommendation(user)
         result = send_daily_look_notification(user, rec)
         assert result['status'] == 'stub'
         assert 'not configured' in result['message'].lower()
 
-    def test_stub_includes_user_and_rec_id(self):
-        user = UserFactory()
-        rec  = self._make_recommendation(user)
-        result = send_daily_look_notification(user, rec)
-        assert result['user'] == user.email
-        assert result['rec_id'] == rec.id
-
-    @patch('outfits.notifications.requests.post')
-    def test_live_fcm_send(self, mock_post, settings):
-        """With a key + device token, a real FCM POST is made."""
+    @patch('firebase_admin.messaging')
+    @patch('outfits.notifications._init_firebase', return_value=True)
+    def test_sent_when_firebase_ok(self, _mock_init, mock_messaging):
+        """Token + initialised Firebase → message sent, message_id returned."""
         user = UserFactory()
         user.device_push_token = 'fake-device-token-abc123'
         rec  = self._make_recommendation(user)
 
-        mock_resp = MagicMock()
-        mock_resp.json.return_value = {'results': [{'message_id': '123'}]}
-        mock_resp.raise_for_status = MagicMock()
-        mock_post.return_value = mock_resp
-
-        settings.FIREBASE_SERVER_KEY = 'fake-fcm-key'
+        mock_messaging.send.return_value = 'projects/ritha/messages/123'
         result = send_daily_look_notification(user, rec)
 
         assert result['status'] == 'sent'
-        mock_post.assert_called_once()
-        assert 'fcm.googleapis.com' in mock_post.call_args[0][0]
+        assert result['message_id'] == 'projects/ritha/messages/123'
+        mock_messaging.send.assert_called_once()
 
-    @patch('outfits.notifications.requests.post')
-    def test_network_error_returns_error_status(self, mock_post, settings):
-        import requests as req_lib
+    @patch('firebase_admin.messaging')
+    @patch('outfits.notifications._init_firebase', return_value=True)
+    def test_send_error_returns_error_status(self, _mock_init, mock_messaging):
+        """An exception from messaging.send is captured as status 'error'."""
         user = UserFactory()
         user.device_push_token = 'fake-token'
         rec  = self._make_recommendation(user)
-        mock_post.side_effect = req_lib.RequestException('timeout')
 
-        settings.FIREBASE_SERVER_KEY = 'fake-key'
+        mock_messaging.send.side_effect = RuntimeError('FCM unavailable')
         result = send_daily_look_notification(user, rec)
 
         assert result['status'] == 'error'
-        assert 'timeout' in result['message']
+        assert 'FCM unavailable' in result['message']

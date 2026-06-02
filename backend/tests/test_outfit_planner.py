@@ -1,9 +1,24 @@
 """Tests for the trip outfit planner agent."""
 import pytest
 import datetime
+from unittest.mock import patch
 from .factories import UserFactory, ClothingItemFactory, TripFactory
 
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture(autouse=True)
+def _stub_weather():
+    """Keep planner tests hermetic — never hit the live Open-Meteo API."""
+    weather = {
+        'temp_c': 18.0, 'feels_like_c': 18.0, 'temp_min_c': 12.0, 'temp_max_c': 22.0,
+        'condition': 'Clear', 'wmo_code': 0, 'precipitation_mm': 0.0,
+        'precipitation_probability': 0, 'wind_kmh': 8.0, 'humidity': 55,
+        'is_raining': False, 'is_cold': False, 'is_hot': False, 'source': 'open-meteo',
+    }
+    with patch('ritha.services.weather.get_weather_for_location', return_value=weather), \
+         patch('ritha.services.weather.get_weather', return_value=weather):
+        yield
 
 
 def auth_header(client, user):

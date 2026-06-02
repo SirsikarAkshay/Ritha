@@ -113,7 +113,7 @@ class TestCulturalAdvisor:
         user = UserFactory()
         h = auth_header(client, user)
         r = client.post('/api/agents/cultural-advisor/', {
-            'country': 'India'
+            'country': 'India', 'month': 3,  # Holi is a March event; advisor filters by month
         }, content_type='application/json', **h)
         output = r.json()['output']
         assert any(e['name'] == 'Holi' for e in output['local_events'])

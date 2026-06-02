@@ -58,7 +58,7 @@ class TestCalendarEvents:
         r = client.post('/api/itinerary/events/sync/', {}, content_type='application/json', **h)
         assert r.status_code == 200
         assert r.json()['status'] == 'no_calendars_connected'
-        assert '/api/calendar/' in r.json()['message']
+        assert 'connect' in r.json()['message'].lower()
 
 
 class TestTrips:

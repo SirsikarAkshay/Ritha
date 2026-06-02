@@ -85,7 +85,7 @@ class TestGoogleConnect:
         assert r.json()['error']['code'] == 'not_configured'
 
     @patch('calendar_sync.google_calendar.get_authorization_url',
-           return_value=('https://accounts.google.com/auth?...', 'state123'))
+           return_value=('https://accounts.google.com/auth?...', 'state123', 'verifier123'))
     def test_connect_returns_auth_url(self, mock_auth, client, settings):
         settings.GOOGLE_CLIENT_ID     = 'fake-client-id'
         settings.GOOGLE_CLIENT_SECRET = 'fake-secret'
