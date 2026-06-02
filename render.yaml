@@ -1,0 +1,157 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Ritha — Render Blueprint (web-first production deploy)
+#
+# Provisions: Postgres + Redis + Django ASGI API (daphne) + Celery worker + beat
+# + the React static site. Deploy with: Render Dashboard → New → Blueprint →
+# point at this repo. Secrets (MISTRAL_API_KEY, OAuth, SMTP, Sentry) are marked
+# `sync: false` — Render prompts for them once in the dashboard; they are never
+# committed here.
+#
+# After the first deploy, if you attach a custom domain, update the URL values
+# in the `ritha-config` group and the frontend VITE_* vars below.
+# ─────────────────────────────────────────────────────────────────────────────
+
+databases:
+  - name: ritha-db
+    databaseName: ritha
+    user: ritha
+    plan: free          # ⚠️ Render free Postgres is deleted after 30 days — upgrade to a paid plan before a real launch.
+
+services:
+  # ── Redis (Celery broker/result + Channels layer) ──────────────────────────
+  - type: redis
+    name: ritha-redis
+    plan: free
+    ipAllowList: []     # internal-only; no public access
+    maxmemoryPolicy: allkeys-lru
+
+  # ── Django API (ASGI via daphne — serves REST + WebSockets) ────────────────
+  - type: web
+    name: ritha-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter       # 'free' spins down after inactivity (cold WebSockets); 'starter' stays warm.
+    healthCheckPath: /api/health/
+    envVars:
+      - fromGroup: ritha-config
+      - key: RUN_RELEASE_TASKS      # this service owns migrate/collectstatic/seed
+        value: "1"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ritha-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: ritha-redis
+          type: redis
+          property: connectionString
+
+  # ── Celery worker (AI agent jobs, calendar sync, notifications) ────────────
+  - type: worker
+    name: ritha-worker
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    dockerCommand: celery -A ritha worker --loglevel=info --concurrency=2
+    envVars:
+      - fromGroup: ritha-config
+      - key: RUN_RELEASE_TASKS      # don't race the web service migrating
+        value: "0"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ritha-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: ritha-redis
+          type: redis
+          property: connectionString
+
+  # ── Celery beat (scheduled tasks) ──────────────────────────────────────────
+  - type: worker
+    name: ritha-beat
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    dockerCommand: celery -A ritha beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    envVars:
+      - fromGroup: ritha-config
+      - key: RUN_RELEASE_TASKS
+        value: "0"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ritha-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: ritha-redis
+          type: redis
+          property: connectionString
+
+  # ── React web app (Vite build → static CDN) ───────────────────────────────
+  - type: web
+    name: ritha-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build:production
+    staticPublishPath: dist
+    envVars:
+      # Vite inlines these at build time — point them at the API service.
+      - key: VITE_API_BASE_URL
+        value: https://ritha-api.onrender.com/api
+      - key: VITE_WS_BASE_URL
+        value: wss://ritha-api.onrender.com
+    routes:
+      - type: rewrite       # SPA client-side routing
+        source: /*
+        destination: /index.html
+
+# ── Shared config + secrets (set sync:false values in the dashboard) ─────────
+envVarGroups:
+  - name: ritha-config
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY            # generated once, shared across api/worker/beat
+        generateValue: true        # (needed so encrypted OAuth tokens decrypt in the worker)
+      # Public URLs — update these if you attach a custom domain.
+      - key: WEB_APP_URL
+        value: https://ritha-web.onrender.com
+      - key: FRONTEND_URL
+        value: https://ritha-web.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://ritha-web.onrender.com,https://ritha-api.onrender.com
+      # ── Secrets: set these in Render → Env Groups → ritha-config ──
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: https://ritha-api.onrender.com/api/calendar/google/callback/
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      # ── Email (SMTP) ──
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: Ritha <noreply@getritha.com>
+      # ── Error monitoring (optional but recommended for launch) ──
+      - key: SENTRY_DSN
+        sync: false
