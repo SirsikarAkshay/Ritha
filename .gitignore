@@ -52,8 +52,10 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Anchored to repo root: these are Python build artifacts. Unanchored "lib/"
+# wrongly ignored the entire Flutter app (mobile_flutter/lib) and frontend/src/lib.
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -239,6 +241,10 @@ docker-compose.override.yml
 .pub/
 .packages
 pubspec.lock
+# but DO track the Flutter app's lockfile (apps commit pubspec.lock)
+!mobile_flutter/pubspec.lock
+# Untracked, generator-broken OpenAPI Dart client — not app source, keep it out.
+mobile_flutter/lib/api/generated/
 *.dart.js
 *.dart.js.deps
 *.dart.js.map
