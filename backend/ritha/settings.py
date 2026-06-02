@@ -309,7 +309,9 @@ if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration(), CeleryIntegration()],
-        traces_sample_rate=0.1,
+        environment=os.getenv('SENTRY_ENVIRONMENT', 'production'),
+        release=os.getenv('APP_VERSION') or None,
+        traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0.1')),
         send_default_pii=False,
     )
 

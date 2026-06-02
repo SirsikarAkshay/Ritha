@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { auth as authApi } from '../api/index.js'
 import { api } from '../api/client.js'
+import { analytics } from '../lib/observability.js'
 
 const AuthContext = createContext(null)
 
@@ -27,17 +28,22 @@ export function AuthProvider({ children }) {
 
   useEffect(() => { loadUser() }, [loadUser])
 
+  // Tie analytics + Sentry identity to the signed-in user.
+  useEffect(() => { if (user) analytics.identify(user) }, [user])
+
   const login = async (email, password) => {
     const data = await authApi.login({ email, password })
     api.setTokens(data.access, data.refresh)
     const me = await authApi.me()
     setUser(me)
+    analytics.capture('user_logged_in')
     return me
   }
 
   const register = async (email, password, firstName) => {
     await authApi.register({ email, password, first_name: firstName })
     // After registration, user needs to verify email - don't auto-login
+    analytics.capture('user_registered')
     return { email }
   }
 
@@ -46,6 +52,7 @@ export function AuthProvider({ children }) {
     try { if (refresh) await authApi.logout(refresh) } catch { /* ignore */ }
     api.clearTokens()
     setUser(null)
+    analytics.reset()
   }
 
   const forgotPassword = async (email) => {

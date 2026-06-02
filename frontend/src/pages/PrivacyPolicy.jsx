@@ -74,7 +74,12 @@ export default function PrivacyPolicy() {
           <li><strong>Firebase Cloud Messaging</strong> — delivers push notifications.</li>
           <li><strong>Our email/SMTP provider</strong> — sends verification and account emails.</li>
           <li><strong>Our hosting provider</strong> — runs the Service infrastructure.</li>
+          <li><strong>PostHog</strong> — product analytics (usage events and feature interactions, to improve the Service); EU-hosted.</li>
+          <li><strong>Sentry</strong> — error and performance monitoring (diagnostic data; we do not send personal content).</li>
         </ul>
+        <p style={{ ...muted, marginTop: 8 }}>
+          Analytics uses cookies/identifiers to understand product usage. Where required, we will ask for your consent.
+        </p>
 
         <h2 style={h2}>5. Retention</h2>
         <p>
