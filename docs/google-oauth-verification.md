@@ -4,8 +4,9 @@ Material for the Google Cloud Console **OAuth consent screen** verification
 submission. Microsoft/Outlook (Azure app verification) and Apple are separate,
 lighter processes — notes at the bottom.
 
-> Before submitting: deploy is live, the Privacy Policy is published at the URL
-> below, and `[LEGAL ENTITY NAME]` placeholders in the policy are filled in.
+> Before submitting: deploy is live, the Privacy Policy (operator: Ritha GmbH) is
+> published at the URL below, and the remaining `[REGISTERED ADDRESS]` placeholder
+> in the policy is filled in.
 
 ## App summary
 Ritha is an AI wardrobe and travel styling assistant. It recommends outfits

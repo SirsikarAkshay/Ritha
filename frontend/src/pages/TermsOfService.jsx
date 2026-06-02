@@ -1,8 +1,8 @@
 // Public Terms of Service page (no auth). Linked from the login screen.
 //
-// ⚠️ DRAFT — pending review by legal counsel before launch. Replace the
-// [LEGAL ENTITY NAME] / [REGISTERED ADDRESS] placeholders and the effective
-// date, and confirm wording (especially liability and governing law) with a lawyer.
+// ⚠️ DRAFT — pending review by legal counsel before launch. Entity name and
+// effective date are filled in; still TODO: the [REGISTERED ADDRESS] placeholder,
+// and a lawyer's review (especially liability and governing law).
 import { Link } from 'react-router-dom'
 import Logo from '../components/Logo.jsx'
 
@@ -20,7 +20,7 @@ export default function TermsOfService() {
         </div>
 
         <h1 style={{ fontSize: '1.8rem', marginBottom: 4 }}>Terms of Service</h1>
-        <p style={muted}>Effective date: __________ · Last updated: __________</p>
+        <p style={muted}>Effective date: 2 June 2026 · Last updated: 2 June 2026</p>
 
         <p style={{ background: 'rgba(200,120,80,0.12)', border: '1px solid var(--terra)', borderRadius: 8, padding: '12px 16px', marginTop: 16, fontSize: '0.9rem' }}>
           <strong>Draft notice:</strong> This document is a working draft pending review by legal counsel. It is not yet a binding agreement.
@@ -29,7 +29,7 @@ export default function TermsOfService() {
         <h2 style={h2}>1. Acceptance</h2>
         <p>
           These Terms govern your use of the Ritha web and mobile applications (the “Service”), operated by
-          <strong> [LEGAL ENTITY NAME]</strong>, [REGISTERED ADDRESS]. By creating an account or using the Service, you
+          <strong> Ritha GmbH</strong>, [REGISTERED ADDRESS]. By creating an account or using the Service, you
           agree to these Terms and to our <Link to="/privacy" style={{ color: 'var(--terra-light)' }}>Privacy Policy</Link>.
         </p>
 
@@ -68,7 +68,7 @@ export default function TermsOfService() {
         <h2 style={h2}>7. Limitation of liability</h2>
         <p>
           To the maximum extent permitted by law, the Service is provided “as is” without warranties, and
-          [LEGAL ENTITY NAME] is not liable for indirect, incidental, or consequential damages, or for any reliance on
+          Ritha GmbH is not liable for indirect, incidental, or consequential damages, or for any reliance on
           AI-generated recommendations.
         </p>
 
@@ -86,7 +86,7 @@ export default function TermsOfService() {
 
         <h2 style={h2}>10. Contact</h2>
         <p>
-          Questions about these Terms? Contact <strong>[LEGAL ENTITY NAME]</strong> at
+          Questions about these Terms? Contact <strong>Ritha GmbH</strong> at
           <a href="mailto:legal@getritha.com" style={{ color: 'var(--terra-light)' }}> legal@getritha.com</a>.
         </p>
       </div>

@@ -1,9 +1,9 @@
 // Public Privacy Policy page (no auth). Linked from the login screen and used
 // as the privacy URL for Google/Microsoft OAuth verification.
 //
-// ⚠️ DRAFT — pending review by legal counsel before launch. Replace the
-// [LEGAL ENTITY NAME] / [REGISTERED ADDRESS] placeholders and the effective
-// date, and confirm wording with a lawyer for GDPR / Swiss FADP compliance.
+// ⚠️ DRAFT — pending review by legal counsel before launch. Entity name and
+// effective date are filled in; still TODO: the [REGISTERED ADDRESS] placeholder,
+// and a lawyer's review for GDPR / Swiss FADP compliance.
 import { Link } from 'react-router-dom'
 import Logo from '../components/Logo.jsx'
 
@@ -21,14 +21,14 @@ export default function PrivacyPolicy() {
         </div>
 
         <h1 style={{ fontSize: '1.8rem', marginBottom: 4 }}>Privacy Policy</h1>
-        <p style={muted}>Effective date: __________ · Last updated: __________</p>
+        <p style={muted}>Effective date: 2 June 2026 · Last updated: 2 June 2026</p>
 
         <p style={{ background: 'rgba(200,120,80,0.12)', border: '1px solid var(--terra)', borderRadius: 8, padding: '12px 16px', marginTop: 16, fontSize: '0.9rem' }}>
           <strong>Draft notice:</strong> This document is a working draft pending review by legal counsel. It is not yet a binding policy.
         </p>
 
         <p style={{ marginTop: 20 }}>
-          This Privacy Policy explains how <strong>[LEGAL ENTITY NAME]</strong> (“Ritha”, “we”, “us”), based at
+          This Privacy Policy explains how <strong>Ritha GmbH</strong> (“Ritha”, “we”, “us”), based at
           [REGISTERED ADDRESS], collects, uses, and protects your personal data when you use the Ritha web and
           mobile applications (the “Service”). We act as the data controller. We comply with the EU General Data
           Protection Regulation (GDPR) and the Swiss Federal Act on Data Protection (FADP).
@@ -110,7 +110,7 @@ export default function PrivacyPolicy() {
         <h2 style={h2}>9. Changes &amp; contact</h2>
         <p>
           We will post any changes here and update the “Last updated” date. Questions? Contact
-          <strong> [LEGAL ENTITY NAME]</strong> at <a href="mailto:privacy@getritha.com" style={{ color: 'var(--terra-light)' }}>privacy@getritha.com</a>.
+          <strong> Ritha GmbH</strong> at <a href="mailto:privacy@getritha.com" style={{ color: 'var(--terra-light)' }}>privacy@getritha.com</a>.
         </p>
 
         <p style={{ ...muted, marginTop: 32 }}>
