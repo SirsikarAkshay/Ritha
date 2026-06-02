@@ -224,6 +224,12 @@ export default function LoginPage() {
               </>
             )}
           </div>
+
+          <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.8rem', color: 'var(--cream-dim)' }}>
+            <Link to="/privacy" style={{ color: 'var(--cream-dim)', textDecoration: 'none' }}>Privacy</Link>
+            {' · '}
+            <Link to="/terms" style={{ color: 'var(--cream-dim)', textDecoration: 'none' }}>Terms</Link>
+          </div>
         </div>
       </div>
     </div>

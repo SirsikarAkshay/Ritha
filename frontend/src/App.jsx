@@ -20,6 +20,8 @@ import SharedWardrobeDetailPage from './pages/SharedWardrobeDetailPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import OutfitHistoryPage from './pages/OutfitHistoryPage.jsx'
 import OnboardingPage from './pages/OnboardingPage.jsx'
+import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
+import TermsOfService from './pages/TermsOfService.jsx'
 
 import { useToast } from './hooks/useToast.jsx'
 import { ToastList } from './components/Toast.jsx'
@@ -62,6 +64,10 @@ function AppRoutes() {
       <Route path="/forgot-password" element={user ? <Navigate to="/" replace /> : <ForgotPasswordPage />} />
       <Route path="/reset-password" element={user ? <Navigate to="/" replace /> : <ResetPasswordPage />} />
       <Route path="/verify-email" element={user ? <Navigate to="/" replace /> : <VerifyEmailPage />} />
+
+      {/* Public legal pages — viewable by anyone (also used as OAuth privacy URL) */}
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
 
       <Route path="/onboarding" element={
         <ProtectedRoute allowDuringOnboarding><OnboardingPage /></ProtectedRoute>
