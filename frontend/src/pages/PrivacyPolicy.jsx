@@ -78,7 +78,9 @@ export default function PrivacyPolicy() {
           <li><strong>Sentry</strong> — error and performance monitoring (diagnostic data; we do not send personal content).</li>
         </ul>
         <p style={{ ...muted, marginTop: 8 }}>
-          Analytics uses cookies/identifiers to understand product usage. Where required, we will ask for your consent.
+          Analytics uses cookies/identifiers to understand product usage. We ask for your consent before
+          enabling analytics, and you can decline without affecting the app; error monitoring (no personal
+          content) runs to keep the Service reliable.
         </p>
 
         <h2 style={h2}>5. Retention</h2>

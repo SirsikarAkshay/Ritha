@@ -22,6 +22,7 @@ import OutfitHistoryPage from './pages/OutfitHistoryPage.jsx'
 import OnboardingPage from './pages/OnboardingPage.jsx'
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 import TermsOfService from './pages/TermsOfService.jsx'
+import ConsentBanner from './components/ConsentBanner.jsx'
 
 import { useToast } from './hooks/useToast.jsx'
 import { ToastList } from './components/Toast.jsx'
@@ -128,6 +129,7 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <AppRoutes />
+          <ConsentBanner />
           <ToastRoot />
         </BrowserRouter>
       </AuthProvider>
