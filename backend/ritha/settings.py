@@ -9,7 +9,37 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
+
+# Render injects the service's public hostname here; trust it automatically so
+# the deploy works regardless of the generated *.onrender.com domain.
+_render_host = os.getenv('RENDER_EXTERNAL_HOSTNAME', '')
+if _render_host and _render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_host)
+
+# Fail fast: never boot a public server on the insecure fallback key.
+if not DEBUG and SECRET_KEY == 'django-insecure-fallback-key':
+    raise RuntimeError('SECRET_KEY must be set in the environment when DEBUG=False.')
+
+# Browsers must POST cross-origin auth (e.g. the SPA at FRONTEND_URL) past CSRF.
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()
+]
+
+# ── Production security ────────────────────────────────────────────────────────
+# Applied whenever DEBUG is off. Behind a TLS-terminating proxy (Render, nginx,
+# load balancer), so trust the forwarded-proto header and redirect to HTTPS.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True') == 'True'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', str(60 * 60 * 24 * 365)))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'same-origin'
+    X_FRAME_OPTIONS = 'DENY'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -67,6 +97,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Serve collected static files (admin, DRF browsable API, Swagger UI) directly
+# from the ASGI/WSGI app via WhiteNoise. Inserted only when installed (prod),
+# so dev without the package is unaffected.
+try:
+    import whitenoise  # noqa: F401
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    # Legacy setting (not the STORAGES dict) so it coexists with the
+    # DEFAULT_FILE_STORAGE used by the S3 media block below.
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+except ImportError:
+    pass
+
 ROOT_URLCONF = 'ritha.urls'
 
 TEMPLATES = [
@@ -87,13 +129,40 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ritha.wsgi.application'
 
-# ── Database (SQLite) ──────────────────────────────────────────────────────────
-DATABASES = {
-    'default': {
-        'ENGINE': os.getenv('DATABASE_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': BASE_DIR / os.getenv('DATABASE_NAME', 'db.sqlite3'),
+# ── Database ─────────────────────────────────────────────────────────────────
+# Prod: set DATABASE_URL (e.g. postgres://user:pass@host:5432/dbname) — Render,
+# Fly, Railway, Heroku all provide it. Dev falls back to SQLite when unset.
+_database_url = os.getenv('DATABASE_URL', '')
+if _database_url:
+    from urllib.parse import urlparse, unquote
+    _u = urlparse(_database_url)
+    _engines = {
+        'postgres': 'django.db.backends.postgresql',
+        'postgresql': 'django.db.backends.postgresql',
+        'mysql': 'django.db.backends.mysql',
+        'sqlite': 'django.db.backends.sqlite3',
     }
-}
+    DATABASES = {
+        'default': {
+            'ENGINE': _engines.get(_u.scheme, 'django.db.backends.postgresql'),
+            'NAME': unquote(_u.path.lstrip('/')),
+            'USER': unquote(_u.username or ''),
+            'PASSWORD': unquote(_u.password or ''),
+            'HOST': _u.hostname or '',
+            'PORT': str(_u.port or ''),
+            # Reuse connections across requests; require TLS in production.
+            'CONN_MAX_AGE': int(os.getenv('DATABASE_CONN_MAX_AGE', '60')),
+            'OPTIONS': {'sslmode': os.getenv('DATABASE_SSLMODE', 'require')}
+            if _u.scheme.startswith('postgres') else {},
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': os.getenv('DATABASE_ENGINE', 'django.db.backends.sqlite3'),
+            'NAME': BASE_DIR / os.getenv('DATABASE_NAME', 'db.sqlite3'),
+        }
+    }
 
 # ── Custom User ────────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = 'auth_app.User'

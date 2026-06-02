@@ -262,36 +262,39 @@ class TestExceptionHandlerAllBranches:
 
     def test_permission_denied_message(self, client):
         """PermissionDenied returns the right message string."""
-        from ritha.exceptions import _human
+        from ritha.exceptions import _human_message
         from rest_framework.exceptions import PermissionDenied
-        msg = _human(PermissionDenied())
+        exc = PermissionDenied()
+        msg = _human_message(exc, exc.detail)
         assert 'permission' in msg.lower()
 
     def test_not_found_message(self, client):
-        from ritha.exceptions import _human
+        from ritha.exceptions import _human_message
         from rest_framework.exceptions import NotFound
-        msg = _human(NotFound())
+        exc = NotFound()
+        msg = _human_message(exc, exc.detail)
         assert 'not found' in msg.lower()
 
     def test_throttled_with_wait_message(self, client):
-        from ritha.exceptions import _human
+        from ritha.exceptions import _human_message
         from rest_framework.exceptions import Throttled
         exc = Throttled(wait=30)
-        msg = _human(exc)
+        msg = _human_message(exc, exc.detail)
         assert '30' in msg
 
     def test_throttled_without_wait_message(self, client):
-        from ritha.exceptions import _human
+        from ritha.exceptions import _human_message
         from rest_framework.exceptions import Throttled
         exc = Throttled()
         exc.wait = None
-        msg = _human(exc)
+        msg = _human_message(exc, exc.detail)
         assert 'too many' in msg.lower()
 
     def test_generic_exception_fallback(self, client):
-        from ritha.exceptions import _human
+        from ritha.exceptions import _human_message
         from rest_framework.exceptions import APIException
-        msg = _human(APIException())
+        exc = APIException()
+        msg = _human_message(exc, exc.detail)
         assert 'error' in msg.lower()
 
     @pytest.mark.django_db

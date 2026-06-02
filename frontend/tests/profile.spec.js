@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures/auth.js'
+import { test, expect, TEST_USER } from './fixtures/auth.js'
 import { CALENDAR_STATUS, CULTURAL_RULES, CULTURAL_EVENTS, SUSTAINABILITY_TRACKER, SUSTAINABILITY_LOGS, OUTFIT_HISTORY } from './fixtures/mocks.js'
 
 function inputByLabel(page, label) {
@@ -50,7 +50,10 @@ test.describe('Profile page', () => {
         updatePayload = JSON.parse(route.request().postData())
         route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...updatePayload, id: 1, email: 'jane@example.com' }) })
       } else {
-        route.continue()
+        // GET on load: serve the authenticated user. This route shadows the
+        // fixture's mockAuthMe (Playwright routes are LIFO), so continuing here
+        // would hit the non-running backend and bounce the user to /login.
+        route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(TEST_USER) })
       }
     })
 

@@ -17,6 +17,9 @@ channels-redis>=4.2,<5.0
 # Database
 psycopg2-binary>=2.9,<3.0
 
+# Static file serving (admin / DRF / Swagger assets via the app)
+whitenoise>=6.6,<7.0
+
 # Cache / broker
 redis>=5.0,<6.0
 
