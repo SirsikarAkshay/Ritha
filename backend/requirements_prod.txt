@@ -53,6 +53,9 @@ firebase-admin>=6.5,<7.0
 celery>=5.3,<6.0
 django-celery-beat>=2.7,<3.0
 
+# Transactional email (Resend via Anymail)
+django-anymail[resend]>=10.0,<13.0
+
 # Error monitoring
 sentry-sdk>=2.0,<3.0
 

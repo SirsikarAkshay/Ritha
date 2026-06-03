@@ -328,7 +328,9 @@ if _s3_bucket:
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/' if AWS_S3_CUSTOM_DOMAIN else f'https://{_s3_bucket}.s3.amazonaws.com/'
 
 # ── Email ──────────────────────────────────────────────────────────────────────
-# Development: print emails to console (no SMTP needed)
+# Dev: prints to console. Prod: set EMAIL_BACKEND=anymail.backends.resend.EmailBackend
+# + RESEND_API_KEY (see render.yaml). SMTP vars remain as a fallback for any
+# provider that prefers an SMTP relay (EMAIL_BACKEND=django...smtp.EmailBackend).
 EMAIL_BACKEND     = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST        = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT        = int(os.getenv('EMAIL_PORT', '587'))
@@ -336,6 +338,12 @@ EMAIL_USE_TLS     = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER   = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'Ritha <noreply@getritha.com>')
+
+# Anymail / Resend (transactional email). The from-domain must be verified in
+# Resend. Plain send_mail/EmailMessage work through the Anymail backend as-is.
+ANYMAIL = {
+    'RESEND_API_KEY': os.getenv('RESEND_API_KEY', ''),
+}
 
 # Verification token expiry (seconds)
 EMAIL_VERIFICATION_TIMEOUT = int(os.getenv('EMAIL_VERIFICATION_TIMEOUT', str(60 * 60 * 24)))  # 24h

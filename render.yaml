@@ -146,18 +146,12 @@ envVarGroups:
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
         sync: false
-      # ── Email (SMTP) ──
+      # ── Transactional email (Resend via Anymail) ──
+      # Verify the getritha.com sending domain in Resend, then set RESEND_API_KEY.
+      # DEFAULT_FROM_EMAIL must use that verified domain.
       - key: EMAIL_BACKEND
-        value: django.core.mail.backends.smtp.EmailBackend
-      - key: EMAIL_HOST
-        value: smtp.gmail.com
-      - key: EMAIL_PORT
-        value: "587"
-      - key: EMAIL_USE_TLS
-        value: "True"
-      - key: EMAIL_HOST_USER
-        sync: false
-      - key: EMAIL_HOST_PASSWORD
+        value: anymail.backends.resend.EmailBackend
+      - key: RESEND_API_KEY
         sync: false
       - key: DEFAULT_FROM_EMAIL
         value: Ritha <noreply@getritha.com>
