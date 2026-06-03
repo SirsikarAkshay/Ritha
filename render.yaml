@@ -161,6 +161,17 @@ envVarGroups:
         sync: false
       - key: DEFAULT_FROM_EMAIL
         value: Ritha <noreply@getritha.com>
+      # ── Object storage for uploaded media (REQUIRED) ──
+      # Render's filesystem is ephemeral — without S3, wardrobe photos are lost
+      # on every deploy/restart. Setting AWS_STORAGE_BUCKET_NAME activates S3.
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: eu-central-1
       # ── Error monitoring (optional but recommended for launch) ──
       - key: SENTRY_DSN
         sync: false
