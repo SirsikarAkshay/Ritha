@@ -3,3 +3,32 @@ name = "ritha"
 version = "0.1.0"
 requires-python = ">=3.9"
 dependencies = []
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Ruff — lint + format for the Django backend. CI runs `ruff check` and
+# `ruff format --check` from backend/; this config is discovered by walking up
+# to the repo root. Keep `line-length` aligned with the old flake8/black (120).
+# ─────────────────────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = [
+    "**/migrations/**",
+    ".venv",
+    "backend/ml/artifacts",
+    "**/api/generated/**",
+]
+
+[tool.ruff.lint]
+# E/F: pyflakes + pycodestyle, I: import sorting, UP: pyupgrade, B: bugbear.
+select = ["E", "F", "I", "UP", "B"]
+# E501 (line length) is owned by the formatter: `ruff format` wraps code, and
+# `ruff format --check` gates it in CI. Linting it on top only flags the lines
+# the formatter intentionally leaves long — un-wrappable string literals
+# (user-facing copy, inline email CSS, regex patterns, JSON test fixtures).
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# asgi.py must call django.setup() before importing anything that touches
+# settings/models — the late imports are required, not a style slip.
+"backend/ritha/asgi.py" = ["E402"]

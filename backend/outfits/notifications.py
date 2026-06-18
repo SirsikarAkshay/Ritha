@@ -8,9 +8,10 @@ Authentication (in priority order):
 
 No file paths or API keys needed in code.
 """
+
 import logging
 
-logger = logging.getLogger('ritha.notifications')
+logger = logging.getLogger("ritha.notifications")
 
 _firebase_app = None
 
@@ -23,10 +24,10 @@ def _init_firebase():
         import firebase_admin
 
         _firebase_app = firebase_admin.initialize_app()
-        logger.info('Firebase Admin SDK initialised (project: %s)', _firebase_app.project_id)
+        logger.info("Firebase Admin SDK initialised (project: %s)", _firebase_app.project_id)
         return True
     except Exception as exc:
-        logger.error('Firebase init failed: %s', exc)
+        logger.error("Firebase init failed: %s", exc)
         return False
 
 
@@ -36,18 +37,18 @@ def send_push(user, *, title: str, body: str, data: dict | None = None) -> dict:
 
     Returns dict with keys: status ('sent'|'stub'|'error'), message
     """
-    device_token = getattr(user, 'device_push_token', '')
+    device_token = getattr(user, "device_push_token", "")
 
     if not device_token:
         return {
-            'status': 'stub',
-            'message': 'No device token registered for this user.',
+            "status": "stub",
+            "message": "No device token registered for this user.",
         }
 
     if not _init_firebase():
         return {
-            'status': 'stub',
-            'message': 'Firebase not configured. Run: gcloud auth application-default login',
+            "status": "stub",
+            "message": "Firebase not configured. Run: gcloud auth application-default login",
         }
 
     try:
@@ -58,23 +59,23 @@ def send_push(user, *, title: str, body: str, data: dict | None = None) -> dict:
             data={k: str(v) for k, v in (data or {}).items()},
             token=device_token,
             android=messaging.AndroidConfig(
-                priority='high',
-                notification=messaging.AndroidNotification(sound='default'),
+                priority="high",
+                notification=messaging.AndroidNotification(sound="default"),
             ),
             apns=messaging.APNSConfig(
                 payload=messaging.APNSPayload(
-                    aps=messaging.Aps(sound='default', badge=1),
+                    aps=messaging.Aps(sound="default", badge=1),
                 ),
             ),
         )
 
         resp = messaging.send(message)
-        logger.info('Push sent to %s — message_id=%s', user.email, resp)
-        return {'status': 'sent', 'message_id': resp}
+        logger.info("Push sent to %s — message_id=%s", user.email, resp)
+        return {"status": "sent", "message_id": resp}
 
     except Exception as exc:
-        logger.error('Push failed for %s: %s', user.email, exc)
-        return {'status': 'error', 'message': str(exc)}
+        logger.error("Push failed for %s: %s", user.email, exc)
+        return {"status": "error", "message": str(exc)}
 
 
 def send_daily_look_notification(user, recommendation) -> dict:
@@ -88,8 +89,8 @@ def send_daily_look_notification(user, recommendation) -> dict:
             f"({item_count} item{'s' if item_count != 1 else ''})"
         ),
         data={
-            'type': 'daily_look',
-            'recommendation_id': str(recommendation.id),
-            'date': str(recommendation.date),
+            "type": "daily_look",
+            "recommendation_id": str(recommendation.id),
+            "date": str(recommendation.date),
         },
     )

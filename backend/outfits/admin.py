@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import OutfitRecommendation, OutfitItem
+
+from .models import OutfitItem, OutfitRecommendation
 
 
 class OutfitItemInline(admin.TabularInline):
@@ -9,6 +10,6 @@ class OutfitItemInline(admin.TabularInline):
 
 @admin.register(OutfitRecommendation)
 class OutfitRecommendationAdmin(admin.ModelAdmin):
-    list_display  = ['user', 'date', 'source', 'accepted', 'created_at']
-    list_filter   = ['source', 'accepted']
-    inlines       = [OutfitItemInline]
+    list_display = ["user", "date", "source", "accepted", "created_at"]
+    list_filter = ["source", "accepted"]
+    inlines = [OutfitItemInline]

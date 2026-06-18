@@ -10,42 +10,43 @@ Design notes:
 - BlockedUser is one-way: blocker → blocked. If A blocks B, neither can send
   connection requests to the other or see the other in search.
 """
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
-
 # ── Profile ────────────────────────────────────────────────────────────────
 
+
 class ProfileVisibility(models.TextChoices):
-    PUBLIC           = 'public',           'Public'
-    CONNECTIONS_ONLY = 'connections_only', 'Connections only'
+    PUBLIC = "public", "Public"
+    CONNECTIONS_ONLY = "connections_only", "Connections only"
 
 
 class Profile(models.Model):
-    user              = models.OneToOneField(
+    user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='profile',
+        related_name="profile",
     )
-    handle            = models.CharField(max_length=30, unique=True, db_index=True)
-    display_name      = models.CharField(max_length=80, blank=True)
-    bio               = models.CharField(max_length=280, blank=True)
-    avatar_url        = models.URLField(blank=True)
-    visibility        = models.CharField(
+    handle = models.CharField(max_length=30, unique=True, db_index=True)
+    display_name = models.CharField(max_length=80, blank=True)
+    bio = models.CharField(max_length=280, blank=True)
+    avatar_url = models.URLField(blank=True)
+    visibility = models.CharField(
         max_length=20,
         choices=ProfileVisibility.choices,
         default=ProfileVisibility.PUBLIC,
     )
     handle_changed_at = models.DateTimeField(null=True, blank=True)
-    created_at        = models.DateTimeField(auto_now_add=True)
-    updated_at        = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        indexes = [models.Index(fields=['handle'])]
+        indexes = [models.Index(fields=["handle"])]
 
     def __str__(self):
-        return f'@{self.handle}'
+        return f"@{self.handle}"
 
     def save(self, *args, **kwargs):
         if self.handle:
@@ -55,24 +56,25 @@ class Profile(models.Model):
 
 # ── Connection ─────────────────────────────────────────────────────────────
 
+
 class ConnectionStatus(models.TextChoices):
-    PENDING  = 'pending',  'Pending'
-    ACCEPTED = 'accepted', 'Accepted'
-    REJECTED = 'rejected', 'Rejected'
+    PENDING = "pending", "Pending"
+    ACCEPTED = "accepted", "Accepted"
+    REJECTED = "rejected", "Rejected"
 
 
 class Connection(models.Model):
-    from_user  = models.ForeignKey(
+    from_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='connections_sent',
+        related_name="connections_sent",
     )
-    to_user    = models.ForeignKey(
+    to_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='connections_received',
+        related_name="connections_received",
     )
-    status     = models.CharField(
+    status = models.CharField(
         max_length=20,
         choices=ConnectionStatus.choices,
         default=ConnectionStatus.PENDING,
@@ -83,28 +85,27 @@ class Connection(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['from_user', 'to_user'],
-                name='unique_connection_pair',
+                fields=["from_user", "to_user"],
+                name="unique_connection_pair",
             ),
         ]
         indexes = [
-            models.Index(fields=['to_user', 'status']),
-            models.Index(fields=['from_user', 'status']),
+            models.Index(fields=["to_user", "status"]),
+            models.Index(fields=["from_user", "status"]),
         ]
 
     def __str__(self):
-        return f'{self.from_user_id} → {self.to_user_id} ({self.status})'
+        return f"{self.from_user_id} → {self.to_user_id} ({self.status})"
 
     def clean(self):
         if self.from_user_id == self.to_user_id:
-            raise ValidationError('Cannot connect to yourself.')
+            raise ValidationError("Cannot connect to yourself.")
 
     @classmethod
     def between(cls, user_a, user_b):
         """Return the single Connection row between two users (either direction) or None."""
         return cls.objects.filter(
-            models.Q(from_user=user_a, to_user=user_b)
-            | models.Q(from_user=user_b, to_user=user_a)
+            models.Q(from_user=user_a, to_user=user_b) | models.Q(from_user=user_b, to_user=user_a)
         ).first()
 
     @classmethod
@@ -112,47 +113,48 @@ class Connection(models.Model):
         """True iff an accepted connection exists in either direction."""
         if user_a.pk == user_b.pk:
             return False
-        return cls.objects.filter(
-            status=ConnectionStatus.ACCEPTED,
-        ).filter(
-            models.Q(from_user=user_a, to_user=user_b)
-            | models.Q(from_user=user_b, to_user=user_a)
-        ).exists()
+        return (
+            cls.objects.filter(
+                status=ConnectionStatus.ACCEPTED,
+            )
+            .filter(models.Q(from_user=user_a, to_user=user_b) | models.Q(from_user=user_b, to_user=user_a))
+            .exists()
+        )
 
 
 # ── BlockedUser ────────────────────────────────────────────────────────────
 
+
 class BlockedUser(models.Model):
-    blocker    = models.ForeignKey(
+    blocker = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='blocks_made',
+        related_name="blocks_made",
     )
-    blocked    = models.ForeignKey(
+    blocked = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='blocks_received',
+        related_name="blocks_received",
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['blocker', 'blocked'],
-                name='unique_block_pair',
+                fields=["blocker", "blocked"],
+                name="unique_block_pair",
             ),
         ]
 
     def __str__(self):
-        return f'{self.blocker_id} blocks {self.blocked_id}'
+        return f"{self.blocker_id} blocks {self.blocked_id}"
 
     def clean(self):
         if self.blocker_id == self.blocked_id:
-            raise ValidationError('Cannot block yourself.')
+            raise ValidationError("Cannot block yourself.")
 
     @classmethod
     def is_blocked_either_way(cls, user_a, user_b) -> bool:
         return cls.objects.filter(
-            models.Q(blocker=user_a, blocked=user_b)
-            | models.Q(blocker=user_b, blocked=user_a)
+            models.Q(blocker=user_a, blocked=user_b) | models.Q(blocker=user_b, blocked=user_a)
         ).exists()

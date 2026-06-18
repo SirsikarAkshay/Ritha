@@ -5,6 +5,7 @@ A Conversation is the container for all messages between exactly two users.
 We look conversations up via `Conversation.between(user_a, user_b)` which
 normalizes the pair to avoid duplicates.
 """
+
 from django.conf import settings
 from django.db import models
 
@@ -13,15 +14,16 @@ class Conversation(models.Model):
     """1:1 conversation. Exactly two participants via user_a / user_b.
     We normalize so that user_a.id < user_b.id to make lookups deterministic
     and prevent duplicate conversations for the same pair."""
-    user_a     = models.ForeignKey(
+
+    user_a = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='conversations_as_a',
+        related_name="conversations_as_a",
     )
-    user_b     = models.ForeignKey(
+    user_b = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='conversations_as_b',
+        related_name="conversations_as_b",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -32,16 +34,16 @@ class Conversation(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user_a', 'user_b'], name='unique_conversation_pair'),
+            models.UniqueConstraint(fields=["user_a", "user_b"], name="unique_conversation_pair"),
         ]
         indexes = [
-            models.Index(fields=['user_a', '-updated_at']),
-            models.Index(fields=['user_b', '-updated_at']),
+            models.Index(fields=["user_a", "-updated_at"]),
+            models.Index(fields=["user_b", "-updated_at"]),
         ]
-        ordering = ['-updated_at']
+        ordering = ["-updated_at"]
 
     def __str__(self):
-        return f'Conversation({self.user_a_id}, {self.user_b_id})'
+        return f"Conversation({self.user_a_id}, {self.user_b_id})"
 
     @classmethod
     def between(cls, user_a, user_b):
@@ -55,7 +57,7 @@ class Conversation(models.Model):
     def get_or_create_between(cls, user_a, user_b):
         """Create if missing. Caller MUST verify the two users are connected."""
         if user_a.pk == user_b.pk:
-            raise ValueError('Cannot create a conversation with yourself.')
+            raise ValueError("Cannot create a conversation with yourself.")
         lo, hi = sorted([user_a, user_b], key=lambda u: u.pk)
         conv, created = cls.objects.get_or_create(user_a=lo, user_b=hi)
         return conv, created
@@ -80,21 +82,21 @@ class Message(models.Model):
     conversation = models.ForeignKey(
         Conversation,
         on_delete=models.CASCADE,
-        related_name='messages',
+        related_name="messages",
     )
-    sender       = models.ForeignKey(
+    sender = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='messages_sent',
+        related_name="messages_sent",
     )
-    body         = models.TextField(max_length=4000)
-    created_at   = models.DateTimeField(auto_now_add=True)
+    body = models.TextField(max_length=4000)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         indexes = [
-            models.Index(fields=['conversation', '-created_at']),
+            models.Index(fields=["conversation", "-created_at"]),
         ]
-        ordering = ['created_at']
+        ordering = ["created_at"]
 
     def __str__(self):
-        return f'Message({self.sender_id}): {self.body[:40]}'
+        return f"Message({self.sender_id}): {self.body[:40]}"

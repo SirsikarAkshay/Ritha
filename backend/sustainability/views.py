@@ -1,6 +1,6 @@
-from rest_framework import viewsets, permissions, generics
-from drf_spectacular.utils import extend_schema_view, extend_schema
-from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework import generics, permissions, viewsets
+
 from .models import SustainabilityLog, UserSustainabilityProfile
 from .serializers import SustainabilityLogSerializer, UserSustainabilityProfileSerializer
 
@@ -14,12 +14,12 @@ from .serializers import SustainabilityLogSerializer, UserSustainabilityProfileS
 class SustainabilityLogViewSet(viewsets.ModelViewSet):
     lookup_field = "pk"
     lookup_value_regex = r"[0-9]+"
-    serializer_class   = SustainabilityLogSerializer
+    serializer_class = SustainabilityLogSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         qs = SustainabilityLog.objects.filter(user=self.request.user)
-        action = self.request.query_params.get('action')
+        action = self.request.query_params.get("action")
         if action:
             qs = qs.filter(action=action)
         return qs
@@ -29,7 +29,7 @@ class SustainabilityLogViewSet(viewsets.ModelViewSet):
 
 
 class SustainabilityTrackerView(generics.RetrieveAPIView):
-    serializer_class   = UserSustainabilityProfileSerializer
+    serializer_class = UserSustainabilityProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):

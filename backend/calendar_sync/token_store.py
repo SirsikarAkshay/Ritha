@@ -3,15 +3,17 @@ Encrypted token storage for calendar OAuth credentials.
 Uses Fernet symmetric encryption derived from Django SECRET_KEY.
 Same approach as apple_calendar.py password encryption.
 """
-import base64, hashlib, json
+
+import base64
+import hashlib
+import json
+
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 
 
 def _fernet() -> Fernet:
-    key = base64.urlsafe_b64encode(
-        hashlib.sha256(settings.SECRET_KEY.encode()).digest()
-    )
+    key = base64.urlsafe_b64encode(hashlib.sha256(settings.SECRET_KEY.encode()).digest())
     return Fernet(key)
 
 

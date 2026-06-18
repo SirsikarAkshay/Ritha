@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class CulturalConfig(AppConfig):
-    name = 'cultural'
+    name = "cultural"

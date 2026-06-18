@@ -1,53 +1,53 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 
 
 class OutfitRecommendation(models.Model):
     SOURCE_CHOICES = [
-        ('daily',  'Daily Look'),
-        ('trip',   'Trip Planner'),
-        ('manual', 'Manual'),
+        ("daily", "Daily Look"),
+        ("trip", "Trip Planner"),
+        ("manual", "Manual"),
     ]
 
-    user        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='outfit_recommendations')
-    date        = models.DateField()
-    source      = models.CharField(max_length=10, choices=SOURCE_CHOICES, default='daily')
-    event       = models.ForeignKey('itinerary.CalendarEvent', null=True, blank=True, on_delete=models.SET_NULL)
-    trip        = models.ForeignKey('itinerary.Trip', null=True, blank=True, on_delete=models.SET_NULL)
-    items       = models.ManyToManyField('wardrobe.ClothingItem', through='OutfitItem')
-    notes       = models.TextField(blank=True)           # AI explanation
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="outfit_recommendations")
+    date = models.DateField()
+    source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default="daily")
+    event = models.ForeignKey("itinerary.CalendarEvent", null=True, blank=True, on_delete=models.SET_NULL)
+    trip = models.ForeignKey("itinerary.Trip", null=True, blank=True, on_delete=models.SET_NULL)
+    items = models.ManyToManyField("wardrobe.ClothingItem", through="OutfitItem")
+    notes = models.TextField(blank=True)  # AI explanation
     weather_snapshot = models.JSONField(default=dict, blank=True)
-    accepted    = models.BooleanField(null=True)         # None=unseen, True=accepted, False=rejected
-    points_awarded = models.BooleanField(default=False)   # prevents double-awarding sustainability points
-    created_at  = models.DateTimeField(auto_now_add=True)
+    accepted = models.BooleanField(null=True)  # None=unseen, True=accepted, False=rejected
+    points_awarded = models.BooleanField(default=False)  # prevents double-awarding sustainability points
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-date']
-        indexes  = [
-            models.Index(fields=['user', 'date'], name='outfit_user_date_idx'),
-            models.Index(fields=['user', 'source'], name='outfit_user_source_idx'),
+        ordering = ["-date"]
+        indexes = [
+            models.Index(fields=["user", "date"], name="outfit_user_date_idx"),
+            models.Index(fields=["user", "source"], name="outfit_user_source_idx"),
         ]
 
     def __str__(self):
-        return f'{self.user.email} — outfit {self.date}'
+        return f"{self.user.email} — outfit {self.date}"
 
 
 class OutfitItem(models.Model):
     ROLE_CHOICES = [
-        ('main',  'Main Piece'),
-        ('layer', 'Layer'),
-        ('shoes', 'Shoes'),
-        ('bag',   'Bag'),
-        ('other', 'Other'),
+        ("main", "Main Piece"),
+        ("layer", "Layer"),
+        ("shoes", "Shoes"),
+        ("bag", "Bag"),
+        ("other", "Other"),
     ]
 
-    outfit       = models.ForeignKey(OutfitRecommendation, on_delete=models.CASCADE)
-    clothing_item = models.ForeignKey('wardrobe.ClothingItem', on_delete=models.CASCADE)
-    role         = models.CharField(max_length=10, choices=ROLE_CHOICES, default='main')
-    liked        = models.BooleanField(null=True)
+    outfit = models.ForeignKey(OutfitRecommendation, on_delete=models.CASCADE)
+    clothing_item = models.ForeignKey("wardrobe.ClothingItem", on_delete=models.CASCADE)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default="main")
+    liked = models.BooleanField(null=True)
 
     class Meta:
-        unique_together = ('outfit', 'clothing_item')
+        unique_together = ("outfit", "clothing_item")
 
 
 class UserStyleProfile(models.Model):
@@ -71,6 +71,7 @@ class UserStyleProfile(models.Model):
             Used as a prior so e.g. a casual-only user isn't shown formal
             recs unless an event forces it.
     """
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -79,15 +80,15 @@ class UserStyleProfile(models.Model):
         # wardrobe/views.py). Using the same related_name made Django
         # try to assign the JSONField's default `{}` through the reverse
         # one-to-one descriptor at startup and crash check_user_model.
-        related_name='learned_style',
+        related_name="learned_style",
     )
-    category_pair_weights  = models.JSONField(default=dict, blank=True)
-    item_pair_negatives    = models.JSONField(default=list, blank=True)
-    color_affinities       = models.JSONField(default=dict, blank=True)
+    category_pair_weights = models.JSONField(default=dict, blank=True)
+    item_pair_negatives = models.JSONField(default=list, blank=True)
+    color_affinities = models.JSONField(default=dict, blank=True)
     formality_distribution = models.JSONField(default=dict, blank=True)
 
     feedback_count = models.PositiveIntegerField(default=0)
-    last_rebuilt   = models.DateTimeField(null=True, blank=True)
+    last_rebuilt = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f'StyleProfile<{self.user.email}>'
+        return f"StyleProfile<{self.user.email}>"

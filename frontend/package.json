@@ -8,7 +8,8 @@
     "build:production": "vite build --mode production",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "gen:api": "openapi-typescript ../backend/openapi.yaml --output src/api/generated/schema.d.ts",
-    "check:api": "tsc --noEmit -p tsconfig.json"
+    "check:api": "tsc --noEmit -p tsconfig.json",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@sentry/react": "^10.56.0",

@@ -9,6 +9,7 @@ access token, resolves the user, and attaches them to `scope['user']`.
 If the token is missing or invalid, `scope['user']` is AnonymousUser and
 the consumer should reject the connection.
 """
+
 from urllib.parse import parse_qs
 
 from channels.db import database_sync_to_async
@@ -31,18 +32,18 @@ def _get_user(user_id):
 
 class JWTAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
-        query_string = scope.get('query_string', b'').decode()
+        query_string = scope.get("query_string", b"").decode()
         params = parse_qs(query_string)
-        token = (params.get('token') or [None])[0]
+        token = (params.get("token") or [None])[0]
 
         if token:
             try:
                 validated = AccessToken(token)
-                scope['user'] = await _get_user(validated['user_id'])
+                scope["user"] = await _get_user(validated["user_id"])
             except (InvalidToken, TokenError, KeyError):
-                scope['user'] = AnonymousUser()
+                scope["user"] = AnonymousUser()
         else:
-            scope['user'] = AnonymousUser()
+            scope["user"] = AnonymousUser()
 
         return await super().__call__(scope, receive, send)
 

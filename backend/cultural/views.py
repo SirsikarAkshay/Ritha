@@ -1,16 +1,17 @@
-from rest_framework import viewsets, permissions
+from rest_framework import permissions, viewsets
+
 from .models import CulturalRule, LocalEvent
 from .serializers import CulturalRuleSerializer, LocalEventSerializer
 
 
 class CulturalRuleViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class   = CulturalRuleSerializer
+    serializer_class = CulturalRuleSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         qs = CulturalRule.objects.all()
-        country = self.request.query_params.get('country')
-        city    = self.request.query_params.get('city')
+        country = self.request.query_params.get("country")
+        city = self.request.query_params.get("city")
         if country:
             qs = qs.filter(country__iexact=country)
         if city:
@@ -19,13 +20,13 @@ class CulturalRuleViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class LocalEventViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class   = LocalEventSerializer
+    serializer_class = LocalEventSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         qs = LocalEvent.objects.all()
-        country = self.request.query_params.get('country')
-        month   = self.request.query_params.get('month')
+        country = self.request.query_params.get("country")
+        month = self.request.query_params.get("month")
         if country:
             qs = qs.filter(country__iexact=country)
         if month:

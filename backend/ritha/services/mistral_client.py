@@ -15,26 +15,28 @@ Usage:
     if _has_mistral():
         result = chat_json("Recommend an outfit. Return JSON: {item_ids: [...]}")
 """
+
 import json
 import logging
 import time
+
 from django.conf import settings
 
-logger = logging.getLogger('ritha.mistral')
+logger = logging.getLogger("ritha.mistral")
 
-DEFAULT_MODEL = 'mistral-small-latest'
-DEFAULT_VISION_MODEL = 'pixtral-12b-latest'
+DEFAULT_MODEL = "mistral-small-latest"
+DEFAULT_VISION_MODEL = "pixtral-12b-latest"
 
 # Models to try in order when the primary model returns 429 capacity errors.
 # Pick models with different capacity pools so a fallback is likely to succeed.
 TEXT_FALLBACK_MODELS = [
-    'mistral-small-latest',
-    'mistral-medium-latest',
-    'mistral-large-latest',
+    "mistral-small-latest",
+    "mistral-medium-latest",
+    "mistral-large-latest",
 ]
 VISION_FALLBACK_MODELS = [
-    'pixtral-12b-latest',
-    'pixtral-large-latest',
+    "pixtral-12b-latest",
+    "pixtral-large-latest",
 ]
 
 # Retry policy for transient 429s. Total worst case: ~0.5 + 1 + 2 + 4 = 7.5 s
@@ -46,10 +48,10 @@ def _is_capacity_error(exc: Exception) -> bool:
     """Return True if this exception represents a Mistral 429 / capacity error."""
     text = str(exc).lower()
     return (
-        'status 429' in text
-        or 'service_tier_capacity_exceeded' in text
-        or 'rate limit' in text
-        or 'capacity exceeded' in text
+        "status 429" in text
+        or "service_tier_capacity_exceeded" in text
+        or "rate limit" in text
+        or "capacity exceeded" in text
     )
 
 
@@ -70,26 +72,30 @@ def _call_with_retries(invoke, models: list[str]):
                 last_exc = exc
                 if _is_capacity_error(exc):
                     logger.warning(
-                        'Mistral capacity error on %s (attempt %d/%d): %s',
-                        model, attempt + 1, len(RETRY_DELAYS_SECONDS) + 1, exc,
+                        "Mistral capacity error on %s (attempt %d/%d): %s",
+                        model,
+                        attempt + 1,
+                        len(RETRY_DELAYS_SECONDS) + 1,
+                        exc,
                     )
                     continue  # retry same model, then move to next model
                 # Non-capacity error — don't waste retries, just re-raise
                 raise
-        logger.warning('Mistral model %s exhausted retries; trying fallback', model)
+        logger.warning("Mistral model %s exhausted retries; trying fallback", model)
     # All models / all retries failed
     raise last_exc  # pragma: no cover
 
 
 def _has_mistral() -> bool:
     """Return True if a usable Mistral API key is configured."""
-    key = getattr(settings, 'MISTRAL_API_KEY', '')
-    return bool(key) and key not in ('your_mistral_key_here', '', 'your_key')
+    key = getattr(settings, "MISTRAL_API_KEY", "")
+    return bool(key) and key not in ("your_mistral_key_here", "", "your_key")
 
 
 def _get_client():
     """Return an authenticated Mistral client."""
     from mistralai import Mistral
+
     return Mistral(api_key=settings.MISTRAL_API_KEY)
 
 
@@ -112,14 +118,14 @@ def chat(prompt: str, model: str = DEFAULT_MODEL) -> str:
     def invoke(m):
         response = client.chat.complete(
             model=m,
-            messages=[{'role': 'user', 'content': prompt}],
+            messages=[{"role": "user", "content": prompt}],
         )
         return response.choices[0].message.content
 
     # Try the requested model first, then remaining fallbacks in order.
     models = [model] + [m for m in TEXT_FALLBACK_MODELS if m != model]
     content, used = _call_with_retries(invoke, models)
-    logger.debug('Mistral %s → %d chars', used, len(content))
+    logger.debug("Mistral %s → %d chars", used, len(content))
     return content
 
 
@@ -144,47 +150,40 @@ def chat_json(prompt: str, model: str = DEFAULT_MODEL) -> dict:
         MistralAPIException: on auth or network errors.
     """
     full_prompt = (
-        prompt
-        + '\n\nIMPORTANT: Respond ONLY with valid JSON. '
-        + 'No markdown fences, no explanation, no preamble.'
+        prompt + "\n\nIMPORTANT: Respond ONLY with valid JSON. " + "No markdown fences, no explanation, no preamble."
     )
     raw = chat(full_prompt, model)
 
     # Strip ```json ... ``` or ``` ... ``` fences
     clean = raw.strip()
-    if clean.startswith('```'):
+    if clean.startswith("```"):
         # Remove opening fence line
-        clean = clean.split('\n', 1)[-1]
+        clean = clean.split("\n", 1)[-1]
         # Remove closing fence
-        if clean.endswith('```'):
-            clean = clean[: clean.rfind('```')]
+        if clean.endswith("```"):
+            clean = clean[: clean.rfind("```")]
 
     clean = clean.strip()
 
     try:
         return json.loads(clean)
     except json.JSONDecodeError as exc:
-        logger.warning(
-            'Mistral returned non-JSON (%s). Raw response (first 300 chars): %.300s',
-            exc, raw
-        )
-        raise ValueError(
-            f'Mistral did not return valid JSON: {exc}\n'
-            f'Raw response: {raw[:300]}'
-        ) from exc
+        logger.warning("Mistral returned non-JSON (%s). Raw response (first 300 chars): %.300s", exc, raw)
+        raise ValueError(f"Mistral did not return valid JSON: {exc}\nRaw response: {raw[:300]}") from exc
 
 
 def _strip_json_fences(raw: str) -> str:
     clean = raw.strip()
-    if clean.startswith('```'):
-        clean = clean.split('\n', 1)[-1]
-        if clean.endswith('```'):
-            clean = clean[: clean.rfind('```')]
+    if clean.startswith("```"):
+        clean = clean.split("\n", 1)[-1]
+        if clean.endswith("```"):
+            clean = clean[: clean.rfind("```")]
     return clean.strip()
 
 
-def chat_image_json(prompt: str, image_bytes: bytes, mime_type: str = 'image/jpeg',
-                    model: str = DEFAULT_VISION_MODEL) -> dict:
+def chat_image_json(
+    prompt: str, image_bytes: bytes, mime_type: str = "image/jpeg", model: str = DEFAULT_VISION_MODEL
+) -> dict:
     """
     Send a vision prompt (text + one image) that expects a JSON response.
 
@@ -203,41 +202,41 @@ def chat_image_json(prompt: str, image_bytes: bytes, mime_type: str = 'image/jpe
         ValueError: if the model returns non-JSON content.
     """
     import base64
+
     client = _get_client()
-    b64 = base64.b64encode(image_bytes).decode('ascii')
-    data_url = f'data:{mime_type};base64,{b64}'
+    b64 = base64.b64encode(image_bytes).decode("ascii")
+    data_url = f"data:{mime_type};base64,{b64}"
 
     full_prompt = (
-        prompt
-        + '\n\nIMPORTANT: Respond ONLY with valid JSON. '
-        + 'No markdown fences, no explanation, no preamble.'
+        prompt + "\n\nIMPORTANT: Respond ONLY with valid JSON. " + "No markdown fences, no explanation, no preamble."
     )
 
     def invoke(m):
         response = client.chat.complete(
             model=m,
-            messages=[{
-                'role': 'user',
-                'content': [
-                    {'type': 'text',      'text': full_prompt},
-                    {'type': 'image_url', 'image_url': data_url},
-                ],
-            }],
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": full_prompt},
+                        {"type": "image_url", "image_url": data_url},
+                    ],
+                }
+            ],
         )
         return response.choices[0].message.content
 
     models = [model] + [m for m in VISION_FALLBACK_MODELS if m != model]
     raw, used = _call_with_retries(invoke, models)
-    logger.debug('Pixtral %s → %d chars', used, len(raw))
+    logger.debug("Pixtral %s → %d chars", used, len(raw))
 
     clean = _strip_json_fences(raw)
     try:
         return json.loads(clean)
     except json.JSONDecodeError as exc:
         logger.warning(
-            'Pixtral returned non-JSON (%s). Raw response (first 300 chars): %.300s',
-            exc, raw,
+            "Pixtral returned non-JSON (%s). Raw response (first 300 chars): %.300s",
+            exc,
+            raw,
         )
-        raise ValueError(
-            f'Pixtral did not return valid JSON: {exc}\nRaw response: {raw[:300]}'
-        ) from exc
+        raise ValueError(f"Pixtral did not return valid JSON: {exc}\nRaw response: {raw[:300]}") from exc

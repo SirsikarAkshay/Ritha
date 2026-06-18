@@ -101,10 +101,12 @@ export-data:
 	$(MANAGE) export_user_data --email=$(EMAIL) --output=export_$(EMAIL).json
 
 lint:
-	flake8 . --max-line-length=120 --exclude=migrations,__pycache__,.venv
+	ruff check .
+	ruff format --check .
 
 fmt:
-	black . --line-length=120 --exclude=migrations
+	ruff check --fix .
+	ruff format .
 
 docker-up:
 	docker-compose up -d

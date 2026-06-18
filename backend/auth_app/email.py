@@ -2,16 +2,19 @@
 Email utilities: verification + password reset.
 All emails include both plain-text and HTML versions.
 """
-import secrets
+
 import logging
+import secrets
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone as dj_timezone
 
-logger = logging.getLogger('ritha.email')
+logger = logging.getLogger("ritha.email")
 
 
 # ── Shared helpers ─────────────────────────────────────────────────────────
+
 
 def _send(*, to: str, subject: str, text: str, html: str) -> bool:
     try:
@@ -30,9 +33,9 @@ def _send(*, to: str, subject: str, text: str, html: str) -> bool:
         return False
 
 
-def _email_wrapper(*, title: str, preheader: str, body_html: str, cta_url: str = '', cta_label: str = '') -> str:
+def _email_wrapper(*, title: str, preheader: str, body_html: str, cta_url: str = "", cta_label: str = "") -> str:
     """Shared HTML shell for all Ritha transactional emails."""
-    cta_block = ''
+    cta_block = ""
     if cta_url and cta_label:
         cta_block = f"""
         <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
@@ -78,6 +81,7 @@ def _email_wrapper(*, title: str, preheader: str, body_html: str, cta_url: str =
 
 # ── Email verification ─────────────────────────────────────────────────────
 
+
 def generate_verification_token() -> str:
     return secrets.token_hex(24)  # 48 hex chars, 192 bits
 
@@ -85,11 +89,11 @@ def generate_verification_token() -> str:
 def send_verification_email(user) -> bool:
     token = generate_verification_token()
     user.email_verification_token = token
-    user.email_token_created_at   = dj_timezone.now()
-    user.save(update_fields=['email_verification_token', 'email_token_created_at'])
+    user.email_token_created_at = dj_timezone.now()
+    user.save(update_fields=["email_verification_token", "email_token_created_at"])
 
-    verify_url  = f"{settings.FRONTEND_URL}/verify-email?token={token}&email={user.email}"
-    name        = user.first_name or 'there'
+    verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token}&email={user.email}"
+    name = user.first_name or "there"
 
     body_html = f"""
     <p style="margin:0 0 24px;font-size:15px;color:#B8B0A0;line-height:1.6;">
@@ -128,28 +132,29 @@ If you didn't create a Ritha account, ignore this email.
 
 def verify_token(user, token: str) -> tuple[bool, str]:
     if not user.email_verification_token:
-        return False, 'No verification token found. Please request a new one.'
+        return False, "No verification token found. Please request a new one."
     if user.email_verification_token != token:
-        return False, 'Invalid verification token.'
+        return False, "Invalid verification token."
     if not user.email_token_created_at:
-        return False, 'Token has no creation timestamp. Please request a new one.'
+        return False, "Token has no creation timestamp. Please request a new one."
 
-    age     = (dj_timezone.now() - user.email_token_created_at).total_seconds()
-    timeout = getattr(settings, 'EMAIL_VERIFICATION_TIMEOUT', 86400)
+    age = (dj_timezone.now() - user.email_token_created_at).total_seconds()
+    timeout = getattr(settings, "EMAIL_VERIFICATION_TIMEOUT", 86400)
     if age > timeout:
-        return False, 'Verification link has expired. Please request a new one.'
-    return True, ''
+        return False, "Verification link has expired. Please request a new one."
+    return True, ""
 
 
 def mark_verified(user) -> None:
-    user.is_email_verified        = True
-    user.email_verification_token = ''
-    user.email_token_created_at   = None
-    user.save(update_fields=['is_email_verified', 'email_verification_token', 'email_token_created_at'])
-    logger.info('Email verified for %s', user.email)
+    user.is_email_verified = True
+    user.email_verification_token = ""
+    user.email_token_created_at = None
+    user.save(update_fields=["is_email_verified", "email_verification_token", "email_token_created_at"])
+    logger.info("Email verified for %s", user.email)
 
 
 # ── Password reset ─────────────────────────────────────────────────────────
+
 
 def generate_password_reset_token() -> str:
     return secrets.token_hex(24)  # 48 hex chars
@@ -157,12 +162,12 @@ def generate_password_reset_token() -> str:
 
 def send_password_reset_email(user) -> bool:
     token = generate_password_reset_token()
-    user.password_reset_token      = token
+    user.password_reset_token = token
     user.password_reset_created_at = dj_timezone.now()
-    user.save(update_fields=['password_reset_token', 'password_reset_created_at'])
+    user.save(update_fields=["password_reset_token", "password_reset_created_at"])
 
     reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}&email={user.email}"
-    name      = user.first_name or 'there'
+    name = user.first_name or "there"
 
     body_html = f"""
     <p style="margin:0 0 16px;font-size:15px;color:#B8B0A0;line-height:1.6;">
@@ -202,23 +207,23 @@ If you didn't request this, ignore this email — your password won't change.
 
 
 def verify_reset_token(user, token: str) -> tuple[bool, str]:
-    if not getattr(user, 'password_reset_token', ''):
-        return False, 'No reset token found. Please request a new password reset.'
+    if not getattr(user, "password_reset_token", ""):
+        return False, "No reset token found. Please request a new password reset."
     if user.password_reset_token != token:
-        return False, 'Invalid or already-used reset token.'
+        return False, "Invalid or already-used reset token."
     if not user.password_reset_created_at:
-        return False, 'Token has no creation timestamp. Please request a new reset.'
+        return False, "Token has no creation timestamp. Please request a new reset."
 
     age = (dj_timezone.now() - user.password_reset_created_at).total_seconds()
     if age > 3600:  # 1 hour
-        return False, 'This reset link has expired. Please request a new one.'
-    return True, ''
+        return False, "This reset link has expired. Please request a new one."
+    return True, ""
 
 
 def consume_reset_token(user, new_password: str) -> None:
     """Set the new password and clear the reset token."""
     user.set_password(new_password)
-    user.password_reset_token      = ''
+    user.password_reset_token = ""
     user.password_reset_created_at = None
-    user.save(update_fields=['password', 'password_reset_token', 'password_reset_created_at'])
-    logger.info('Password reset for %s', user.email)
+    user.save(update_fields=["password", "password_reset_token", "password_reset_created_at"])
+    logger.info("Password reset for %s", user.email)

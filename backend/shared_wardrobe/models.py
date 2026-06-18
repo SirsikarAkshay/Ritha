@@ -11,29 +11,30 @@ Membership roles:
   - editor : can add/remove their own items.
   - viewer : read-only (not used yet, but reserved for later).
 """
+
 from django.conf import settings
 from django.db import models
 
 
 class MemberRole(models.TextChoices):
-    OWNER  = 'owner',  'Owner'
-    EDITOR = 'editor', 'Editor'
-    VIEWER = 'viewer', 'Viewer'
+    OWNER = "owner", "Owner"
+    EDITOR = "editor", "Editor"
+    VIEWER = "viewer", "Viewer"
 
 
 class SharedWardrobe(models.Model):
-    name        = models.CharField(max_length=120)
+    name = models.CharField(max_length=120)
     description = models.CharField(max_length=500, blank=True)
-    created_by  = models.ForeignKey(
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='shared_wardrobes_created',
+        related_name="shared_wardrobes_created",
     )
-    created_at  = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-updated_at']
+        ordering = ["-updated_at"]
 
     def __str__(self):
         return self.name
@@ -47,17 +48,17 @@ class SharedWardrobe(models.Model):
 
 
 class SharedWardrobeMember(models.Model):
-    wardrobe  = models.ForeignKey(
+    wardrobe = models.ForeignKey(
         SharedWardrobe,
         on_delete=models.CASCADE,
-        related_name='members',
+        related_name="members",
     )
-    user      = models.ForeignKey(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='shared_wardrobe_memberships',
+        related_name="shared_wardrobe_memberships",
     )
-    role      = models.CharField(
+    role = models.CharField(
         max_length=10,
         choices=MemberRole.choices,
         default=MemberRole.EDITOR,
@@ -66,74 +67,78 @@ class SharedWardrobeMember(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['wardrobe', 'user'], name='unique_wardrobe_member'),
+            models.UniqueConstraint(fields=["wardrobe", "user"], name="unique_wardrobe_member"),
         ]
 
     def __str__(self):
-        return f'{self.user_id} in {self.wardrobe_id} ({self.role})'
+        return f"{self.user_id} in {self.wardrobe_id} ({self.role})"
 
 
 class SharedWardrobeItem(models.Model):
     CATEGORY_CHOICES = [
-        ('top',        'Top'),
-        ('bottom',     'Bottom'),
-        ('dress',      'Dress'),
-        ('outerwear',  'Outerwear'),
-        ('footwear',   'Footwear'),
-        ('accessory',  'Accessory'),
-        ('other',      'Other'),
+        ("top", "Top"),
+        ("bottom", "Bottom"),
+        ("dress", "Dress"),
+        ("outerwear", "Outerwear"),
+        ("footwear", "Footwear"),
+        ("accessory", "Accessory"),
+        ("other", "Other"),
     ]
 
-    wardrobe    = models.ForeignKey(
+    wardrobe = models.ForeignKey(
         SharedWardrobe,
         on_delete=models.CASCADE,
-        related_name='items',
+        related_name="items",
     )
-    added_by    = models.ForeignKey(
+    added_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='shared_items_added',
+        related_name="shared_items_added",
     )
-    name        = models.CharField(max_length=200)
-    category    = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
-    brand       = models.CharField(max_length=100, blank=True)
-    image_url   = models.URLField(blank=True)
-    notes       = models.CharField(max_length=500, blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=200)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="other")
+    brand = models.CharField(max_length=100, blank=True)
+    image_url = models.URLField(blank=True)
+    notes = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['wardrobe', '-created_at']),
+            models.Index(fields=["wardrobe", "-created_at"]),
         ]
 
     def __str__(self):
-        return f'{self.name} ({self.wardrobe_id})'
+        return f"{self.name} ({self.wardrobe_id})"
 
 
 class InvitationStatus(models.TextChoices):
-    PENDING  = 'pending',  'Pending'
-    ACCEPTED = 'accepted', 'Accepted'
-    DECLINED = 'declined', 'Declined'
+    PENDING = "pending", "Pending"
+    ACCEPTED = "accepted", "Accepted"
+    DECLINED = "declined", "Declined"
 
 
 class SharedWardrobeInvitation(models.Model):
-    wardrobe   = models.ForeignKey(SharedWardrobe, on_delete=models.CASCADE, related_name='invitations')
-    invited_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_wardrobe_invitations')
-    invitee    = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_wardrobe_invitations')
-    status     = models.CharField(max_length=10, choices=InvitationStatus.choices, default=InvitationStatus.PENDING)
+    wardrobe = models.ForeignKey(SharedWardrobe, on_delete=models.CASCADE, related_name="invitations")
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_wardrobe_invitations"
+    )
+    invitee = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="received_wardrobe_invitations"
+    )
+    status = models.CharField(max_length=10, choices=InvitationStatus.choices, default=InvitationStatus.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=['wardrobe', 'invitee'],
-                condition=models.Q(status='pending'),
-                name='unique_pending_invitation',
+                fields=["wardrobe", "invitee"],
+                condition=models.Q(status="pending"),
+                name="unique_pending_invitation",
             ),
         ]
 
     def __str__(self):
-        return f'Invite {self.invitee_id} → {self.wardrobe_id} ({self.status})'
+        return f"Invite {self.invitee_id} → {self.wardrobe_id} ({self.status})"

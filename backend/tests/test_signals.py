@@ -1,9 +1,12 @@
 """Tests for Django signals: sustainability profile auto-creation and outfit feedback loop."""
-import pytest
+
 import datetime
-from .factories import UserFactory, ClothingItemFactory
-from sustainability.models import UserSustainabilityProfile, SustainabilityLog
-from outfits.models import OutfitRecommendation, OutfitItem
+
+import pytest
+from outfits.models import OutfitItem, OutfitRecommendation
+from sustainability.models import SustainabilityLog, UserSustainabilityProfile
+
+from .factories import ClothingItemFactory, UserFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -11,11 +14,17 @@ pytestmark = pytest.mark.django_db
 class TestSustainabilityProfileSignal:
     def test_profile_created_on_user_register(self, client):
         """Registering a user automatically creates a sustainability profile."""
-        client.post('/api/auth/register/', {
-            'email': 'signal@ritha.com', 'password': 'testpass99',
-        }, content_type='application/json')
+        client.post(
+            "/api/auth/register/",
+            {
+                "email": "signal@ritha.com",
+                "password": "testpass99",
+            },
+            content_type="application/json",
+        )
         from django.contrib.auth import get_user_model
-        user = get_user_model().objects.get(email='signal@ritha.com')
+
+        user = get_user_model().objects.get(email="signal@ritha.com")
         assert UserSustainabilityProfile.objects.filter(user=user).exists()
 
     def test_profile_not_duplicated(self):
@@ -29,11 +38,9 @@ class TestSustainabilityProfileSignal:
 class TestOutfitFeedbackSignal:
     def _setup(self):
         user = UserFactory()
-        item = ClothingItemFactory(user=user, name='Test Shirt', times_worn=0)
-        rec  = OutfitRecommendation.objects.create(
-            user=user, date=datetime.date.today(), source='daily'
-        )
-        OutfitItem.objects.create(outfit=rec, clothing_item=item, role='main')
+        item = ClothingItemFactory(user=user, name="Test Shirt", times_worn=0)
+        rec = OutfitRecommendation.objects.create(user=user, date=datetime.date.today(), source="daily")
+        OutfitItem.objects.create(outfit=rec, clothing_item=item, role="main")
         return user, item, rec
 
     def test_accepting_outfit_increments_times_worn(self):
@@ -47,7 +54,7 @@ class TestOutfitFeedbackSignal:
         user, item, rec = self._setup()
         rec.accepted = True
         rec.save()
-        logs = SustainabilityLog.objects.filter(user=user, action='wear_again')
+        logs = SustainabilityLog.objects.filter(user=user, action="wear_again")
         assert logs.count() == 1
         assert logs.first().points == 10
 
