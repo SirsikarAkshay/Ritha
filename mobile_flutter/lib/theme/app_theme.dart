@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const midnight   = Color(0xFF0D0F14);
-  static const cream      = Color(0xFFF5F0E8);
-  static const creamDim   = Color(0x8CF5F0E8);
+  static const midnight = Color(0xFF0D0F14);
+  static const cream = Color(0xFFF5F0E8);
+  static const creamDim = Color(0x8CF5F0E8);
   static const creamLight = Color(0x14F5F0E8);
-  static const terra      = Color(0xFFD4724A);
+  static const terra = Color(0xFFD4724A);
   static const terraLight = Color(0xFFE8956E);
-  static const terraDim   = Color(0x1FD4724A);
-  static const sky        = Color(0xFF6FA8C7);
-  static const sage       = Color(0xFF7BA67E);
-  static const sageDim    = Color(0x1F7BA67E);
-  static const gold       = Color(0xFFC9A84C);
-  static const goldDim    = Color(0x1FC9A84C);
-  static const surface1   = Color(0xFF161921);
-  static const surface2   = Color(0xFF1C1F29);
-  static const surface3   = Color(0xFF252833);
-  static const border     = Color(0x14F5F0E8);
-  static const danger     = Color(0xFFF87171);
+  static const terraDim = Color(0x1FD4724A);
+  static const sky = Color(0xFF6FA8C7);
+  static const sage = Color(0xFF7BA67E);
+  static const sageDim = Color(0x1F7BA67E);
+  static const gold = Color(0xFFC9A84C);
+  static const goldDim = Color(0x1FC9A84C);
+  static const surface1 = Color(0xFF161921);
+  static const surface2 = Color(0xFF1C1F29);
+  static const surface3 = Color(0xFF252833);
+  static const border = Color(0x14F5F0E8);
+  static const danger = Color(0xFFF87171);
 }
 
 ThemeData buildAppTheme() {
@@ -36,12 +36,30 @@ ThemeData buildAppTheme() {
     scaffoldBackgroundColor: AppColors.midnight,
     fontFamily: 'System',
     textTheme: const TextTheme(
-      displayLarge: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w700),
-      displayMedium: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w700),
-      headlineLarge: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w700),
-      headlineMedium: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w700),
-      titleLarge: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w600),
-      titleMedium: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w600),
+      displayLarge: TextStyle(
+        color: AppColors.cream,
+        fontWeight: FontWeight.w700,
+      ),
+      displayMedium: TextStyle(
+        color: AppColors.cream,
+        fontWeight: FontWeight.w700,
+      ),
+      headlineLarge: TextStyle(
+        color: AppColors.cream,
+        fontWeight: FontWeight.w700,
+      ),
+      headlineMedium: TextStyle(
+        color: AppColors.cream,
+        fontWeight: FontWeight.w700,
+      ),
+      titleLarge: TextStyle(
+        color: AppColors.cream,
+        fontWeight: FontWeight.w600,
+      ),
+      titleMedium: TextStyle(
+        color: AppColors.cream,
+        fontWeight: FontWeight.w600,
+      ),
       bodyLarge: TextStyle(color: AppColors.cream),
       bodyMedium: TextStyle(color: AppColors.cream),
       labelLarge: TextStyle(color: AppColors.cream),

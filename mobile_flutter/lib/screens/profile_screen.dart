@@ -14,8 +14,14 @@ import '../theme/app_theme.dart';
 import '../widgets/ui.dart';
 
 const _timezones = [
-  'UTC', 'Europe/Zurich', 'Europe/London', 'America/New_York',
-  'America/Los_Angeles', 'Asia/Tokyo', 'Asia/Singapore', 'Australia/Sydney',
+  'UTC',
+  'Europe/Zurich',
+  'Europe/London',
+  'America/New_York',
+  'America/Los_Angeles',
+  'Asia/Tokyo',
+  'Asia/Singapore',
+  'Australia/Sydney',
 ];
 
 class ProfileScreen extends StatefulWidget {
@@ -26,9 +32,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _firstName = TextEditingController();
-  final _lastName  = TextEditingController();
+  final _lastName = TextEditingController();
   final _currentPw = TextEditingController();
-  final _newPw     = TextEditingController();
+  final _newPw = TextEditingController();
   String _tz = 'UTC';
 
   bool _saving = false;
@@ -45,15 +51,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     final user = context.read<AuthProvider>().user ?? {};
     _firstName.text = user['first_name'] ?? '';
-    _lastName.text  = user['last_name'] ?? '';
-    _tz             = user['timezone'] ?? 'UTC';
+    _lastName.text = user['last_name'] ?? '';
+    _tz = user['timezone'] ?? 'UTC';
     _refreshCalStatus();
   }
 
   @override
   void dispose() {
     _pollTimer?.cancel();
-    _firstName.dispose(); _lastName.dispose(); _currentPw.dispose(); _newPw.dispose();
+    _firstName.dispose();
+    _lastName.dispose();
+    _currentPw.dispose();
+    _newPw.dispose();
     super.dispose();
   }
 
@@ -61,12 +70,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final s = await calendarApi.status();
       if (!mounted) return;
-      setState(() => _calStatus = s is Map ? Map<String, dynamic>.from(s) : null);
+      setState(
+        () => _calStatus = s is Map ? Map<String, dynamic>.from(s) : null,
+      );
     } catch (_) {}
   }
 
   void _flash(String msg, {bool error = false}) {
-    setState(() { _message = msg; _isError = error; });
+    setState(() {
+      _message = msg;
+      _isError = error;
+    });
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) setState(() => _message = null);
     });
@@ -75,13 +89,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _saveProfile() async {
     setState(() => _saving = true);
     try {
-      final updated = await authApi.updateMe({
-        'first_name': _firstName.text.trim(),
-        'last_name':  _lastName.text.trim(),
-        'timezone':   _tz,
-      }) as Map;
+      final updated =
+          await authApi.updateMe({
+                'first_name': _firstName.text.trim(),
+                'last_name': _lastName.text.trim(),
+                'timezone': _tz,
+              })
+              as Map;
       if (!mounted) return;
-      context.read<AuthProvider>().updateLocalUser(Map<String, dynamic>.from(updated));
+      context.read<AuthProvider>().updateLocalUser(
+        Map<String, dynamic>.from(updated),
+      );
       _flash('Profile updated.');
     } catch (e) {
       _flash(e.toString(), error: true);
@@ -91,11 +109,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _changePassword() async {
-    if (_newPw.text.length < 8) { _flash('New password must be at least 8 characters.', error: true); return; }
+    if (_newPw.text.length < 8) {
+      _flash('New password must be at least 8 characters.', error: true);
+      return;
+    }
     setState(() => _changingPw = true);
     try {
-      await authApi.changePassword({'current_password': _currentPw.text, 'new_password': _newPw.text});
-      _currentPw.clear(); _newPw.clear();
+      await authApi.changePassword({
+        'current_password': _currentPw.text,
+        'new_password': _newPw.text,
+      });
+      _currentPw.clear();
+      _newPw.clear();
       _flash('Password changed successfully.');
     } catch (e) {
       _flash(e.toString(), error: true);
@@ -109,10 +134,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _connectOAuth(String provider) async {
     setState(() => _busyProvider = provider);
     try {
-      final res = await (provider == 'google'
-              ? calendarApi.google.connect()
-              : calendarApi.outlook.connect())
-          as Map;
+      final res =
+          await (provider == 'google'
+                  ? calendarApi.google.connect()
+                  : calendarApi.outlook.connect())
+              as Map;
       final authUrl = res['auth_url']?.toString();
       if (authUrl == null || authUrl.isEmpty) {
         _flash('$provider connect URL missing.', error: true);
@@ -122,11 +148,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
       _startPolling(provider);
       if (!mounted) return;
-      _flash('Complete the $provider sign-in in your browser. We\'ll detect the connection automatically.');
+      _flash(
+        'Complete the $provider sign-in in your browser. We\'ll detect the connection automatically.',
+      );
     } catch (e) {
       final msg = e.toString();
       if (msg.contains('not_configured')) {
-        _flash('$provider requires backend client-id/secret configuration.', error: true);
+        _flash(
+          '$provider requires backend client-id/secret configuration.',
+          error: true,
+        );
       } else {
         _flash('Failed to start $provider connection.', error: true);
       }
@@ -139,14 +170,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _pollTimer?.cancel();
     final started = DateTime.now();
     _pollTimer = Timer.periodic(const Duration(seconds: 2), (t) async {
-      if (!mounted || DateTime.now().difference(started) > const Duration(minutes: 2)) {
+      if (!mounted ||
+          DateTime.now().difference(started) > const Duration(minutes: 2)) {
         t.cancel();
         return;
       }
       try {
         final s = await calendarApi.status();
         if (!mounted) return;
-        if (s is Map && s[provider] is Map && (s[provider]['connected'] == true)) {
+        if (s is Map &&
+            s[provider] is Map &&
+            (s[provider]['connected'] == true)) {
           t.cancel();
           setState(() => _calStatus = Map<String, dynamic>.from(s));
           _flash('${_providerLabel(provider)} connected!');
@@ -162,7 +196,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       backgroundColor: AppColors.surface1,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (_) => const _AppleCredentialSheet(),
     );
     if (creds == null) return;
@@ -192,7 +228,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (result.containsKey('error')) {
         _flash(result['error'].toString(), error: true);
       } else {
-        final total = result['total'] ?? (result['created'] ?? 0) + (result['updated'] ?? 0);
+        final total =
+            result['total'] ??
+            (result['created'] ?? 0) + (result['updated'] ?? 0);
         final cals = result['calendars'] ?? 0;
         setState(() => _deviceEventCount = total is int ? total : 0);
         _flash('Synced $total events from $cals calendars');
@@ -211,9 +249,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (ok != true) return;
     try {
       switch (provider) {
-        case 'google':  await calendarApi.google.disconnect(); break;
-        case 'apple':   await calendarApi.apple.disconnect();  break;
-        case 'outlook': await calendarApi.outlook.disconnect();break;
+        case 'google':
+          await calendarApi.google.disconnect();
+          break;
+        case 'apple':
+          await calendarApi.apple.disconnect();
+          break;
+        case 'outlook':
+          await calendarApi.outlook.disconnect();
+          break;
       }
       await _refreshCalStatus();
       _flash('${_providerLabel(provider)} disconnected.');
@@ -226,9 +270,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _busyProvider = provider);
     try {
       switch (provider) {
-        case 'google':  await calendarApi.google.sync(); break;
-        case 'apple':   await calendarApi.apple.sync();  break;
-        case 'outlook': await calendarApi.outlook.sync();break;
+        case 'google':
+          await calendarApi.google.sync();
+          break;
+        case 'apple':
+          await calendarApi.apple.sync();
+          break;
+        case 'outlook':
+          await calendarApi.outlook.sync();
+          break;
       }
       await _refreshCalStatus();
       _flash('${_providerLabel(provider)} synced!');
@@ -244,7 +294,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _deleteAccount() async {
     final ok = await _confirm(
       'Delete your account?',
-      body: 'This permanently deletes your account and all associated data. This cannot be undone.',
+      body:
+          'This permanently deletes your account and all associated data. This cannot be undone.',
       destructive: true,
     );
     if (ok != true) return;
@@ -257,18 +308,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<bool?> _confirm(String title, {String? body, bool destructive = false}) {
+  Future<bool?> _confirm(
+    String title, {
+    String? body,
+    bool destructive = false,
+  }) {
     return showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.surface1,
         title: Text(title, style: const TextStyle(color: AppColors.cream)),
-        content: body == null ? null : Text(body, style: const TextStyle(color: AppColors.creamDim)),
+        content: body == null
+            ? null
+            : Text(body, style: const TextStyle(color: AppColors.creamDim)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: destructive ? AppColors.danger : AppColors.terra),
+            style: TextButton.styleFrom(
+              foregroundColor: destructive ? AppColors.danger : AppColors.terra,
+            ),
             child: Text(destructive ? 'Delete' : 'Confirm'),
           ),
         ],
@@ -276,11 +338,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  static String _providerLabel(String p) => {
-        'google':  'Google Calendar',
-        'apple':   'Apple Calendar',
+  static String _providerLabel(String p) =>
+      {
+        'google': 'Google Calendar',
+        'apple': 'Apple Calendar',
         'outlook': 'Outlook Calendar',
-      }[p] ?? p;
+      }[p] ??
+      p;
 
   // ── Build ────────────────────────────────────────────────────────────────
 
@@ -292,48 +356,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text('Your Profile',
-              style: TextStyle(color: AppColors.cream, fontSize: 28, fontWeight: FontWeight.w700)),
+          const Text(
+            'Your Profile',
+            style: TextStyle(
+              color: AppColors.cream,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
-          const Text('Manage your account.', style: TextStyle(color: AppColors.creamDim, fontSize: 14)),
+          const Text(
+            'Manage your account.',
+            style: TextStyle(color: AppColors.creamDim, fontSize: 14),
+          ),
           const SizedBox(height: 20),
-          if (_message != null) AlertBanner(message: _message!, error: _isError),
+          if (_message != null)
+            AlertBanner(message: _message!, error: _isError),
 
           // Profile card
           ACard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  Avatar(name: user?['first_name'] ?? user?['email'], size: 56),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(user?['first_name'] ?? 'Your account',
-                            style: const TextStyle(color: AppColors.cream, fontSize: 18, fontWeight: FontWeight.w600)),
-                        Text(user?['email'] ?? '',
-                            style: const TextStyle(color: AppColors.creamDim, fontSize: 13)),
-                      ],
+                Row(
+                  children: [
+                    Avatar(
+                      name: user?['first_name'] ?? user?['email'],
+                      size: 56,
                     ),
-                  ),
-                ]),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?['first_name'] ?? 'Your account',
+                            style: const TextStyle(
+                              color: AppColors.cream,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            user?['email'] ?? '',
+                            style: const TextStyle(
+                              color: AppColors.creamDim,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 20),
                 LabeledInput(label: 'First name', controller: _firstName),
                 LabeledInput(label: 'Last name', controller: _lastName),
-                const Text('TIMEZONE',
-                    style: TextStyle(color: AppColors.creamDim, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+                const Text(
+                  'TIMEZONE',
+                  style: TextStyle(
+                    color: AppColors.creamDim,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: _timezones.contains(_tz) ? _tz : 'UTC',
                   dropdownColor: AppColors.surface1,
                   style: const TextStyle(color: AppColors.cream),
-                  items: [for (final tz in _timezones) DropdownMenuItem(value: tz, child: Text(tz))],
+                  items: [
+                    for (final tz in _timezones)
+                      DropdownMenuItem(value: tz, child: Text(tz)),
+                  ],
                   onChanged: (v) => setState(() => _tz = v ?? 'UTC'),
                 ),
                 const SizedBox(height: 20),
-                APrimaryButton(label: 'Save changes', loading: _saving, onPressed: _saveProfile),
+                APrimaryButton(
+                  label: 'Save changes',
+                  loading: _saving,
+                  onPressed: _saveProfile,
+                ),
               ],
             ),
           ),
@@ -346,8 +450,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const CardLabel('Change password'),
                 const SizedBox(height: 12),
-                LabeledInput(label: 'Current password', controller: _currentPw, obscure: true),
-                LabeledInput(label: 'New password', controller: _newPw, obscure: true, hint: 'Min. 8 characters'),
+                LabeledInput(
+                  label: 'Current password',
+                  controller: _currentPw,
+                  obscure: true,
+                ),
+                LabeledInput(
+                  label: 'New password',
+                  controller: _newPw,
+                  obscure: true,
+                  hint: 'Min. 8 characters',
+                ),
                 OutlinedButton(
                   onPressed: _changingPw ? null : _changePassword,
                   child: Text(_changingPw ? 'Changing…' : 'Change password'),
@@ -358,40 +471,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
 
           // Device Calendar (native — one tap)
-          if (!kIsWeb) ACard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CardLabel(!kIsWeb && (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS)
-                    ? 'Apple & Device Calendars'
-                    : 'Device Calendar'),
-                const SizedBox(height: 6),
-                Text(
-                  !kIsWeb && (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS)
-                      ? 'Sync iCloud Calendar and all other calendars on this device with one tap — no passwords needed.'
-                      : 'Sync events from all calendars on this device (Google, Exchange, etc.) with one tap.',
-                  style: const TextStyle(color: AppColors.creamDim, fontSize: 12, height: 1.4),
-                ),
-                const SizedBox(height: 12),
-                Row(children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _deviceSyncing ? null : _syncDeviceCalendar,
-                      icon: _deviceSyncing
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.cream))
-                          : const Icon(Icons.sync, size: 18),
-                      label: Text(_deviceSyncing ? 'Syncing…' : 'Sync now'),
+          if (!kIsWeb)
+            ACard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CardLabel(
+                    !kIsWeb &&
+                            (defaultTargetPlatform == TargetPlatform.iOS ||
+                                defaultTargetPlatform == TargetPlatform.macOS)
+                        ? 'Apple & Device Calendars'
+                        : 'Device Calendar',
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    !kIsWeb &&
+                            (defaultTargetPlatform == TargetPlatform.iOS ||
+                                defaultTargetPlatform == TargetPlatform.macOS)
+                        ? 'Sync iCloud Calendar and all other calendars on this device with one tap — no passwords needed.'
+                        : 'Sync events from all calendars on this device (Google, Exchange, etc.) with one tap.',
+                    style: const TextStyle(
+                      color: AppColors.creamDim,
+                      fontSize: 12,
+                      height: 1.4,
                     ),
                   ),
-                ]),
-                if (_deviceEventCount != null) ...[
-                  const SizedBox(height: 8),
-                  Text('✓ $_deviceEventCount events synced',
-                      style: const TextStyle(color: AppColors.sage, fontSize: 12)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _deviceSyncing
+                              ? null
+                              : _syncDeviceCalendar,
+                          icon: _deviceSyncing
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.cream,
+                                  ),
+                                )
+                              : const Icon(Icons.sync, size: 18),
+                          label: Text(_deviceSyncing ? 'Syncing…' : 'Sync now'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_deviceEventCount != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      '✓ $_deviceEventCount events synced',
+                      style: const TextStyle(
+                        color: AppColors.sage,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
           const SizedBox(height: 16),
 
           // Cloud calendar providers (Apple CalDAV only shown on web)
@@ -403,15 +543,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 6),
                 const Text(
                   'Connect directly to cloud calendar services for automatic background sync.',
-                  style: TextStyle(color: AppColors.creamDim, fontSize: 12, height: 1.4),
+                  style: TextStyle(
+                    color: AppColors.creamDim,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 _CalendarRow(
                   label: 'Google Calendar',
                   status: _calStatus?['google'],
                   busy: _busyProvider == 'google',
-                  onConnect:    () => _connectOAuth('google'),
-                  onSync:       () => _sync('google'),
+                  onConnect: () => _connectOAuth('google'),
+                  onSync: () => _sync('google'),
                   onDisconnect: () => _disconnect('google'),
                 ),
                 if (kIsWeb) ...[
@@ -420,8 +564,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     label: 'Apple Calendar (CalDAV)',
                     status: _calStatus?['apple'],
                     busy: _busyProvider == 'apple',
-                    onConnect:    _connectApple,
-                    onSync:       () => _sync('apple'),
+                    onConnect: _connectApple,
+                    onSync: () => _sync('apple'),
                     onDisconnect: () => _disconnect('apple'),
                     identifierKey: 'username',
                   ),
@@ -431,8 +575,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Outlook Calendar',
                   status: _calStatus?['outlook'],
                   busy: _busyProvider == 'outlook',
-                  onConnect:    () => _connectOAuth('outlook'),
-                  onSync:       () => _sync('outlook'),
+                  onConnect: () => _connectOAuth('outlook'),
+                  onSync: () => _sync('outlook'),
                   onDisconnect: () => _disconnect('outlook'),
                 ),
               ],
@@ -444,10 +588,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ACard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                CardLabel('Account info'),
-                SizedBox(height: 10),
-              ],
+              children: const [CardLabel('Account info'), SizedBox(height: 10)],
             ),
           ),
           const SizedBox(height: 10),
@@ -463,7 +604,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 10),
                 OutlinedButton(
                   onPressed: () => context.read<AuthProvider>().logout(),
-                  style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                  ),
                   child: const Text('Sign out'),
                 ),
               ],
@@ -477,24 +620,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: BoxDecoration(
               color: AppColors.surface1,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+              border: Border.all(
+                color: AppColors.danger.withValues(alpha: 0.3),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('DANGER ZONE',
-                    style: TextStyle(color: AppColors.danger, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.8)),
+                const Text(
+                  'DANGER ZONE',
+                  style: TextStyle(
+                    color: AppColors.danger,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.8,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 const Text(
                   'Permanently delete your account and all associated data. This cannot be undone.',
-                  style: TextStyle(color: AppColors.creamDim, fontSize: 13, height: 1.5),
+                  style: TextStyle(
+                    color: AppColors.creamDim,
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 OutlinedButton(
                   onPressed: _deleteAccount,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.danger,
-                    side: BorderSide(color: AppColors.danger.withValues(alpha: 0.4)),
+                    side: BorderSide(
+                      color: AppColors.danger.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: const Text('Delete account'),
                 ),
@@ -542,32 +700,62 @@ class _CalendarRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(children: [
-                    Text(label, style: const TextStyle(color: AppColors.cream, fontSize: 14, fontWeight: FontWeight.w500)),
-                    const SizedBox(width: 8),
-                    if (connected)
-                      const Text('✓', style: TextStyle(color: AppColors.sage, fontSize: 14)),
-                  ]),
-                  if (connected && identifier != null && identifier.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          color: AppColors.cream,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (connected)
+                        const Text(
+                          '✓',
+                          style: TextStyle(color: AppColors.sage, fontSize: 14),
+                        ),
+                    ],
+                  ),
+                  if (connected &&
+                      identifier != null &&
+                      identifier.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(identifier,
-                        style: const TextStyle(color: AppColors.creamDim, fontSize: 12)),
+                    Text(
+                      identifier,
+                      style: const TextStyle(
+                        color: AppColors.creamDim,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                   if (connected && syncedAt != null && syncedAt.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text('Last synced ${_relativeTime(syncedAt)}',
-                        style: const TextStyle(color: AppColors.creamDim, fontSize: 11)),
+                    Text(
+                      'Last synced ${_relativeTime(syncedAt)}',
+                      style: const TextStyle(
+                        color: AppColors.creamDim,
+                        fontSize: 11,
+                      ),
+                    ),
                   ],
                   if (!connected) ...[
                     const SizedBox(height: 2),
-                    const Text('Not connected',
-                        style: TextStyle(color: AppColors.creamDim, fontSize: 12)),
+                    const Text(
+                      'Not connected',
+                      style: TextStyle(color: AppColors.creamDim, fontSize: 12),
+                    ),
                   ],
                 ],
               ),
             ),
             if (busy)
-              const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
             else if (connected) ...[
               TextButton(onPressed: onSync, child: const Text('Sync')),
               TextButton(
@@ -589,8 +777,8 @@ class _CalendarRow extends StatelessWidget {
     final diff = DateTime.now().difference(t);
     if (diff.inMinutes < 1) return 'just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24)   return '${diff.inHours}h ago';
-    if (diff.inDays < 7)     return '${diff.inDays}d ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
     return DateFormat('d MMM').format(t);
   }
 }
@@ -600,7 +788,8 @@ class _CalendarRow extends StatelessWidget {
 class _PushNotificationToggle extends StatefulWidget {
   const _PushNotificationToggle();
   @override
-  State<_PushNotificationToggle> createState() => _PushNotificationToggleState();
+  State<_PushNotificationToggle> createState() =>
+      _PushNotificationToggleState();
 }
 
 class _PushNotificationToggleState extends State<_PushNotificationToggle> {
@@ -617,10 +806,15 @@ class _PushNotificationToggleState extends State<_PushNotificationToggle> {
     setState(() => _loading = true);
     try {
       if (value) {
-        final ok = await PushNotificationService.instance.requestPermissionAndRegister();
+        final ok = await PushNotificationService.instance
+            .requestPermissionAndRegister();
         if (!ok && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Notification permission denied. Enable in system settings.')),
+            const SnackBar(
+              content: Text(
+                'Notification permission denied. Enable in system settings.',
+              ),
+            ),
           );
         }
         if (mounted) setState(() => _enabled = ok);
@@ -630,9 +824,9 @@ class _PushNotificationToggleState extends State<_PushNotificationToggle> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -648,18 +842,30 @@ class _PushNotificationToggleState extends State<_PushNotificationToggle> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Push notifications',
-                    style: TextStyle(color: AppColors.cream, fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(
+                  'Push notifications',
+                  style: TextStyle(
+                    color: AppColors.cream,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 SizedBox(height: 2),
-                Text('Morning outfit alerts and trip reminders',
-                    style: TextStyle(color: AppColors.creamDim, fontSize: 12)),
+                Text(
+                  'Morning outfit alerts and trip reminders',
+                  style: TextStyle(color: AppColors.creamDim, fontSize: 12),
+                ),
               ],
             ),
           ),
           if (_loading)
             const SizedBox(
-              width: 20, height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.terra),
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.terra,
+              ),
             )
           else
             Switch.adaptive(
@@ -687,7 +893,11 @@ class _AppleCredentialSheetState extends State<_AppleCredentialSheet> {
   String? _error;
 
   @override
-  void dispose() { _user.dispose(); _pw.dispose(); super.dispose(); }
+  void dispose() {
+    _user.dispose();
+    _pw.dispose();
+    super.dispose();
+  }
 
   void _submit() {
     final username = _user.text.trim().toLowerCase();
@@ -696,7 +906,9 @@ class _AppleCredentialSheetState extends State<_AppleCredentialSheet> {
         ? '${raw.substring(0, 4)}-${raw.substring(4, 8)}-${raw.substring(8, 12)}-${raw.substring(12, 16)}'
         : _pw.text.trim();
     if (username.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Apple ID and App-Specific Password are required.');
+      setState(
+        () => _error = 'Apple ID and App-Specific Password are required.',
+      );
       return;
     }
     Navigator.pop(context, {'username': username, 'password': password});
@@ -705,7 +917,9 @@ class _AppleCredentialSheetState extends State<_AppleCredentialSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: SingleChildScrollView(
@@ -713,16 +927,30 @@ class _AppleCredentialSheetState extends State<_AppleCredentialSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Connect Apple Calendar',
-                  style: TextStyle(color: AppColors.cream, fontSize: 20, fontWeight: FontWeight.w700)),
+              const Text(
+                'Connect Apple Calendar',
+                style: TextStyle(
+                  color: AppColors.cream,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 8),
               const Text(
                 'Generate an App-Specific Password at appleid.apple.com under Sign-In & Security.',
-                style: TextStyle(color: AppColors.creamDim, fontSize: 12, height: 1.4),
+                style: TextStyle(
+                  color: AppColors.creamDim,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 16),
               if (_error != null) AlertBanner(message: _error!),
-              LabeledInput(label: 'Apple ID', controller: _user, hint: 'you@icloud.com'),
+              LabeledInput(
+                label: 'Apple ID',
+                controller: _user,
+                hint: 'you@icloud.com',
+              ),
               LabeledInput(
                 label: 'App-Specific Password',
                 controller: _pw,

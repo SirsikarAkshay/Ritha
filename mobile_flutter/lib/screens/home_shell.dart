@@ -9,11 +9,11 @@ class HomeShell extends StatelessWidget {
   const HomeShell({super.key, required this.child});
 
   static const _tabs = <_Tab>[
-    _Tab('/',              Icons.dashboard_outlined,     'Home'),
-    _Tab('/wardrobe',      Icons.checkroom_outlined,     'Wardrobe'),
-    _Tab('/itinerary',     Icons.event_note_outlined,    'Schedule'),
-    _Tab('/trips',         Icons.flight_takeoff_outlined,'Trips'),
-    _Tab('/cultural',      Icons.public_outlined,        'Cultural'),
+    _Tab('/', Icons.dashboard_outlined, 'Home'),
+    _Tab('/wardrobe', Icons.checkroom_outlined, 'Wardrobe'),
+    _Tab('/itinerary', Icons.event_note_outlined, 'Schedule'),
+    _Tab('/trips', Icons.flight_takeoff_outlined, 'Trips'),
+    _Tab('/cultural', Icons.public_outlined, 'Cultural'),
   ];
 
   int _indexOf(String location) {
@@ -34,7 +34,10 @@ class HomeShell extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.midnight,
         elevation: 0,
-        title: const Text('Ritha', style: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Ritha',
+          style: TextStyle(color: AppColors.cream, fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_outline, color: AppColors.cream),
@@ -46,20 +49,57 @@ class HomeShell extends StatelessWidget {
             color: AppColors.surface1,
             onSelected: (v) {
               switch (v) {
-                case 'sustainability':  context.go('/sustainability'); break;
-                case 'people':          context.go('/people'); break;
-                case 'messages':        context.go('/messages'); break;
-                case 'shared':          context.go('/shared-wardrobes'); break;
-                case 'logout':          auth.logout(); break;
+                case 'sustainability':
+                  context.go('/sustainability');
+                  break;
+                case 'people':
+                  context.go('/people');
+                  break;
+                case 'messages':
+                  context.go('/messages');
+                  break;
+                case 'shared':
+                  context.go('/shared-wardrobes');
+                  break;
+                case 'logout':
+                  auth.logout();
+                  break;
               }
             },
             itemBuilder: (_) => const [
-              PopupMenuItem(value: 'sustainability', child: Text('Sustainability',     style: TextStyle(color: AppColors.cream))),
-              PopupMenuItem(value: 'people',         child: Text('People',             style: TextStyle(color: AppColors.cream))),
-              PopupMenuItem(value: 'messages',       child: Text('Messages',           style: TextStyle(color: AppColors.cream))),
-              PopupMenuItem(value: 'shared',         child: Text('Shared wardrobes',   style: TextStyle(color: AppColors.cream))),
+              PopupMenuItem(
+                value: 'sustainability',
+                child: Text(
+                  'Sustainability',
+                  style: TextStyle(color: AppColors.cream),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'people',
+                child: Text('People', style: TextStyle(color: AppColors.cream)),
+              ),
+              PopupMenuItem(
+                value: 'messages',
+                child: Text(
+                  'Messages',
+                  style: TextStyle(color: AppColors.cream),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'shared',
+                child: Text(
+                  'Shared wardrobes',
+                  style: TextStyle(color: AppColors.cream),
+                ),
+              ),
               PopupMenuDivider(),
-              PopupMenuItem(value: 'logout',         child: Text('Sign out',           style: TextStyle(color: AppColors.danger))),
+              PopupMenuItem(
+                value: 'logout',
+                child: Text(
+                  'Sign out',
+                  style: TextStyle(color: AppColors.danger),
+                ),
+              ),
             ],
           ),
         ],
@@ -72,7 +112,11 @@ class HomeShell extends StatelessWidget {
         onDestinationSelected: (i) => context.go(_tabs[i].path),
         destinations: [
           for (final t in _tabs)
-            NavigationDestination(icon: Icon(t.icon, color: AppColors.creamDim), selectedIcon: Icon(t.icon, color: AppColors.terraLight), label: t.label),
+            NavigationDestination(
+              icon: Icon(t.icon, color: AppColors.creamDim),
+              selectedIcon: Icon(t.icon, color: AppColors.terraLight),
+              label: t.label,
+            ),
         ],
       ),
     );

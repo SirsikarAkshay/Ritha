@@ -15,9 +15,14 @@ class AuthProvider extends ChangeNotifier {
   // isn't initialised (no DSN), so it's safe to call unconditionally.
   void _syncSentryUser() {
     Sentry.configureScope((scope) {
-      scope.setUser(_user == null
-          ? null
-          : SentryUser(id: _user!['id']?.toString(), email: _user!['email'] as String?));
+      scope.setUser(
+        _user == null
+            ? null
+            : SentryUser(
+                id: _user!['id']?.toString(),
+                email: _user!['email'] as String?,
+              ),
+      );
     });
   }
 
@@ -52,8 +57,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> login(String email, String password) async {
-    final data = await authApi.login({'email': email, 'password': password}) as Map<String, dynamic>;
-    await ApiClient.instance.setTokens(data['access'] as String, data['refresh'] as String);
+    final data =
+        await authApi.login({'email': email, 'password': password})
+            as Map<String, dynamic>;
+    await ApiClient.instance.setTokens(
+      data['access'] as String,
+      data['refresh'] as String,
+    );
     final me = await authApi.me() as Map<String, dynamic>;
     _user = me;
     _syncSentryUser();
@@ -71,7 +81,9 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     final refresh = await ApiClient.instance.getRefreshToken();
     if (refresh != null) {
-      try { await authApi.logout(refresh); } catch (_) {}
+      try {
+        await authApi.logout(refresh);
+      } catch (_) {}
     }
     await ApiClient.instance.clearTokens();
     _user = null;
@@ -83,8 +95,16 @@ class AuthProvider extends ChangeNotifier {
     await authApi.forgotPassword({'email': email});
   }
 
-  Future<void> resetPassword(String token, String email, String password) async {
-    await authApi.resetPassword({'token': token, 'email': email, 'new_password': password});
+  Future<void> resetPassword(
+    String token,
+    String email,
+    String password,
+  ) async {
+    await authApi.resetPassword({
+      'token': token,
+      'email': email,
+      'new_password': password,
+    });
   }
 
   Future<void> verifyEmail(String token, String email) async {

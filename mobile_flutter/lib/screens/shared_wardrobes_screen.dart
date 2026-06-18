@@ -18,10 +18,16 @@ class _SharedWardrobesScreenState extends State<SharedWardrobesScreen> {
   int? _responding;
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    _load();
+  }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final results = await Future.wait([
         sharedWardrobesApi.list(),
@@ -34,7 +40,12 @@ class _SharedWardrobesScreenState extends State<SharedWardrobesScreen> {
         _invitations = (invs is List) ? invs : [];
         _loading = false;
       });
-    } catch (e) { setState(() { _error = e.toString(); _loading = false; }); }
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
   }
 
   Future<void> _respondToInvitation(int id, String action) async {
@@ -45,11 +56,20 @@ class _SharedWardrobesScreenState extends State<SharedWardrobesScreen> {
       if (action == 'accept') _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(action == 'accept' ? 'Joined the wardrobe.' : 'Invitation declined.')),
+          SnackBar(
+            content: Text(
+              action == 'accept'
+                  ? 'Joined the wardrobe.'
+                  : 'Invitation declined.',
+            ),
+          ),
         );
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       setState(() => _responding = null);
     }
@@ -60,7 +80,9 @@ class _SharedWardrobesScreenState extends State<SharedWardrobesScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface1,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (_) => const _CreateSheet(),
     );
     if (ok != null && mounted) {
@@ -78,55 +100,107 @@ class _SharedWardrobesScreenState extends State<SharedWardrobesScreen> {
         child: const Icon(Icons.add),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.terra))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.terra),
+            )
           : RefreshIndicator(
               color: AppColors.terra,
               onRefresh: _load,
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  const Text('Shared Wardrobes',
-                      style: TextStyle(color: AppColors.cream, fontSize: 28, fontWeight: FontWeight.w700)),
+                  const Text(
+                    'Shared Wardrobes',
+                    style: TextStyle(
+                      color: AppColors.cream,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  const Text('Collaborate on wardrobes with your connections.',
-                      style: TextStyle(color: AppColors.creamDim, fontSize: 14)),
+                  const Text(
+                    'Collaborate on wardrobes with your connections.',
+                    style: TextStyle(color: AppColors.creamDim, fontSize: 14),
+                  ),
                   const SizedBox(height: 16),
                   if (_error != null) AlertBanner(message: _error!),
                   if (_invitations.isNotEmpty) ...[
-                    const Text('Pending Invitations',
-                        style: TextStyle(color: AppColors.cream, fontSize: 16, fontWeight: FontWeight.w600)),
+                    const Text(
+                      'Pending Invitations',
+                      style: TextStyle(
+                        color: AppColors.cream,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     for (final inv in _invitations)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: ACard(
-                          child: Row(children: [
-                            Expanded(child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(inv['wardrobe_name'] ?? '',
-                                    style: const TextStyle(color: AppColors.cream, fontSize: 15, fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 2),
-                                Text('Invited by ${inv['invited_by']?['display_name'] ?? '@${inv['invited_by']?['handle']}'}',
-                                    style: const TextStyle(color: AppColors.creamDim, fontSize: 12)),
-                              ],
-                            )),
-                            TextButton(
-                              onPressed: _responding == inv['id'] ? null : () => _respondToInvitation(inv['id'] as int, 'decline'),
-                              child: const Text('Decline', style: TextStyle(color: AppColors.creamDim)),
-                            ),
-                            ElevatedButton(
-                              onPressed: _responding == inv['id'] ? null : () => _respondToInvitation(inv['id'] as int, 'accept'),
-                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.terra),
-                              child: Text(_responding == inv['id'] ? '…' : 'Accept'),
-                            ),
-                          ]),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      inv['wardrobe_name'] ?? '',
+                                      style: const TextStyle(
+                                        color: AppColors.cream,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Invited by ${inv['invited_by']?['display_name'] ?? '@${inv['invited_by']?['handle']}'}',
+                                      style: const TextStyle(
+                                        color: AppColors.creamDim,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: _responding == inv['id']
+                                    ? null
+                                    : () => _respondToInvitation(
+                                        inv['id'] as int,
+                                        'decline',
+                                      ),
+                                child: const Text(
+                                  'Decline',
+                                  style: TextStyle(color: AppColors.creamDim),
+                                ),
+                              ),
+                              ElevatedButton(
+                                onPressed: _responding == inv['id']
+                                    ? null
+                                    : () => _respondToInvitation(
+                                        inv['id'] as int,
+                                        'accept',
+                                      ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.terra,
+                                ),
+                                child: Text(
+                                  _responding == inv['id'] ? '…' : 'Accept',
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     const SizedBox(height: 16),
                   ],
                   if (_wardrobes.isEmpty)
-                    const EmptyState(icon: '👗', title: 'No shared wardrobes', body: 'Create one with the + button.'),
+                    const EmptyState(
+                      icon: '👗',
+                      title: 'No shared wardrobes',
+                      body: 'Create one with the + button.',
+                    ),
                   for (final w in _wardrobes)
                     GestureDetector(
                       onTap: () => context.go('/shared-wardrobes/${w['id']}'),
@@ -136,22 +210,44 @@ class _SharedWardrobesScreenState extends State<SharedWardrobesScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(children: [
-                                Expanded(
-                                  child: Text(w['name'] ?? '',
-                                      style: const TextStyle(color: AppColors.cream, fontSize: 16, fontWeight: FontWeight.w600)),
-                                ),
-                                if (w['my_role'] == 'owner') const ABadge(text: 'Owner', variant: BadgeVariant.terra),
-                              ]),
-                              if ((w['description'] ?? '').toString().isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      w['name'] ?? '',
+                                      style: const TextStyle(
+                                        color: AppColors.cream,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  if (w['my_role'] == 'owner')
+                                    const ABadge(
+                                      text: 'Owner',
+                                      variant: BadgeVariant.terra,
+                                    ),
+                                ],
+                              ),
+                              if ((w['description'] ?? '')
+                                  .toString()
+                                  .isNotEmpty) ...[
                                 const SizedBox(height: 6),
-                                Text(w['description'],
-                                    style: const TextStyle(color: AppColors.creamDim, fontSize: 13)),
+                                Text(
+                                  w['description'],
+                                  style: const TextStyle(
+                                    color: AppColors.creamDim,
+                                    fontSize: 13,
+                                  ),
+                                ),
                               ],
                               const SizedBox(height: 10),
                               Text(
                                 '${w['item_count'] ?? 0} items · ${(w['members'] as List?)?.length ?? 0} members',
-                                style: const TextStyle(color: AppColors.creamDim, fontSize: 12),
+                                style: const TextStyle(
+                                  color: AppColors.creamDim,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
@@ -179,35 +275,62 @@ class _CreateSheetState extends State<_CreateSheet> {
   String? _error;
 
   Future<void> _save() async {
-    if (_name.text.trim().isEmpty) { setState(() => _error = 'Name is required.'); return; }
-    setState(() { _saving = true; _error = null; });
+    if (_name.text.trim().isEmpty) {
+      setState(() => _error = 'Name is required.');
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
     try {
-      final w = await sharedWardrobesApi.create({
-        'name': _name.text.trim(),
-        'description': _description.text.trim(),
-      }) as Map;
+      final w =
+          await sharedWardrobesApi.create({
+                'name': _name.text.trim(),
+                'description': _description.text.trim(),
+              })
+              as Map;
       if (mounted) Navigator.pop(context, Map<String, dynamic>.from(w));
     } catch (e) {
-      setState(() { _error = e.toString(); _saving = false; });
+      setState(() {
+        _error = e.toString();
+        _saving = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Create shared wardrobe',
-                style: TextStyle(color: AppColors.cream, fontSize: 20, fontWeight: FontWeight.w700)),
+            const Text(
+              'Create shared wardrobe',
+              style: TextStyle(
+                color: AppColors.cream,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: 16),
             if (_error != null) AlertBanner(message: _error!),
-            LabeledInput(label: 'Name', controller: _name, hint: 'Summer in Portugal'),
-            LabeledInput(label: 'Description (optional)', controller: _description, maxLines: 3),
+            LabeledInput(
+              label: 'Name',
+              controller: _name,
+              hint: 'Summer in Portugal',
+            ),
+            LabeledInput(
+              label: 'Description (optional)',
+              controller: _description,
+              maxLines: 3,
+            ),
             APrimaryButton(label: 'Create', loading: _saving, onPressed: _save),
           ],
         ),

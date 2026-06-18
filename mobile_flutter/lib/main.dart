@@ -10,9 +10,18 @@ import 'router.dart';
 
 // Set in CI/release builds: flutter build --dart-define=SENTRY_DSN=...
 // Empty by default, so local/dev runs send nothing.
-const String _sentryDsn = String.fromEnvironment('SENTRY_DSN', defaultValue: '');
-const String _sentryEnv = String.fromEnvironment('SENTRY_ENVIRONMENT', defaultValue: 'production');
-const String _appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '');
+const String _sentryDsn = String.fromEnvironment(
+  'SENTRY_DSN',
+  defaultValue: '',
+);
+const String _sentryEnv = String.fromEnvironment(
+  'SENTRY_ENVIRONMENT',
+  defaultValue: 'production',
+);
+const String _appVersion = String.fromEnvironment(
+  'APP_VERSION',
+  defaultValue: '',
+);
 
 Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,16 +36,13 @@ Future<void> main() async {
     await _bootstrap();
     return;
   }
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = _sentryDsn;
-      options.environment = _sentryEnv;
-      if (_appVersion.isNotEmpty) options.release = _appVersion;
-      options.tracesSampleRate = 0.1;
-      options.sendDefaultPii = false;
-    },
-    appRunner: _bootstrap,
-  );
+  await SentryFlutter.init((options) {
+    options.dsn = _sentryDsn;
+    options.environment = _sentryEnv;
+    if (_appVersion.isNotEmpty) options.release = _appVersion;
+    options.tracesSampleRate = 0.1;
+    options.sendDefaultPii = false;
+  }, appRunner: _bootstrap);
 }
 
 class RithaApp extends StatelessWidget {

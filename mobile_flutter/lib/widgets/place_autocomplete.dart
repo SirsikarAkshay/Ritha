@@ -28,19 +28,25 @@ class PlaceSuggestion {
     this.longitude,
   });
 
-  factory PlaceSuggestion.fromJson(Map<String, dynamic> json) => PlaceSuggestion(
-        name:        (json['name'] ?? '').toString(),
-        admin1:      json['admin1']?.toString(),
-        country:     json['country']?.toString(),
+  factory PlaceSuggestion.fromJson(Map<String, dynamic> json) =>
+      PlaceSuggestion(
+        name: (json['name'] ?? '').toString(),
+        admin1: json['admin1']?.toString(),
+        country: json['country']?.toString(),
         countryCode: json['country_code']?.toString(),
         featureCode: json['feature_code']?.toString(),
-        latitude:    (json['latitude'] as num?)?.toDouble(),
-        longitude:   (json['longitude'] as num?)?.toDouble(),
+        latitude: (json['latitude'] as num?)?.toDouble(),
+        longitude: (json['longitude'] as num?)?.toDouble(),
       );
 
   String labelFor(PlaceMode mode) {
-    if (mode == PlaceMode.country) return (country != null && country!.isNotEmpty) ? country! : name;
-    return [name, admin1, country].where((s) => s != null && s.isNotEmpty).join(', ');
+    if (mode == PlaceMode.country)
+      return (country != null && country!.isNotEmpty) ? country! : name;
+    return [
+      name,
+      admin1,
+      country,
+    ].where((s) => s != null && s.isNotEmpty).join(', ');
   }
 
   String get label => labelFor(PlaceMode.any);
@@ -53,7 +59,7 @@ class PlaceAutocompleteField extends StatefulWidget {
   final int minChars;
   final void Function(PlaceSuggestion)? onSelected;
   final PlaceMode mode;
-  final String? countryCode;     // ISO 3166 alpha-2 — used in city mode
+  final String? countryCode; // ISO 3166 alpha-2 — used in city mode
   final bool disabled;
   final String? disabledHint;
 
@@ -128,7 +134,8 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
         'language': 'en',
         'format': 'json',
       };
-      if (widget.mode == PlaceMode.city && (widget.countryCode ?? '').isNotEmpty) {
+      if (widget.mode == PlaceMode.city &&
+          (widget.countryCode ?? '').isNotEmpty) {
         params['countryCode'] = widget.countryCode!;
       }
       final uri = Uri.parse(_geocodeBase).replace(queryParameters: params);
@@ -155,14 +162,18 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
     switch (widget.mode) {
       case PlaceMode.country:
         final seen = <String>{};
-        return list.where((p) => (p.featureCode ?? '').startsWith('PCL')).where((p) {
-          final key = p.countryCode ?? p.country ?? p.name;
-          if (seen.contains(key)) return false;
-          seen.add(key);
-          return true;
-        }).toList();
+        return list.where((p) => (p.featureCode ?? '').startsWith('PCL')).where(
+          (p) {
+            final key = p.countryCode ?? p.country ?? p.name;
+            if (seen.contains(key)) return false;
+            seen.add(key);
+            return true;
+          },
+        ).toList();
       case PlaceMode.city:
-        return list.where((p) => (p.featureCode ?? '').startsWith('PPL')).toList();
+        return list
+            .where((p) => (p.featureCode ?? '').startsWith('PPL'))
+            .toList();
       case PlaceMode.any:
         return list;
     }
@@ -191,7 +202,11 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
                 border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: const [
-                  BoxShadow(color: Color(0x99000000), blurRadius: 24, offset: Offset(0, 6)),
+                  BoxShadow(
+                    color: Color(0x99000000),
+                    blurRadius: 24,
+                    offset: Offset(0, 6),
+                  ),
                 ],
               ),
               child: ClipRRect(
@@ -200,8 +215,11 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
                   padding: EdgeInsets.zero,
                   shrinkWrap: true,
                   itemCount: _suggestions.length,
-                  separatorBuilder: (_, _) =>
-                      const Divider(height: 1, thickness: 1, color: AppColors.border),
+                  separatorBuilder: (_, _) => const Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: AppColors.border,
+                  ),
                   itemBuilder: (_, i) {
                     final p = _suggestions[i];
                     final primary = widget.mode == PlaceMode.country
@@ -209,36 +227,48 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
                         : p.name;
                     final secondary = widget.mode == PlaceMode.country
                         ? ''
-                        : [p.admin1, p.country]
-                            .where((s) => (s ?? '').isNotEmpty)
-                            .join(', ');
+                        : [
+                            p.admin1,
+                            p.country,
+                          ].where((s) => (s ?? '').isNotEmpty).join(', ');
                     return InkWell(
                       onTap: () => _pick(p),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                        child: Row(children: [
-                          const Opacity(
-                            opacity: 0.6,
-                            child: Text('📍', style: TextStyle(fontSize: 13)),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: RichText(
-                              overflow: TextOverflow.ellipsis,
-                              text: TextSpan(
-                                style: const TextStyle(color: AppColors.cream, fontSize: 14),
-                                children: [
-                                  TextSpan(text: primary),
-                                  if (secondary.isNotEmpty)
-                                    TextSpan(
-                                      text: '  $secondary',
-                                      style: const TextStyle(color: AppColors.creamDim, fontSize: 12),
-                                    ),
-                                ],
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 11,
+                        ),
+                        child: Row(
+                          children: [
+                            const Opacity(
+                              opacity: 0.6,
+                              child: Text('📍', style: TextStyle(fontSize: 13)),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: RichText(
+                                overflow: TextOverflow.ellipsis,
+                                text: TextSpan(
+                                  style: const TextStyle(
+                                    color: AppColors.cream,
+                                    fontSize: 14,
+                                  ),
+                                  children: [
+                                    TextSpan(text: primary),
+                                    if (secondary.isNotEmpty)
+                                      TextSpan(
+                                        text: '  $secondary',
+                                        style: const TextStyle(
+                                          color: AppColors.creamDim,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ]),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -291,15 +321,20 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
               enabled: !widget.disabled,
               style: const TextStyle(color: AppColors.cream, fontSize: 15),
               decoration: InputDecoration(
-                hintText: widget.disabled && (widget.disabledHint ?? '').isNotEmpty
+                hintText:
+                    widget.disabled && (widget.disabledHint ?? '').isNotEmpty
                     ? widget.disabledHint
                     : widget.hint,
                 suffixIcon: _loading
                     ? const Padding(
                         padding: EdgeInsets.all(12),
                         child: SizedBox(
-                          width: 14, height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.terraLight),
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.terraLight,
+                          ),
                         ),
                       )
                     : null,

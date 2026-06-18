@@ -30,13 +30,22 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     final auth = context.read<AuthProvider>();
     try {
       if (_register) {
-        await auth.register(_email.text.trim(), _password.text, _firstName.text.trim());
+        await auth.register(
+          _email.text.trim(),
+          _password.text,
+          _firstName.text.trim(),
+        );
         if (!mounted) return;
-        context.go('/verify-email?email=${Uri.encodeQueryComponent(_email.text.trim())}');
+        context.go(
+          '/verify-email?email=${Uri.encodeQueryComponent(_email.text.trim())}',
+        );
       } else {
         await auth.login(_email.text.trim(), _password.text);
       }
@@ -63,25 +72,64 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 24),
-                  const Text('Ritha',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.cream, fontSize: 32, fontWeight: FontWeight.w700)),
+                  const Text(
+                    'Ritha',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.cream,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  const Text('YOUR WARDROBE ASSISTANT',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.terra, fontSize: 11, letterSpacing: 1.5)),
+                  const Text(
+                    'YOUR WARDROBE ASSISTANT',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.terra,
+                      fontSize: 11,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
                   const SizedBox(height: 36),
-                  Text(_register ? 'Create account' : 'Welcome back',
-                      style: const TextStyle(color: AppColors.cream, fontSize: 24, fontWeight: FontWeight.w700)),
+                  Text(
+                    _register ? 'Create account' : 'Welcome back',
+                    style: const TextStyle(
+                      color: AppColors.cream,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(_register ? 'Start your AI-powered wardrobe journey.' : 'Sign in to your style companion.',
-                      style: const TextStyle(color: AppColors.creamDim, fontSize: 14)),
+                  Text(
+                    _register
+                        ? 'Start your AI-powered wardrobe journey.'
+                        : 'Sign in to your style companion.',
+                    style: const TextStyle(
+                      color: AppColors.creamDim,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 22),
                   if (_error != null) AlertBanner(message: _error!),
                   if (_register)
-                    LabeledInput(label: 'First name', controller: _firstName, hint: 'Jane'),
-                  LabeledInput(label: 'Email', controller: _email, hint: 'you@example.com', keyboardType: TextInputType.emailAddress),
-                  LabeledInput(label: 'Password', controller: _password, obscure: true, hint: _register ? 'Min. 8 characters' : '••••••••'),
+                    LabeledInput(
+                      label: 'First name',
+                      controller: _firstName,
+                      hint: 'Jane',
+                    ),
+                  LabeledInput(
+                    label: 'Email',
+                    controller: _email,
+                    hint: 'you@example.com',
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  LabeledInput(
+                    label: 'Password',
+                    controller: _password,
+                    obscure: true,
+                    hint: _register ? 'Min. 8 characters' : '••••••••',
+                  ),
                   const SizedBox(height: 6),
                   APrimaryButton(
                     label: _register ? 'Create account' : 'Sign in',
@@ -97,10 +145,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_register ? 'Already have an account?' : "Don't have an account?",
-                          style: const TextStyle(color: AppColors.creamDim, fontSize: 14)),
+                      Text(
+                        _register
+                            ? 'Already have an account?'
+                            : "Don't have an account?",
+                        style: const TextStyle(
+                          color: AppColors.creamDim,
+                          fontSize: 14,
+                        ),
+                      ),
                       TextButton(
-                        onPressed: () => setState(() { _register = !_register; _error = null; }),
+                        onPressed: () => setState(() {
+                          _register = !_register;
+                          _error = null;
+                        }),
                         child: Text(_register ? 'Sign in' : 'Sign up'),
                       ),
                     ],

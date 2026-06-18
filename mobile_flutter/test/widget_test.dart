@@ -8,10 +8,12 @@ import 'package:ritha_mobile/theme/app_theme.dart';
 
 void main() {
   testWidgets('app theme builds and renders a basic frame', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      theme: buildAppTheme(),
-      home: const Scaffold(body: Center(child: Text('Ritha'))),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: const Scaffold(body: Center(child: Text('Ritha'))),
+      ),
+    );
 
     expect(find.text('Ritha'), findsOneWidget);
   });

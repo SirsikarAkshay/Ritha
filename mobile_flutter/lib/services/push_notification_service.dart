@@ -3,7 +3,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import '../api/api.dart';
 
-const _vapidKey = 'BOVW5On13xvLTVhNiN1eciAX77ipfinAQqMZJWwUT3mHv6pzOTbumJGuw-J_wvhU7ZVbq96Cdxcas2VZgcmv4bo';
+const _vapidKey =
+    'BOVW5On13xvLTVhNiN1eciAX77ipfinAQqMZJWwUT3mHv6pzOTbumJGuw-J_wvhU7ZVbq96Cdxcas2VZgcmv4bo';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
@@ -58,9 +59,7 @@ class PushNotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
-      _token = await _messaging.getToken(
-        vapidKey: kIsWeb ? _vapidKey : null,
-      );
+      _token = await _messaging.getToken(vapidKey: kIsWeb ? _vapidKey : null);
       if (_token != null) {
         await _sendTokenToBackend(_token!, enabled: true);
       }
@@ -75,7 +74,10 @@ class PushNotificationService {
     _token = null;
   }
 
-  Future<void> _sendTokenToBackend(String token, {required bool enabled}) async {
+  Future<void> _sendTokenToBackend(
+    String token, {
+    required bool enabled,
+  }) async {
     try {
       await authApi.registerPushToken(token, enabled);
     } catch (e) {

@@ -19,7 +19,7 @@ const String kWsHost = String.fromEnvironment(
   defaultValue: 'api.getritha.com',
 );
 
-const _accessKey  = 'gg_access';
+const _accessKey = 'gg_access';
 const _refreshKey = 'gg_refresh';
 
 class ApiException implements Exception {
@@ -99,12 +99,18 @@ class ApiClient {
       final uri = _uri(path);
       final payload = body == null ? null : jsonEncode(body);
       switch (method) {
-        case 'GET':    return http.get(uri, headers: headers);
-        case 'POST':   return http.post(uri, headers: headers, body: payload);
-        case 'PUT':    return http.put(uri, headers: headers, body: payload);
-        case 'PATCH':  return http.patch(uri, headers: headers, body: payload);
-        case 'DELETE': return http.delete(uri, headers: headers, body: payload);
-        default: throw ArgumentError('Bad method: $method');
+        case 'GET':
+          return http.get(uri, headers: headers);
+        case 'POST':
+          return http.post(uri, headers: headers, body: payload);
+        case 'PUT':
+          return http.put(uri, headers: headers, body: payload);
+        case 'PATCH':
+          return http.patch(uri, headers: headers, body: payload);
+        case 'DELETE':
+          return http.delete(uri, headers: headers, body: payload);
+        default:
+          throw ArgumentError('Bad method: $method');
       }
     }
 
@@ -127,7 +133,11 @@ class ApiClient {
     dynamic data;
     final contentType = res.headers['content-type'] ?? '';
     if (contentType.contains('application/json') && res.body.isNotEmpty) {
-      try { data = jsonDecode(res.body); } catch (_) { data = null; }
+      try {
+        data = jsonDecode(res.body);
+      } catch (_) {
+        data = null;
+      }
     } else {
       data = res.body.isEmpty ? null : res.body;
     }
@@ -135,26 +145,39 @@ class ApiClient {
       String message = res.reasonPhrase ?? 'Request failed (${res.statusCode})';
       if (data is Map) {
         final err = data['error'];
-        if (err is Map && err['message'] != null) message = err['message'].toString();
-        else if (data['detail'] != null) message = data['detail'].toString();
+        if (err is Map && err['message'] != null)
+          message = err['message'].toString();
+        else if (data['detail'] != null)
+          message = data['detail'].toString();
       }
       throw ApiException(res.statusCode, message, data);
     }
     return data;
   }
 
-  Future<dynamic> get(String path)                    => _send('GET', path);
-  Future<dynamic> post(String path, [Object? body])   => _send('POST', path, body: body);
-  Future<dynamic> put(String path, [Object? body])    => _send('PUT', path, body: body);
-  Future<dynamic> patch(String path, [Object? body])  => _send('PATCH', path, body: body);
-  Future<dynamic> delete(String path, [Object? body]) => _send('DELETE', path, body: body);
+  Future<dynamic> get(String path) => _send('GET', path);
+  Future<dynamic> post(String path, [Object? body]) =>
+      _send('POST', path, body: body);
+  Future<dynamic> put(String path, [Object? body]) =>
+      _send('PUT', path, body: body);
+  Future<dynamic> patch(String path, [Object? body]) =>
+      _send('PATCH', path, body: body);
+  Future<dynamic> delete(String path, [Object? body]) =>
+      _send('DELETE', path, body: body);
 
-  Future<dynamic> uploadFile(String path, String field, String filePath, {String? filename}) async {
+  Future<dynamic> uploadFile(
+    String path,
+    String field,
+    String filePath, {
+    String? filename,
+  }) async {
     Future<http.StreamedResponse> doSend() async {
       final token = await getAccessToken();
       final req = http.MultipartRequest('POST', _uri(path));
       if (token != null) req.headers['Authorization'] = 'Bearer $token';
-      req.files.add(await http.MultipartFile.fromPath(field, filePath, filename: filename));
+      req.files.add(
+        await http.MultipartFile.fromPath(field, filePath, filename: filename),
+      );
       return req.send();
     }
 

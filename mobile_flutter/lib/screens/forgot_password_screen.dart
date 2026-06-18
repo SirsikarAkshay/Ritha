@@ -19,10 +19,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   String? _error;
 
   @override
-  void dispose() { _email.dispose(); super.dispose(); }
+  void dispose() {
+    _email.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       await context.read<AuthProvider>().forgotPassword(_email.text.trim());
       setState(() => _sent = true);
@@ -46,14 +52,32 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Reset password', style: TextStyle(color: AppColors.cream, fontSize: 24, fontWeight: FontWeight.w700)),
+                  const Text(
+                    'Reset password',
+                    style: TextStyle(
+                      color: AppColors.cream,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  const Text("Enter your email and we'll send you a reset link.",
-                      style: TextStyle(color: AppColors.creamDim, fontSize: 14)),
+                  const Text(
+                    "Enter your email and we'll send you a reset link.",
+                    style: TextStyle(color: AppColors.creamDim, fontSize: 14),
+                  ),
                   const SizedBox(height: 22),
                   if (_error != null) AlertBanner(message: _error!),
-                  if (_sent) const AlertBanner(message: 'Check your inbox for a password reset link.', error: false),
-                  LabeledInput(label: 'Email', controller: _email, hint: 'you@example.com', keyboardType: TextInputType.emailAddress),
+                  if (_sent)
+                    const AlertBanner(
+                      message: 'Check your inbox for a password reset link.',
+                      error: false,
+                    ),
+                  LabeledInput(
+                    label: 'Email',
+                    controller: _email,
+                    hint: 'you@example.com',
+                    keyboardType: TextInputType.emailAddress,
+                  ),
                   APrimaryButton(
                     label: 'Send reset link',
                     loading: _loading,
@@ -62,12 +86,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   if (_sent) ...[
                     const SizedBox(height: 12),
                     OutlinedButton(
-                      onPressed: () => context.go('/reset-password?email=${Uri.encodeQueryComponent(_email.text.trim())}'),
+                      onPressed: () => context.go(
+                        '/reset-password?email=${Uri.encodeQueryComponent(_email.text.trim())}',
+                      ),
                       child: const Text('Enter reset code'),
                     ),
                   ],
                   const SizedBox(height: 8),
-                  TextButton(onPressed: () => context.go('/login'), child: const Text('Back to login')),
+                  TextButton(
+                    onPressed: () => context.go('/login'),
+                    child: const Text('Back to login'),
+                  ),
                 ],
               ),
             ),

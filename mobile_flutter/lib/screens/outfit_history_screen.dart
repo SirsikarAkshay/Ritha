@@ -5,8 +5,15 @@ import '../theme/app_theme.dart';
 import '../widgets/ui.dart';
 
 const _catIcons = {
-  'top': '👕', 'bottom': '👖', 'dress': '👗', 'outerwear': '🧥',
-  'footwear': '👟', 'accessory': '💍', 'activewear': '🏃', 'formal': '🤵', 'other': '📦',
+  'top': '👕',
+  'bottom': '👖',
+  'dress': '👗',
+  'outerwear': '🧥',
+  'footwear': '👟',
+  'accessory': '💍',
+  'activewear': '🏃',
+  'formal': '🤵',
+  'other': '📦',
 };
 
 class OutfitHistoryScreen extends StatefulWidget {
@@ -22,7 +29,10 @@ class _OutfitHistoryScreenState extends State<OutfitHistoryScreen> {
   String _filter = '';
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    _load();
+  }
 
   Future<void> _load() async {
     setState(() => _loading = true);
@@ -36,8 +46,14 @@ class _OutfitHistoryScreenState extends State<OutfitHistoryScreen> {
       if (!mounted) return;
       final history = results[0];
       setState(() {
-        _recs = history is List ? history : (history is Map && history['results'] is List ? history['results'] : []);
-        _prefs = results[1] is Map ? Map<String, dynamic>.from(results[1] as Map) : null;
+        _recs = history is List
+            ? history
+            : (history is Map && history['results'] is List
+                  ? history['results']
+                  : []);
+        _prefs = results[1] is Map
+            ? Map<String, dynamic>.from(results[1] as Map)
+            : null;
         _loading = false;
       });
     } catch (_) {
@@ -51,7 +67,10 @@ class _OutfitHistoryScreenState extends State<OutfitHistoryScreen> {
       backgroundColor: AppColors.midnight,
       appBar: AppBar(
         backgroundColor: AppColors.midnight,
-        title: const Text('Outfit History', style: TextStyle(color: AppColors.cream)),
+        title: const Text(
+          'Outfit History',
+          style: TextStyle(color: AppColors.cream),
+        ),
         iconTheme: const IconThemeData(color: AppColors.cream),
       ),
       body: RefreshIndicator(
@@ -64,25 +83,40 @@ class _OutfitHistoryScreenState extends State<OutfitHistoryScreen> {
             const SizedBox(height: 12),
             _FilterChips(
               value: _filter,
-              onChanged: (v) { setState(() => _filter = v); _load(); },
+              onChanged: (v) {
+                setState(() => _filter = v);
+                _load();
+              },
             ),
             const SizedBox(height: 16),
             if (_loading)
-              const Center(child: Padding(
-                padding: EdgeInsets.all(40),
-                child: CircularProgressIndicator(color: AppColors.terra),
-              ))
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(40),
+                  child: CircularProgressIndicator(color: AppColors.terra),
+                ),
+              )
             else if (_recs.isEmpty)
-              const ACard(child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 30),
-                child: Center(child: Text('No outfit recommendations yet.',
-                    style: TextStyle(color: AppColors.creamDim, fontSize: 14))),
-              ))
+              const ACard(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 30),
+                  child: Center(
+                    child: Text(
+                      'No outfit recommendations yet.',
+                      style: TextStyle(color: AppColors.creamDim, fontSize: 14),
+                    ),
+                  ),
+                ),
+              )
             else
-              ..._recs.map((rec) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _OutfitHistoryTile(rec: Map<String, dynamic>.from(rec as Map)),
-              )),
+              ..._recs.map(
+                (rec) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _OutfitHistoryTile(
+                    rec: Map<String, dynamic>.from(rec as Map),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -114,9 +148,17 @@ class _StatsCard extends StatelessWidget {
             children: [
               _StatPill(label: 'Total', value: '$total'),
               const SizedBox(width: 10),
-              _StatPill(label: 'Accepted', value: '$accepted', color: AppColors.sage),
+              _StatPill(
+                label: 'Accepted',
+                value: '$accepted',
+                color: AppColors.sage,
+              ),
               const SizedBox(width: 10),
-              _StatPill(label: 'Skipped', value: '$rejected', color: AppColors.terra),
+              _StatPill(
+                label: 'Skipped',
+                value: '$rejected',
+                color: AppColors.terra,
+              ),
               if (rate != null) ...[
                 const SizedBox(width: 10),
                 _StatPill(label: 'Rate', value: '${(rate * 100).round()}%'),
@@ -125,11 +167,19 @@ class _StatsCard extends StatelessWidget {
           ),
           if (prefCats.isNotEmpty) ...[
             const SizedBox(height: 14),
-            const Text('PREFERRED CATEGORIES',
-                style: TextStyle(color: AppColors.creamDim, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+            const Text(
+              'PREFERRED CATEGORIES',
+              style: TextStyle(
+                color: AppColors.creamDim,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
             const SizedBox(height: 6),
             Wrap(
-              spacing: 6, runSpacing: 6,
+              spacing: 6,
+              runSpacing: 6,
               children: prefCats.take(5).map((c) {
                 final cat = c['category']?.toString() ?? '';
                 final r = c['rate'] is num ? (c['rate'] * 100).round() : 0;
@@ -139,13 +189,24 @@ class _StatsCard extends StatelessWidget {
           ],
           if (prefColors.isNotEmpty) ...[
             const SizedBox(height: 12),
-            const Text('FAVORITE COLORS',
-                style: TextStyle(color: AppColors.creamDim, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+            const Text(
+              'FAVORITE COLORS',
+              style: TextStyle(
+                color: AppColors.creamDim,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
             const SizedBox(height: 6),
             Wrap(
-              spacing: 6, runSpacing: 6,
+              spacing: 6,
+              runSpacing: 6,
               children: prefColors.take(6).map((c) {
-                return ABadge(text: c['color']?.toString() ?? '', variant: BadgeVariant.sky);
+                return ABadge(
+                  text: c['color']?.toString() ?? '',
+                  variant: BadgeVariant.sky,
+                );
               }).toList(),
             ),
           ],
@@ -171,9 +232,19 @@ class _StatPill extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(value, style: TextStyle(color: color ?? AppColors.cream, fontSize: 18, fontWeight: FontWeight.w700)),
+          Text(
+            value,
+            style: TextStyle(
+              color: color ?? AppColors.cream,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: AppColors.creamDim, fontSize: 10)),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.creamDim, fontSize: 10),
+          ),
         ],
       ),
     );
@@ -203,7 +274,10 @@ class _FilterChips extends StatelessWidget {
             selected: active,
             selectedColor: AppColors.terra,
             backgroundColor: AppColors.surface2,
-            labelStyle: TextStyle(color: active ? Colors.white : AppColors.creamDim, fontSize: 12),
+            labelStyle: TextStyle(
+              color: active ? Colors.white : AppColors.creamDim,
+              fontSize: 12,
+            ),
             onSelected: (_) => onChanged(f.$1),
             side: BorderSide.none,
           ),
@@ -220,12 +294,16 @@ class _OutfitHistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = DateTime.tryParse(rec['date']?.toString() ?? '');
-    final dateLabel = date != null ? DateFormat('EEE, d MMM y').format(date) : rec['date']?.toString() ?? '';
+    final dateLabel = date != null
+        ? DateFormat('EEE, d MMM y').format(date)
+        : rec['date']?.toString() ?? '';
     final accepted = rec['accepted'];
     final source = rec['source']?.toString() ?? '';
     final notes = rec['notes']?.toString() ?? '';
     final items = (rec['outfit_items'] as List?) ?? [];
-    final weather = rec['weather_snapshot'] is Map ? rec['weather_snapshot'] as Map : null;
+    final weather = rec['weather_snapshot'] is Map
+        ? rec['weather_snapshot'] as Map
+        : null;
 
     return ACard(
       child: Column(
@@ -237,58 +315,124 @@ class _OutfitHistoryTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(dateLabel, style: const TextStyle(color: AppColors.cream, fontSize: 15, fontWeight: FontWeight.w600)),
+                    Text(
+                      dateLabel,
+                      style: const TextStyle(
+                        color: AppColors.cream,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Row(children: [
-                      ABadge(text: source, variant: BadgeVariant.sky),
-                      const SizedBox(width: 6),
-                      if (weather != null)
-                        Text('${weather['temp_c'] ?? '?'}°C', style: const TextStyle(color: AppColors.creamDim, fontSize: 12)),
-                    ]),
+                    Row(
+                      children: [
+                        ABadge(text: source, variant: BadgeVariant.sky),
+                        const SizedBox(width: 6),
+                        if (weather != null)
+                          Text(
+                            '${weather['temp_c'] ?? '?'}°C',
+                            style: const TextStyle(
+                              color: AppColors.creamDim,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              if (accepted == true) const ABadge(text: 'Accepted', variant: BadgeVariant.sage),
-              if (accepted == false) const ABadge(text: 'Skipped', variant: BadgeVariant.terra),
-              if (accepted == null) const ABadge(text: 'Pending', variant: BadgeVariant.sky),
+              if (accepted == true)
+                const ABadge(text: 'Accepted', variant: BadgeVariant.sage),
+              if (accepted == false)
+                const ABadge(text: 'Skipped', variant: BadgeVariant.terra),
+              if (accepted == null)
+                const ABadge(text: 'Pending', variant: BadgeVariant.sky),
             ],
           ),
           if (notes.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Text('"$notes"', style: const TextStyle(color: AppColors.creamDim, fontSize: 13, fontStyle: FontStyle.italic, height: 1.4)),
+            Text(
+              '"$notes"',
+              style: const TextStyle(
+                color: AppColors.creamDim,
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+                height: 1.4,
+              ),
+            ),
           ],
           if (items.isNotEmpty) ...[
             const SizedBox(height: 12),
             Wrap(
-              spacing: 6, runSpacing: 6,
+              spacing: 6,
+              runSpacing: 6,
               children: items.map<Widget>((oi) {
                 final cat = oi['item_category']?.toString() ?? 'other';
-                final name = oi['item_name']?.toString() ?? 'Item #${oi['clothing_item']}';
+                final name =
+                    oi['item_name']?.toString() ??
+                    'Item #${oi['clothing_item']}';
                 final role = oi['role']?.toString() ?? '';
                 final liked = oi['liked'];
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: liked == true ? AppColors.sage.withValues(alpha: 0.15) :
-                           liked == false ? AppColors.terra.withValues(alpha: 0.15) :
-                           AppColors.surface2,
+                    color: liked == true
+                        ? AppColors.sage.withValues(alpha: 0.15)
+                        : liked == false
+                        ? AppColors.terra.withValues(alpha: 0.15)
+                        : AppColors.surface2,
                     border: Border.all(color: AppColors.border),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_catIcons[cat] ?? '📦', style: const TextStyle(fontSize: 14)),
+                      Text(
+                        _catIcons[cat] ?? '📦',
+                        style: const TextStyle(fontSize: 14),
+                      ),
                       const SizedBox(width: 6),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(name, style: const TextStyle(color: AppColors.cream, fontSize: 11, fontWeight: FontWeight.w500)),
-                          Text(role, style: const TextStyle(color: AppColors.creamDim, fontSize: 10)),
+                          Text(
+                            name,
+                            style: const TextStyle(
+                              color: AppColors.cream,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            role,
+                            style: const TextStyle(
+                              color: AppColors.creamDim,
+                              fontSize: 10,
+                            ),
+                          ),
                         ],
                       ),
-                      if (liked == true) const Padding(padding: EdgeInsets.only(left: 4), child: Icon(Icons.thumb_up, size: 12, color: AppColors.sage)),
-                      if (liked == false) const Padding(padding: EdgeInsets.only(left: 4), child: Icon(Icons.thumb_down, size: 12, color: AppColors.terra)),
+                      if (liked == true)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(
+                            Icons.thumb_up,
+                            size: 12,
+                            color: AppColors.sage,
+                          ),
+                        ),
+                      if (liked == false)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Icon(
+                            Icons.thumb_down,
+                            size: 12,
+                            color: AppColors.terra,
+                          ),
+                        ),
                     ],
                   ),
                 );

@@ -5,23 +5,38 @@ import '../theme/app_theme.dart';
 import '../widgets/ui.dart';
 import '../widgets/place_autocomplete.dart';
 
-const _popular = ['Japan', 'Turkey', 'India', 'Italy', 'Morocco', 'Thailand', 'Saudi Arabia'];
+const _popular = [
+  'Japan',
+  'Turkey',
+  'India',
+  'Italy',
+  'Morocco',
+  'Thailand',
+  'Saudi Arabia',
+];
 
 const _ruleIcons = {
-  'cover_head':      '🧕',
+  'cover_head': '🧕',
   'cover_shoulders': '👘',
-  'cover_knees':     '👖',
-  'remove_shoes':    '👟',
-  'modest_dress':    '🎀',
-  'no_bare_feet':    '🦶',
-  'festival_wear':   '🎊',
-  'color_warning':   '🎨',
-  'general':         '📝',
+  'cover_knees': '👖',
+  'remove_shoes': '👟',
+  'modest_dress': '🎀',
+  'no_bare_feet': '🦶',
+  'festival_wear': '🎊',
+  'color_warning': '🎨',
+  'general': '📝',
 };
 
 const _catIcons = {
-  'top': '👕', 'bottom': '👖', 'dress': '👗', 'outerwear': '🧥',
-  'footwear': '👟', 'accessory': '💍', 'activewear': '🏃', 'formal': '🤵', 'other': '📦',
+  'top': '👕',
+  'bottom': '👖',
+  'dress': '👗',
+  'outerwear': '🧥',
+  'footwear': '👟',
+  'accessory': '💍',
+  'activewear': '🏃',
+  'formal': '🤵',
+  'other': '📦',
 };
 
 class CulturalScreen extends StatefulWidget {
@@ -63,19 +78,28 @@ class _CulturalScreenState extends State<CulturalScreen> {
 
   Future<void> _getAdvice() async {
     if (_country.text.trim().isEmpty) return;
-    setState(() { _loading = true; _error = null; _advice = null; _activeTab = 'etiquette'; });
+    setState(() {
+      _loading = true;
+      _error = null;
+      _advice = null;
+      _activeTab = 'etiquette';
+    });
     try {
-      final result = await agentsApi.culturalAdvisor({
-        'country': _country.text.trim(),
-        'city': _city.text.trim(),
-      }) as Map;
+      final result =
+          await agentsApi.culturalAdvisor({
+                'country': _country.text.trim(),
+                'city': _city.text.trim(),
+              })
+              as Map;
       if (!mounted) return;
       if (result['status'] == 'completed') {
         final out = Map<String, dynamic>.from(result['output'] ?? {});
         setState(() {
           _advice = out;
           _rules = (out['rules'] is List) ? out['rules'] as List : [];
-          _events = (out['local_events'] is List) ? out['local_events'] as List : [];
+          _events = (out['local_events'] is List)
+              ? out['local_events'] as List
+              : [];
           _loading = false;
         });
       } else {
@@ -85,7 +109,11 @@ class _CulturalScreenState extends State<CulturalScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted)
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
     }
   }
 
@@ -98,8 +126,12 @@ class _CulturalScreenState extends State<CulturalScreen> {
   @override
   Widget build(BuildContext context) {
     final highlights = (_advice?['highlights'] as List?) ?? const [];
-    final placeHighlights = highlights.where((h) => (h is Map) && h['type'] != 'event').toList();
-    final eventHighlights = highlights.where((h) => (h is Map) && h['type'] == 'event').toList();
+    final placeHighlights = highlights
+        .where((h) => (h is Map) && h['type'] != 'event')
+        .toList();
+    final eventHighlights = highlights
+        .where((h) => (h is Map) && h['type'] == 'event')
+        .toList();
     final matches = (_advice?['wardrobe_matches'] as List?) ?? const [];
     final gaps = (_advice?['gaps'] as List?) ?? const [];
     final wardrobeCount = matches.length + gaps.length;
@@ -107,9 +139,9 @@ class _CulturalScreenState extends State<CulturalScreen> {
 
     final tabs = [
       _TabDef('etiquette', 'Etiquette', '📜', _rules?.length ?? 0),
-      _TabDef('places',    'Places',    '📍', placeHighlights.length),
-      _TabDef('events',    'Events',    '🎊', eventsCount),
-      _TabDef('wardrobe',  'Wardrobe',  '👔', wardrobeCount),
+      _TabDef('places', 'Places', '📍', placeHighlights.length),
+      _TabDef('events', 'Events', '🎊', eventsCount),
+      _TabDef('wardrobe', 'Wardrobe', '👔', wardrobeCount),
     ];
 
     return Scaffold(
@@ -117,69 +149,102 @@ class _CulturalScreenState extends State<CulturalScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text('Cultural Guide',
-              style: TextStyle(color: AppColors.cream, fontSize: 28, fontWeight: FontWeight.w700)),
+          const Text(
+            'Cultural Guide',
+            style: TextStyle(
+              color: AppColors.cream,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
-          const Text('Etiquette, events, and clothing advice for your destination.',
-              style: TextStyle(color: AppColors.creamDim, fontSize: 14)),
+          const Text(
+            'Etiquette, events, and clothing advice for your destination.',
+            style: TextStyle(color: AppColors.creamDim, fontSize: 14),
+          ),
           const SizedBox(height: 20),
           // Popular chips — above the input so the autocomplete dropdown
           // expands downward into empty space without overlapping them.
           const Padding(
             padding: EdgeInsets.only(bottom: 8),
-            child: Text('POPULAR',
-                style: TextStyle(
-                  color: AppColors.creamDim,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.8,
-                )),
+            child: Text(
+              'POPULAR',
+              style: TextStyle(
+                color: AppColors.creamDim,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.8,
+              ),
+            ),
           ),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [for (final c in _popular) _PopularChip(label: c, onTap: () => _selectPopular(c))],
+            children: [
+              for (final c in _popular)
+                _PopularChip(label: c, onTap: () => _selectPopular(c)),
+            ],
           ),
           const SizedBox(height: 20),
-          Row(children: [
-            Expanded(
-              child: PlaceAutocompleteField(
-                label: 'Country',
-                hint: 'e.g. Turkey',
-                controller: _country,
-                mode: PlaceMode.country,
-                onSelected: (p) {
-                  setState(() => _countryCode = p.countryCode ?? '');
-                  _city.clear();
-                },
+          Row(
+            children: [
+              Expanded(
+                child: PlaceAutocompleteField(
+                  label: 'Country',
+                  hint: 'e.g. Turkey',
+                  controller: _country,
+                  mode: PlaceMode.country,
+                  onSelected: (p) {
+                    setState(() => _countryCode = p.countryCode ?? '');
+                    _city.clear();
+                  },
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: PlaceAutocompleteField(
-                label: 'City (optional)',
-                controller: _city,
-                mode: PlaceMode.city,
-                countryCode: _countryCode,
-                disabled: _countryCode.isEmpty,
-                disabledHint: 'Pick a country first',
-                onSelected: (p) => _city.text = p.name,
+              const SizedBox(width: 10),
+              Expanded(
+                child: PlaceAutocompleteField(
+                  label: 'City (optional)',
+                  controller: _city,
+                  mode: PlaceMode.city,
+                  countryCode: _countryCode,
+                  disabled: _countryCode.isEmpty,
+                  disabledHint: 'Pick a country first',
+                  onSelected: (p) => _city.text = p.name,
+                ),
               ),
-            ),
-          ]),
-          APrimaryButton(label: '✦ Get Cultural Guide', loading: _loading, onPressed: _getAdvice),
+            ],
+          ),
+          APrimaryButton(
+            label: '✦ Get Cultural Guide',
+            loading: _loading,
+            onPressed: _getAdvice,
+          ),
           const SizedBox(height: 20),
           if (_error != null) AlertBanner(message: _error!),
-          if (_advice != null) _AdviceCard(advice: _advice!, country: _country.text.trim(), city: _city.text.trim()),
+          if (_advice != null)
+            _AdviceCard(
+              advice: _advice!,
+              country: _country.text.trim(),
+              city: _city.text.trim(),
+            ),
           if (_rules == null && !_loading)
-            const EmptyState(icon: '🌍', title: 'Pick a destination', body: 'Enter a country above and tap Get Cultural Guide for etiquette, events, places, and wardrobe advice.'),
+            const EmptyState(
+              icon: '🌍',
+              title: 'Pick a destination',
+              body:
+                  'Enter a country above and tap Get Cultural Guide for etiquette, events, places, and wardrobe advice.',
+            ),
           if (_rules != null) ...[
-            _TabBar(tabs: tabs, active: _activeTab, onTap: (id) => setState(() => _activeTab = id)),
+            _TabBar(
+              tabs: tabs,
+              active: _activeTab,
+              onTap: (id) => setState(() => _activeTab = id),
+            ),
             const SizedBox(height: 16),
             if (_activeTab == 'etiquette') _etiquetteTab(),
-            if (_activeTab == 'places')    _placesTab(placeHighlights),
-            if (_activeTab == 'events')    _eventsTab(eventHighlights),
-            if (_activeTab == 'wardrobe')  _wardrobeTab(matches, gaps),
+            if (_activeTab == 'places') _placesTab(placeHighlights),
+            if (_activeTab == 'events') _eventsTab(eventHighlights),
+            if (_activeTab == 'wardrobe') _wardrobeTab(matches, gaps),
           ],
         ],
       ),
@@ -188,7 +253,11 @@ class _CulturalScreenState extends State<CulturalScreen> {
 
   Widget _etiquetteTab() {
     if ((_rules ?? []).isEmpty) {
-      return const EmptyState(icon: '📜', title: 'No etiquette rules found', body: 'Try a different destination.');
+      return const EmptyState(
+        icon: '📜',
+        title: 'No etiquette rules found',
+        body: 'Try a different destination.',
+      );
     }
     return Column(
       children: [
@@ -203,14 +272,21 @@ class _CulturalScreenState extends State<CulturalScreen> {
 
   Widget _placesTab(List places) {
     if (places.isEmpty) {
-      return const EmptyState(icon: '📍', title: 'No places yet', body: 'Try a different destination.');
+      return const EmptyState(
+        icon: '📍',
+        title: 'No places yet',
+        body: 'Try a different destination.',
+      );
     }
     return Column(
       children: [
         for (final h in places)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: _HighlightCard(data: Map<String, dynamic>.from(h as Map), isEvent: false),
+            child: _HighlightCard(
+              data: Map<String, dynamic>.from(h as Map),
+              isEvent: false,
+            ),
           ),
       ],
     );
@@ -218,7 +294,11 @@ class _CulturalScreenState extends State<CulturalScreen> {
 
   Widget _eventsTab(List eventHighlights) {
     if (eventHighlights.isEmpty && _events.isEmpty) {
-      return const EmptyState(icon: '🎊', title: 'No events found', body: 'Nothing notable this month for this destination.');
+      return const EmptyState(
+        icon: '🎊',
+        title: 'No events found',
+        body: 'Nothing notable this month for this destination.',
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,13 +306,18 @@ class _CulturalScreenState extends State<CulturalScreen> {
         if (eventHighlights.isNotEmpty) ...[
           const Padding(
             padding: EdgeInsets.only(bottom: 12),
-            child: Text('Upcoming, with clothing guidance',
-                style: TextStyle(color: AppColors.creamDim, fontSize: 13)),
+            child: Text(
+              'Upcoming, with clothing guidance',
+              style: TextStyle(color: AppColors.creamDim, fontSize: 13),
+            ),
           ),
           for (final h in eventHighlights)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _HighlightCard(data: Map<String, dynamic>.from(h as Map), isEvent: true),
+              child: _HighlightCard(
+                data: Map<String, dynamic>.from(h as Map),
+                isEvent: true,
+              ),
             ),
           const SizedBox(height: 12),
         ],
@@ -242,7 +327,9 @@ class _CulturalScreenState extends State<CulturalScreen> {
           for (final e in _events)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _MonthlyEventCard(event: Map<String, dynamic>.from(e as Map)),
+              child: _MonthlyEventCard(
+                event: Map<String, dynamic>.from(e as Map),
+              ),
             ),
         ],
       ],
@@ -251,7 +338,12 @@ class _CulturalScreenState extends State<CulturalScreen> {
 
   Widget _wardrobeTab(List matches, List gaps) {
     if (matches.isEmpty && gaps.isEmpty) {
-      return const EmptyState(icon: '👔', title: 'No wardrobe advice yet', body: 'Add items to your wardrobe to see matches and gaps for this destination.');
+      return const EmptyState(
+        icon: '👔',
+        title: 'No wardrobe advice yet',
+        body:
+            'Add items to your wardrobe to see matches and gaps for this destination.',
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,12 +384,18 @@ class _TabBar extends StatelessWidget {
   final List<_TabDef> tabs;
   final String active;
   final ValueChanged<String> onTap;
-  const _TabBar({required this.tabs, required this.active, required this.onTap});
+  const _TabBar({
+    required this.tabs,
+    required this.active,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const Border(bottom: BorderSide(color: AppColors.border)).toBoxDecoration(),
+      decoration: const Border(
+        bottom: BorderSide(color: AppColors.border),
+      ).toBoxDecoration(),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -306,11 +404,16 @@ class _TabBar extends StatelessWidget {
               GestureDetector(
                 onTap: () => onTap(t.id),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: active == t.id ? AppColors.terraLight : Colors.transparent,
+                        color: active == t.id
+                            ? AppColors.terraLight
+                            : Colors.transparent,
                         width: 2,
                       ),
                     ),
@@ -322,20 +425,32 @@ class _TabBar extends StatelessWidget {
                       Text(
                         t.label,
                         style: TextStyle(
-                          color: active == t.id ? AppColors.cream : AppColors.creamDim,
+                          color: active == t.id
+                              ? AppColors.cream
+                              : AppColors.creamDim,
                           fontSize: 13,
-                          fontWeight: active == t.id ? FontWeight.w500 : FontWeight.w400,
+                          fontWeight: active == t.id
+                              ? FontWeight.w500
+                              : FontWeight.w400,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.surface3,
                           borderRadius: BorderRadius.circular(100),
                         ),
-                        child: Text('${t.count}',
-                            style: const TextStyle(color: AppColors.creamDim, fontSize: 10)),
+                        child: Text(
+                          '${t.count}',
+                          style: const TextStyle(
+                            color: AppColors.creamDim,
+                            fontSize: 10,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -367,7 +482,10 @@ class _PopularChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(100),
           border: Border.all(color: AppColors.border),
         ),
-        child: Text(label, style: const TextStyle(color: AppColors.cream, fontSize: 12)),
+        child: Text(
+          label,
+          style: const TextStyle(color: AppColors.cream, fontSize: 12),
+        ),
       ),
     );
   }
@@ -377,7 +495,11 @@ class _AdviceCard extends StatelessWidget {
   final Map<String, dynamic> advice;
   final String country;
   final String city;
-  const _AdviceCard({required this.advice, required this.country, required this.city});
+  const _AdviceCard({
+    required this.advice,
+    required this.country,
+    required this.city,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -389,24 +511,46 @@ class _AdviceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              const Text('✦', style: TextStyle(fontSize: 20, color: AppColors.terraLight)),
-              const SizedBox(width: 8),
-              const CardLabel('AI Cultural Advisor'),
-              if (source == 'ai') ...[
+            Row(
+              children: [
+                const Text(
+                  '✦',
+                  style: TextStyle(fontSize: 20, color: AppColors.terraLight),
+                ),
                 const SizedBox(width: 8),
-                const Text('· AI-generated',
-                    style: TextStyle(color: AppColors.terraLight, fontSize: 10, letterSpacing: 0.5)),
+                const CardLabel('AI Cultural Advisor'),
+                if (source == 'ai') ...[
+                  const SizedBox(width: 8),
+                  const Text(
+                    '· AI-generated',
+                    style: TextStyle(
+                      color: AppColors.terraLight,
+                      fontSize: 10,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ],
-            ]),
+            ),
             const SizedBox(height: 10),
             Text(
               'Clothing guide for $country${city.isNotEmpty ? ', $city' : ''}',
-              style: const TextStyle(color: AppColors.cream, fontSize: 16, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: AppColors.cream,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             if (summary.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(summary, style: const TextStyle(color: AppColors.creamDim, fontSize: 13, height: 1.5)),
+              Text(
+                summary,
+                style: const TextStyle(
+                  color: AppColors.creamDim,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+              ),
             ],
           ],
         ),
@@ -429,9 +573,17 @@ class _RuleCard extends StatelessWidget {
     BadgeVariant sevVariant;
     String sevIcon;
     switch (severity) {
-      case 'required': sevVariant = BadgeVariant.terra; sevIcon = '⚠'; break;
-      case 'warning':  sevVariant = BadgeVariant.gold;  sevIcon = '⚡'; break;
-      default:         sevVariant = BadgeVariant.sky;   sevIcon = 'ℹ';
+      case 'required':
+        sevVariant = BadgeVariant.terra;
+        sevIcon = '⚠';
+        break;
+      case 'warning':
+        sevVariant = BadgeVariant.gold;
+        sevIcon = '⚡';
+        break;
+      default:
+        sevVariant = BadgeVariant.sky;
+        sevIcon = 'ℹ';
     }
 
     return ACard(
@@ -439,7 +591,10 @@ class _RuleCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_ruleIcons[ruleType] ?? '📝', style: const TextStyle(fontSize: 22)),
+          Text(
+            _ruleIcons[ruleType] ?? '📝',
+            style: const TextStyle(fontSize: 22),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -451,20 +606,43 @@ class _RuleCard extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     if (placeName != null && placeName.isNotEmpty)
-                      Text(placeName,
-                          style: const TextStyle(color: AppColors.cream, fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(
+                        placeName,
+                        style: const TextStyle(
+                          color: AppColors.cream,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ABadge(text: '$sevIcon $severity', variant: sevVariant),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                      decoration: BoxDecoration(color: AppColors.surface3, borderRadius: BorderRadius.circular(100)),
-                      child: Text(ruleType.replaceAll('_', ' '),
-                          style: const TextStyle(color: AppColors.creamDim, fontSize: 11)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface3,
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Text(
+                        ruleType.replaceAll('_', ' '),
+                        style: const TextStyle(
+                          color: AppColors.creamDim,
+                          fontSize: 11,
+                        ),
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(description,
-                    style: const TextStyle(color: AppColors.creamDim, fontSize: 13, height: 1.4)),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: AppColors.creamDim,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           ),
@@ -492,35 +670,70 @@ class _HighlightCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Text(isEvent ? '🎊' : '📍', style: const TextStyle(fontSize: 18)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(name,
-                  style: const TextStyle(color: AppColors.cream, fontSize: 15, fontWeight: FontWeight.w600)),
-            ),
-            ABadge(text: isEvent ? 'EVENT' : 'PLACE', variant: isEvent ? BadgeVariant.gold : BadgeVariant.sky),
-          ]),
+          Row(
+            children: [
+              Text(isEvent ? '🎊' : '📍', style: const TextStyle(fontSize: 18)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    color: AppColors.cream,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ABadge(
+                text: isEvent ? 'EVENT' : 'PLACE',
+                variant: isEvent ? BadgeVariant.gold : BadgeVariant.sky,
+              ),
+            ],
+          ),
           if (when != null && when.isNotEmpty && when != 'year-round') ...[
             const SizedBox(height: 6),
-            Text('📅 $when',
-                style: const TextStyle(color: AppColors.terraLight, fontSize: 12, fontWeight: FontWeight.w500)),
+            Text(
+              '📅 $when',
+              style: const TextStyle(
+                color: AppColors.terraLight,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
           if (description != null && description.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Text(description, style: const TextStyle(color: AppColors.creamDim, fontSize: 13, height: 1.4)),
+            Text(
+              description,
+              style: const TextStyle(
+                color: AppColors.creamDim,
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
           ],
           if (clothing != null && clothing.isNotEmpty) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.only(top: 10),
-              decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.border)),
+              ),
               child: RichText(
                 text: TextSpan(
-                  style: const TextStyle(color: AppColors.cream, fontSize: 13, height: 1.4),
+                  style: const TextStyle(
+                    color: AppColors.cream,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
                   children: [
-                    const TextSpan(text: '👔 What to wear: ',
-                        style: TextStyle(color: AppColors.terraLight, fontWeight: FontWeight.w500)),
+                    const TextSpan(
+                      text: '👔 What to wear: ',
+                      style: TextStyle(
+                        color: AppColors.terraLight,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     TextSpan(text: clothing),
                   ],
                 ),
@@ -532,10 +745,21 @@ class _HighlightCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(color: AppColors.surface3, borderRadius: BorderRadius.circular(100)),
-                child: Text(formality.replaceAll('_', ' '),
-                    style: const TextStyle(color: AppColors.creamDim, fontSize: 11)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surface3,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Text(
+                  formality.replaceAll('_', ' '),
+                  style: const TextStyle(
+                    color: AppColors.creamDim,
+                    fontSize: 11,
+                  ),
+                ),
               ),
             ),
           ],
@@ -566,12 +790,24 @@ class _MonthlyEventCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    style: const TextStyle(color: AppColors.cream, fontSize: 15, fontWeight: FontWeight.w600)),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    color: AppColors.cream,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 if (description.isNotEmpty) ...[
                   const SizedBox(height: 6),
-                  Text(description,
-                      style: const TextStyle(color: AppColors.creamDim, fontSize: 13, height: 1.4)),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      color: AppColors.creamDim,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
                 ],
                 if (clothingNote != null && clothingNote.isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -581,8 +817,14 @@ class _MonthlyEventCard extends StatelessWidget {
                       color: AppColors.goldDim,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text('👔 $clothingNote',
-                        style: const TextStyle(color: AppColors.gold, fontSize: 12, height: 1.4)),
+                    child: Text(
+                      '👔 $clothingNote',
+                      style: const TextStyle(
+                        color: AppColors.gold,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
                   ),
                 ],
               ],
@@ -608,18 +850,33 @@ class _MatchCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_catIcons[category] ?? '📦', style: const TextStyle(fontSize: 22)),
+          Text(
+            _catIcons[category] ?? '📦',
+            style: const TextStyle(fontSize: 22),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    style: const TextStyle(color: AppColors.cream, fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    color: AppColors.cream,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 if (reason.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(reason,
-                      style: const TextStyle(color: AppColors.creamDim, fontSize: 12, height: 1.4)),
+                  Text(
+                    reason,
+                    style: const TextStyle(
+                      color: AppColors.creamDim,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -646,29 +903,49 @@ class _GapCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(_catIcons[category] ?? '🛍', style: const TextStyle(fontSize: 22)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(description,
-                      style: const TextStyle(color: AppColors.cream, fontSize: 14, fontWeight: FontWeight.w600)),
-                  if (why != null && why.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(why,
-                        style: const TextStyle(color: AppColors.creamDim, fontSize: 12, height: 1.4)),
-                  ],
-                ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _catIcons[category] ?? '🛍',
+                style: const TextStyle(fontSize: 22),
               ),
-            ),
-          ]),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        color: AppColors.cream,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (why != null && why.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        why,
+                        style: const TextStyle(
+                          color: AppColors.creamDim,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
           if (links.isNotEmpty) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.only(top: 10),
-              decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.border))),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.border)),
+              ),
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -710,8 +987,10 @@ class _LinkChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(100),
           border: Border.all(color: AppColors.border),
         ),
-        child: Text('🔗 $label',
-            style: const TextStyle(color: AppColors.cream, fontSize: 12)),
+        child: Text(
+          '🔗 $label',
+          style: const TextStyle(color: AppColors.cream, fontSize: 12),
+        ),
       ),
     );
   }

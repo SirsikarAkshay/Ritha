@@ -50,7 +50,9 @@ class DeviceCalendarService {
         for (final event in events) {
           if (event.start == null || event.end == null) continue;
           allEvents.add({
-            'external_id': event.eventId ?? '${calendar.id}_${event.start!.millisecondsSinceEpoch}',
+            'external_id':
+                event.eventId ??
+                '${calendar.id}_${event.start!.millisecondsSinceEpoch}',
             'title': event.title ?? '(No title)',
             'description': event.description ?? '',
             'location': event.location ?? '',
@@ -66,12 +68,18 @@ class DeviceCalendarService {
     }
 
     if (allEvents.isEmpty) {
-      return {'synced': 0, 'calendars': calendars.length, 'message': 'No events found in date range'};
+      return {
+        'synced': 0,
+        'calendars': calendars.length,
+        'message': 'No events found in date range',
+      };
     }
 
     try {
       final result = await calendarApi.deviceSync(allEvents);
-      final map = result is Map ? Map<String, dynamic>.from(result) : <String, dynamic>{};
+      final map = result is Map
+          ? Map<String, dynamic>.from(result)
+          : <String, dynamic>{};
       map['calendars'] = calendars.length;
       return map;
     } catch (e) {
