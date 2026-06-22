@@ -4,7 +4,25 @@ import { useAuth } from '../hooks/useAuth.jsx'
 import { auth as authApi, calendar as calendarApi } from '../api/index.js'
 
 export default function ProfilePage() {
-  const { user, updateUser } = useAuth()
+  const { user, updateUser, logout } = useAuth()
+  const [deleting, setDeleting] = useState(false)
+
+  const deleteAccount = async () => {
+    if (!window.confirm('Are you sure? This will permanently delete your account and all your data. This cannot be undone.')) return
+    setDeleting(true)
+    try {
+      await authApi.deleteAccount()
+      // Account is gone — clear the session and send the user back to login.
+      if (typeof logout === 'function') {
+        await logout()
+      } else {
+        window.location.href = '/login'
+      }
+    } catch (err) {
+      flash(err.response?.data?.error?.message || 'Could not delete your account. Please try again or contact support@getritha.com.', 'error')
+      setDeleting(false)
+    }
+  }
 
   const [profile, setProfile]       = useState({ first_name: user?.first_name || '', last_name: user?.last_name || '', timezone: user?.timezone || 'UTC' })
   const [passwords, setPasswords]   = useState({ current_password: '', new_password: '' })
@@ -385,14 +403,11 @@ export default function ProfilePage() {
             </p>
             <button
               className="btn btn-ghost btn-sm"
-              style={{ color: '#f87171', borderColor: 'rgba(220,70,60,0.3)' }}
-              onClick={() => {
-                if (window.confirm('Are you sure? This will permanently delete your account and all your data.')) {
-                  alert('Account deletion coming soon — please contact support@getritha.com')
-                }
-              }}
+              style={{ color: '#f87171', borderColor: 'rgba(220,70,60,0.3)', cursor: deleting ? 'not-allowed' : 'pointer' }}
+              onClick={deleteAccount}
+              disabled={deleting}
             >
-              Delete account
+              {deleting ? 'Deleting…' : 'Delete account'}
             </button>
           </div>
         </div>

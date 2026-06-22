@@ -221,10 +221,17 @@ CORS_ALLOWED_ORIGINS = [
     os.getenv("WEB_APP_URL", "http://localhost:3000"),
     os.getenv("MOBILE_APP_URL", "http://localhost:8081"),
 ]
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://localhost:\d+$",
-    r"^http://127\.0\.0\.1:\d+$",
-]
+# Localhost origins are only trusted in development. In production (DEBUG=False)
+# these regexes are dropped so the prod API never honours a localhost Origin
+# alongside CORS_ALLOW_CREDENTIALS.
+CORS_ALLOWED_ORIGIN_REGEXES = (
+    [
+        r"^http://localhost:\d+$",
+        r"^http://127\.0\.0\.1:\d+$",
+    ]
+    if DEBUG
+    else []
+)
 CORS_ALLOW_CREDENTIALS = True
 
 # ── Internationalisation ───────────────────────────────────────────────────────

@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [firstName,setFirstName]= useState('')
+  const [agreed,   setAgreed]   = useState(false)
   const [error,    setError]    = useState('')
   const [loading,  setLoading]  = useState(false)
 
@@ -21,6 +22,10 @@ export default function LoginPage() {
   const submit = async (e) => {
     e.preventDefault()
     setError('')
+    if (mode === 'register' && !agreed) {
+      setError('Please accept the Terms of Service and Privacy Policy to continue.')
+      return
+    }
     setLoading(true)
     try {
       if (mode === 'register') {
@@ -188,10 +193,27 @@ export default function LoginPage() {
               />
             </div>
 
+            {mode === 'register' && (
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.8rem', color: 'var(--cream-dim)', lineHeight: 1.5, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={e => setAgreed(e.target.checked)}
+                  style={{ marginTop: '2px', flexShrink: 0, cursor: 'pointer' }}
+                />
+                <span>
+                  I agree to the{' '}
+                  <Link to="/terms" target="_blank" style={{ color: 'var(--terra-light)', textDecoration: 'none' }}>Terms of Service</Link>
+                  {' '}and{' '}
+                  <Link to="/privacy" target="_blank" style={{ color: 'var(--terra-light)', textDecoration: 'none' }}>Privacy Policy</Link>.
+                </span>
+              </label>
+            )}
+
             <button
               type="submit"
               className="btn btn-primary btn-lg"
-              disabled={loading}
+              disabled={loading || (mode === 'register' && !agreed)}
               style={{ marginTop: '8px' }}
             >
               {loading

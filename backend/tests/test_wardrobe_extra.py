@@ -1,9 +1,6 @@
-"""Tests for background-removal, receipt-import, and luggage-weight endpoints."""
-
-from io import BytesIO
+"""Tests for receipt-import and luggage-weight endpoints."""
 
 import pytest
-from PIL import Image
 
 from .factories import ClothingItemFactory, UserFactory
 
@@ -15,31 +12,6 @@ def auth_header(client, user):
         "/api/auth/login/", {"email": user.email, "password": "testpass99"}, content_type="application/json"
     )
     return {"HTTP_AUTHORIZATION": f"Bearer {r.json()['access']}"}
-
-
-class TestBackgroundRemoval:
-    def _make_image(self):
-        img = Image.new("RGB", (100, 100), color="red")
-        buf = BytesIO()
-        img.save(buf, format="JPEG")
-        buf.seek(0)
-        buf.name = "shirt.jpg"
-        return buf
-
-    def test_no_image_returns_400(self, client):
-        user = UserFactory()
-        h = auth_header(client, user)
-        r = client.post("/api/wardrobe/background-removal/", {}, **h)
-        assert r.status_code == 400
-
-    def test_image_upload_returns_stub(self, client):
-        user = UserFactory()
-        h = auth_header(client, user)
-        img = self._make_image()
-        r = client.post("/api/wardrobe/background-removal/", {"image": img}, format="multipart", **h)
-        assert r.status_code == 200
-        assert r.json()["status"] == "stub"
-        assert "original_filename" in r.json()
 
 
 class TestReceiptImport:

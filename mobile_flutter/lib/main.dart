@@ -25,8 +25,18 @@ const String _appVersion = String.fromEnvironment(
 
 Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await PushNotificationService.instance.init();
+  // Firebase powers push notifications only. If it hasn't been configured for
+  // this build (no firebase_options / google-services files yet), skip it so
+  // the app still launches instead of crashing — push is simply unavailable
+  // until `flutterfire configure` has been run.
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await PushNotificationService.instance.init();
+  } catch (e) {
+    debugPrint('Firebase/push notifications unavailable, continuing without: $e');
+  }
   await loadOnboardingSkipFlag();
   runApp(const RithaApp());
 }

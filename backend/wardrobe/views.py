@@ -135,50 +135,13 @@ class AnalyzeClothingImageView(drf_views.APIView):
         return Response(payload)
 
 
-class BackgroundRemovalView(drf_views.APIView):
-    serializer_class = None
-    """
-    POST /api/wardrobe/background-removal/
-    Upload an image; returns a URL to the cleaned (background-removed) version.
-    Currently a stub — wire up Google Vision / Remove.bg in production.
-    """
-    permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [MultiPartParser]
-
-    @extend_schema(
-        summary="Remove background from clothing photo",
-        description="Upload a garment image; returns URL to background-removed version.",
-        responses={
-            200: inline_serializer(
-                name="BgRemovalResponse",
-                fields={
-                    "status": serializers.CharField(),
-                    "message": serializers.CharField(),
-                    "original_filename": serializers.CharField(),
-                },
-            )
-        },
-    )
-    def post(self, request):
-        image = request.FILES.get("image")
-        if not image:
-            return Response({"detail": "No image file provided."}, status=400)
-        return Response(
-            {
-                "status": "stub",
-                "message": "Background removal not yet connected. Upload the item normally and the cleaned image will be generated asynchronously.",
-                "original_filename": image.name,
-            }
-        )
-
-
 class ReceiptImportView(drf_views.APIView):
     serializer_class = None
     """
     POST /api/wardrobe/receipt-import/
     Body: { "email_body": "<raw email text>" }
-    Parses a shopping receipt email and creates ClothingItem records.
-    Currently a stub — wire up OpenAI parsing in production.
+    Parses a shopping receipt email (via Mistral) and returns ClothingItem
+    candidates, optionally saving them when ``auto_save`` is set.
     """
     permission_classes = [permissions.IsAuthenticated]
 

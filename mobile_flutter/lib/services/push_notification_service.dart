@@ -15,14 +15,30 @@ class PushNotificationService {
   PushNotificationService._();
   static final instance = PushNotificationService._();
 
-  final _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging? _messagingInstance;
   String? _token;
   bool _initialized = false;
 
   String? get token => _token;
 
+  /// Lazily resolves [FirebaseMessaging], returning null when Firebase isn't
+  /// configured/initialized for this build so every caller degrades gracefully
+  /// instead of throwing.
+  FirebaseMessaging? get _messaging {
+    try {
+      return _messagingInstance ??= FirebaseMessaging.instance;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> init() async {
     if (_initialized) return;
+    final messaging = _messaging;
+    if (messaging == null) {
+      debugPrint('Push notifications unavailable: Firebase not configured.');
+      return;
+    }
     _initialized = true;
 
     if (!kIsWeb) {
@@ -38,20 +54,22 @@ class PushNotificationService {
     });
 
     if (!kIsWeb) {
-      final initial = await _messaging.getInitialMessage();
+      final initial = await messaging.getInitialMessage();
       if (initial != null) {
         debugPrint('FCM launched from: ${initial.data}');
       }
     }
 
-    _messaging.onTokenRefresh.listen((newToken) {
+    messaging.onTokenRefresh.listen((newToken) {
       _token = newToken;
       _sendTokenToBackend(newToken, enabled: true);
     });
   }
 
   Future<bool> requestPermissionAndRegister() async {
-    final settings = await _messaging.requestPermission(
+    final messaging = _messaging;
+    if (messaging == null) return false;
+    final settings = await messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
@@ -59,7 +77,7 @@ class PushNotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
-      _token = await _messaging.getToken(vapidKey: kIsWeb ? _vapidKey : null);
+      _token = await messaging.getToken(vapidKey: kIsWeb ? _vapidKey : null);
       if (_token != null) {
         await _sendTokenToBackend(_token!, enabled: true);
       }
@@ -70,7 +88,7 @@ class PushNotificationService {
 
   Future<void> disable() async {
     await _sendTokenToBackend('', enabled: false);
-    await _messaging.deleteToken();
+    await _messaging?.deleteToken();
     _token = null;
   }
 
