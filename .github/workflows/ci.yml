@@ -298,10 +298,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # NOTE: the input is `languages` (plural). With the wrong key CodeQL ignores
+      # it and auto-detects every language in the repo — including Swift from the
+      # Flutter iOS project, which only builds on macOS runners → config error.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          language: ${{ matrix.language }}
+          languages: ${{ matrix.language }}
           queries: security-and-quality
 
       - name: Autobuild
