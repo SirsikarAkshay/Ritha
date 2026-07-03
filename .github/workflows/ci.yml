@@ -30,6 +30,43 @@ jobs:
       run:
         working-directory: backend
 
+    # Prod parity: run the suite against the same engines production uses
+    # (Postgres + Redis) instead of the SQLite/in-memory fallbacks.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ritha_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # DATABASE_URL flips settings.py onto the Postgres branch; SSLMODE=disable is
+    # required because that branch defaults sslmode=require, which a plain service
+    # container rejects. DEBUG stays unset (defaults True) so the production
+    # security branch (SSL redirect / secure cookies) doesn't fight the test client.
+    env:
+      DJANGO_SETTINGS_MODULE: ritha.settings
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/ritha_test
+      DATABASE_SSLMODE: disable
+      REDIS_URL: redis://localhost:6379/0
+      SECRET_KEY: ci-not-a-real-secret
+
     steps:
       - uses: actions/checkout@v4
 
@@ -69,10 +106,20 @@ jobs:
             exit 1
           fi
 
+      # Coverage gate. 40 is a deliberately conservative PROVISIONAL floor chosen
+      # without a measured baseline — the term-missing report in this step's log
+      # prints the real %. Raise this toward the actual number after the first
+      # green run so the gate has teeth (that's the intended ratchet).
       - name: Run pytest
-        env:
-          DJANGO_SETTINGS_MODULE: ritha.settings
-        run: pytest tests/ --cov=. --cov-report=term-missing --cov-report=xml
+        run: pytest tests/ --cov=. --cov-report=term-missing --cov-report=xml --cov-fail-under=40
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage.xml
+          retention-days: 7
 
   # ─── Web frontend: typecheck + client drift + production build ────────────
   web:
@@ -191,3 +238,147 @@ jobs:
 
       - name: Run unit tests
         run: flutter test
+
+  # ─── Security: dependency audit + secret scan ─────────────────────────────
+  security:
+    name: Security (deps audit + gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # gitleaks scans full history for leaked secrets
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install pip-audit
+        run: python -m pip install --upgrade pip pip-audit
+
+      # Audit the lean runtime set + the prod-only extras (psycopg, gunicorn, S3,
+      # sentry). The heavy torch/sklearn *training* stack is intentionally not
+      # resolved here — it isn't web-facing. continue-on-error keeps a single
+      # upstream CVE from wedging launch; triage in the job log, then make blocking.
+      - name: pip-audit (backend runtime deps)
+        continue-on-error: true
+        run: |
+          pip-audit -r backend/requirements-ci.txt
+          pip-audit -r backend/requirements_prod.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: npm audit (frontend)
+        continue-on-error: true
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─── SAST: CodeQL for backend (Python) and web (TS/JS) ────────────────────
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write   # upload SARIF results to the repo Security tab
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          language: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
+
+  # ─── Docker: validate the backend image builds (no push) ──────────────────
+  docker:
+    name: Docker (backend image build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─── Deploy: fire Render deploy hooks, only after every gate is green ──────
+  # Runs solely on push to main (never on PRs). render.yaml sets autoDeploy:false
+  # on each service, so these hooks are the *only* path to production.
+  # Prereq: add the four RENDER_DEPLOY_HOOK_* repo secrets (see repo README/CI docs).
+  deploy:
+    name: Deploy (Render, gated on green CI)
+    needs: [backend, web, e2e, mobile, security, codeql, docker]
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger Render deploy — API (ritha-api)
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_API }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_API is not set — add it in repo Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          curl -fsS -X POST "$HOOK"
+
+      - name: Trigger Render deploy — worker (ritha-worker)
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_WORKER }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_WORKER is not set."
+            exit 1
+          fi
+          curl -fsS -X POST "$HOOK"
+
+      - name: Trigger Render deploy — beat (ritha-beat)
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_BEAT }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_BEAT is not set."
+            exit 1
+          fi
+          curl -fsS -X POST "$HOOK"
+
+      - name: Trigger Render deploy — web (ritha-web)
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_WEB }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_WEB is not set."
+            exit 1
+          fi
+          curl -fsS -X POST "$HOOK"
