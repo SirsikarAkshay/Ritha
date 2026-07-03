@@ -59,13 +59,15 @@ jobs:
     # DATABASE_URL flips settings.py onto the Postgres branch; SSLMODE=disable is
     # required because that branch defaults sslmode=require, which a plain service
     # container rejects. DEBUG stays unset (defaults True) so the production
-    # security branch (SSL redirect / secure cookies) doesn't fight the test client.
+    # security branch (SSL redirect / secure cookies) doesn't fight the test client
+    # — and because DEBUG is on, the settings SECRET_KEY guard never fires, so we
+    # deliberately do NOT set a SECRET_KEY here (a literal one trips secret scanners
+    # for no benefit; the insecure fallback key is fine for the test run).
     env:
       DJANGO_SETTINGS_MODULE: ritha.settings
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/ritha_test
       DATABASE_SSLMODE: disable
       REDIS_URL: redis://localhost:6379/0
-      SECRET_KEY: ci-not-a-real-secret
 
     steps:
       - uses: actions/checkout@v4
