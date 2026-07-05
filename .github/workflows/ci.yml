@@ -56,18 +56,17 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    # DATABASE_URL flips settings.py onto the Postgres branch; SSLMODE=disable is
-    # required because that branch defaults sslmode=require, which a plain service
-    # container rejects. DEBUG stays unset (defaults True) so the production
-    # security branch (SSL redirect / secure cookies) doesn't fight the test client
-    # — and because DEBUG is on, the settings SECRET_KEY guard never fires, so we
-    # deliberately do NOT set a SECRET_KEY here (a literal one trips secret scanners
-    # for no benefit; the insecure fallback key is fine for the test run).
+    # NOTE: DATABASE_URL is intentionally NOT set at the job level. Django's
+    # PositiveIntegerField/IntegerField max-value validators are database-specific
+    # (Postgres = 32-bit, SQLite = 64-bit), so drf-spectacular emits a different
+    # `maximum:` per backend. The committed openapi.yaml and `make codegen` are
+    # generated on SQLite, so the schema-drift check MUST run on SQLite too or it
+    # false-positives. Only the pytest step opts into Postgres (prod parity), via
+    # step-level env below. DEBUG stays unset (defaults True) so the production
+    # security branch doesn't fight the test client and the SECRET_KEY guard never
+    # fires (no literal SECRET_KEY here — it would trip secret scanners for nothing).
     env:
       DJANGO_SETTINGS_MODULE: ritha.settings
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/ritha_test
-      DATABASE_SSLMODE: disable
-      REDIS_URL: redis://localhost:6379/0
 
     steps:
       - uses: actions/checkout@v4
@@ -112,7 +111,15 @@ jobs:
       # without a measured baseline — the term-missing report in this step's log
       # prints the real %. Raise this toward the actual number after the first
       # green run so the gate has teeth (that's the intended ratchet).
+      # Postgres/Redis (prod parity) are opted into HERE only — see the note on the
+      # job env above for why the schema step must stay on SQLite. SSLMODE=disable
+      # because the Postgres settings branch defaults sslmode=require, which a plain
+      # service container rejects.
       - name: Run pytest
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/ritha_test
+          DATABASE_SSLMODE: disable
+          REDIS_URL: redis://localhost:6379/0
         run: pytest tests/ --cov=. --cov-report=term-missing --cov-report=xml --cov-fail-under=40
 
       - name: Upload coverage report
