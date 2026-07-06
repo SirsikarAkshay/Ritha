@@ -22,7 +22,7 @@ django-cors-headers>=4.3,<5.0
 drf-spectacular==0.29.0
 
 # Environment
-python-dotenv>=1.0,<2.0
+python-dotenv>=1.2.2,<2.0
 
 # Database driver — CI runs the suite against a real Postgres service container
 # (prod parity). The heavy torch/sklearn stack stays out, but the DB driver is

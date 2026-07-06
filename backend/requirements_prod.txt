@@ -24,7 +24,7 @@ whitenoise>=6.6,<7.0
 redis>=5.0,<6.0
 
 # Environment
-python-dotenv>=1.0,<2.0
+python-dotenv>=1.2.2,<2.0
 
 # Images
 Pillow>=10.0,<12.0
