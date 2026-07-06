@@ -57,7 +57,7 @@ django-celery-beat>=2.7,<3.0
 django-anymail[resend]>=10.0,<13.0
 
 # Error monitoring
-sentry-sdk>=2.0,<3.0
+sentry-sdk>=2.64.0,<3.0
 
 # Object storage (S3-compatible)
 django-storages>=1.14,<2.0
