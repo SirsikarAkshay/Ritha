@@ -124,6 +124,7 @@ test.describe('Registration', () => {
     await page.getByPlaceholder('Jane').fill('New')
     await page.getByPlaceholder('you@example.com').fill('new@example.com')
     await page.getByPlaceholder('Min. 8 characters').fill('newpassword123')
+    await page.getByRole('checkbox').check() // accept Terms — required to enable submit
     await page.getByRole('button', { name: 'Create account' }).click()
 
     await expect(page).toHaveURL(/\/verify-email/)
@@ -143,6 +144,7 @@ test.describe('Registration', () => {
     await page.getByPlaceholder('Jane').fill('Jane')
     await page.getByPlaceholder('you@example.com').fill('existing@example.com')
     await page.getByPlaceholder('Min. 8 characters').fill('password123')
+    await page.getByRole('checkbox').check() // accept Terms — required to enable submit
     await page.getByRole('button', { name: 'Create account' }).click()
 
     await expect(page.getByText('A user with this email already exists.')).toBeVisible()

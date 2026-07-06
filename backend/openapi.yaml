@@ -2621,6 +2621,18 @@ components:
       - created
       - errors
       - updated
+    BagTypeEnum:
+      enum:
+      - personal_item
+      - backpack
+      - carry_on
+      - checked
+      type: string
+      description: |-
+        * `personal_item` - personal_item
+        * `backpack` - backpack
+        * `carry_on` - carry_on
+        * `checked` - checked
     BlankEnum:
       enum:
       - ''
@@ -3544,6 +3556,22 @@ components:
             minLength: 1
             maxLength: 50
           description: List of activity types, e.g. ["beach", "hiking", "dinner"]
+        bag_capacity_liters:
+          type: integer
+          maximum: 200
+          minimum: 5
+          description: Bag volume in liters (e.g. 30 for a 30L backpack). Omit for
+            an unconstrained list.
+        bag_type:
+          allOf:
+          - $ref: '#/components/schemas/BagTypeEnum'
+          description: |-
+            Preset bag size, mapped to liters when bag_capacity_liters is not given.
+
+            * `personal_item` - personal_item
+            * `backpack` - backpack
+            * `carry_on` - carry_on
+            * `checked` - checked
     PackingListResponse:
       type: object
       properties:

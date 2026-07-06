@@ -195,3 +195,41 @@ class TestPackingList:
         output = r.json()["output"]
         assert "packing_list" in output
         assert isinstance(output["packing_list"], list)
+
+    def test_packing_list_respects_bag_capacity(self, client):
+        user = UserFactory()
+        for cat, n in [("top", 5), ("bottom", 4), ("outerwear", 3), ("footwear", 2)]:
+            for _ in range(n):
+                ClothingItemFactory(user=user, category=cat)
+        h = auth_header(client, user)
+        r = client.post(
+            "/api/agents/packing-list/",
+            {"days": 14, "location": "Europe", "bag_capacity_liters": 12},
+            content_type="application/json",
+            **h,
+        )
+        assert r.status_code == 200
+        output = r.json()["output"]
+        # Capacity is respected and reported.
+        assert output["bag_capacity_liters"] == 12
+        assert output["estimated_volume_liters"] <= 12
+        assert output["capacity_utilization_pct"] is not None
+        # Every packed item carries its estimated volume.
+        assert all("packed_volume_liters" in i for i in output["packing_list"])
+        # A 12L bag can't hold the whole ~30L capsule, so some items are left behind.
+        assert len(output["left_behind"]) > 0
+        # Human-readable headline uses the week phrasing.
+        assert output["headline"] == "How to pack for 2 weeks in Europe in a 12L bag"
+
+    def test_packing_list_bag_type_preset_maps_to_liters(self, client):
+        user = UserFactory()
+        ClothingItemFactory(user=user, category="top")
+        h = auth_header(client, user)
+        r = client.post(
+            "/api/agents/packing-list/",
+            {"days": 3, "bag_type": "backpack"},
+            content_type="application/json",
+            **h,
+        )
+        assert r.status_code == 200
+        assert r.json()["output"]["bag_capacity_liters"] == 30
