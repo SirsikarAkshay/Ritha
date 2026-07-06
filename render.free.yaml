@@ -1,0 +1,143 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Ritha — ZERO-COST Render Blueprint (free tier, demo / pre-launch)
+#
+# A stripped-down alternative to render.yaml for getting live at $0. Differences
+# from the paid blueprint:
+#   • Every service is on the `free` plan.
+#   • No Celery worker/beat services — CELERY_TASK_ALWAYS_EAGER=True runs tasks
+#     inline in the web process instead. (Scheduled/beat jobs do NOT fire.)
+#   • Secrets (Mistral, Resend, R2) are optional: leave MISTRAL_API_KEY empty and
+#     the app serves deterministic stub recommendations.
+#
+# Trade-offs you accept on free tier:
+#   • The API spins down after ~15 min idle (cold start on first hit).
+#   • ⚠️ Render's free Postgres is DELETED after 30 days. For persistent free data,
+#     use Supabase instead: delete the `databases:` block below and set DATABASE_URL
+#     (sync:false) to the Supabase connection string.
+#   • Uploads are ephemeral unless you wire Cloudflare R2 (free 10GB) — see the
+#     AWS_* / AWS_S3_ENDPOINT_URL vars at the bottom.
+#
+# Deploy: Render Dashboard → New → Blueprint → pick this file (render.free.yaml).
+# When you outgrow it, switch to render.yaml (warm API + worker/beat + paid DB).
+# ─────────────────────────────────────────────────────────────────────────────
+
+databases:
+  - name: ritha-db
+    databaseName: ritha
+    user: ritha
+    plan: free          # ⚠️ deleted after 30 days — swap for Supabase for persistence (see header)
+
+services:
+  # ── Redis (Channels layer for WebSocket messaging) ─────────────────────────
+  # Still required even in eager mode: CHANNEL_LAYERS uses Redis for realtime chat.
+  - type: redis
+    name: ritha-redis
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+
+  # ── Django API (ASGI via daphne) ───────────────────────────────────────────
+  - type: web
+    name: ritha-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free          # spins down when idle → cold start on next request
+    healthCheckPath: /api/health/
+    envVars:
+      - fromGroup: ritha-free-config
+      - key: RUN_RELEASE_TASKS      # this service runs migrate/collectstatic/seed
+        value: "1"
+      - key: CELERY_TASK_ALWAYS_EAGER   # no worker/beat services → run tasks inline
+        value: "True"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ritha-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: ritha-redis
+          type: redis
+          property: connectionString
+
+  # ── React web app (Vite build → static CDN, free) ──────────────────────────
+  - type: web
+    name: ritha-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build:production
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://ritha-api.onrender.com/api
+      - key: VITE_WS_BASE_URL
+        value: wss://ritha-api.onrender.com
+      - key: VITE_SENTRY_DSN
+        sync: false
+      - key: VITE_POSTHOG_KEY
+        sync: false
+      - key: VITE_POSTHOG_HOST
+        value: https://eu.i.posthog.com
+    routes:
+      - type: rewrite       # SPA client-side routing
+        source: /*
+        destination: /index.html
+
+# ── Shared config (secrets are OPTIONAL on free tier — see notes) ────────────
+envVarGroups:
+  - name: ritha-free-config
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SENTRY_ENVIRONMENT
+        value: demo
+      # Public URLs — update if you attach a custom domain.
+      - key: WEB_APP_URL
+        value: https://ritha-web.onrender.com
+      - key: FRONTEND_URL
+        value: https://ritha-web.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://ritha-web.onrender.com,https://ritha-api.onrender.com
+      # ── AI: leave EMPTY for deterministic stub recommendations ($0). Set a
+      #    Mistral free-tier key later to enable live AI. ──
+      - key: MISTRAL_API_KEY
+        sync: false
+      # ── Calendar OAuth (optional for a demo; set to enable) ──
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: https://ritha-api.onrender.com/api/calendar/google/callback/
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      # ── Email (Resend free: 100/day). Console backend by default → no email. ──
+      - key: EMAIL_BACKEND
+        value: anymail.backends.resend.EmailBackend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: Ritha <noreply@getritha.com>
+      # ── Media storage: Cloudflare R2 (free 10GB, S3-compatible). Leave the
+      #    bucket empty to skip storage (uploads are then ephemeral). To enable:
+      #    set the bucket + keys, AWS_S3_ENDPOINT_URL to your R2 endpoint, and
+      #    AWS_S3_CUSTOM_DOMAIN to the bucket's public/r2.dev domain. ──
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_S3_ENDPOINT_URL          # e.g. https://<accountid>.r2.cloudflarestorage.com
+        sync: false
+      - key: AWS_S3_CUSTOM_DOMAIN          # e.g. <bucket>.<hash>.r2.dev  (public URL host)
+        sync: false
+      - key: AWS_REGION
+        value: auto                        # R2 uses "auto"
+      # ── Error monitoring (optional) ──
+      - key: SENTRY_DSN
+        sync: false
