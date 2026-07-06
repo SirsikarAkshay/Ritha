@@ -277,6 +277,13 @@ else:
 # ── Celery ────────────────────────────────────────────────────────────────────
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+# Zero-worker mode: when true, tasks run synchronously in the calling process
+# instead of being shipped to a separate Celery worker. This lets a free-tier
+# deploy skip the worker + beat services entirely. Trade-off: task work happens
+# inline in the request (slower responses) and the beat schedule does not fire —
+# fine for a demo / pre-launch, not for production throughput.
+CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False") == "True"
+CELERY_TASK_EAGER_PROPAGATES = CELERY_TASK_ALWAYS_EAGER
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -329,6 +336,12 @@ if _s3_bucket:
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     AWS_STORAGE_BUCKET_NAME = _s3_bucket
     AWS_S3_REGION_NAME = os.getenv("AWS_REGION", "eu-central-1")
+    # S3-compatible endpoint override (e.g. Cloudflare R2, Backblaze B2, MinIO).
+    # Leave unset for real AWS S3. For R2/B2 also set AWS_S3_CUSTOM_DOMAIN so the
+    # generated MEDIA_URL points at the bucket's public/custom domain, not S3.
+    _s3_endpoint = os.getenv("AWS_S3_ENDPOINT_URL", "")
+    if _s3_endpoint:
+        AWS_S3_ENDPOINT_URL = _s3_endpoint
     AWS_S3_FILE_OVERWRITE = False
     AWS_DEFAULT_ACL = "private"
     AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN", "")
