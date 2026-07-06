@@ -1,6 +1,7 @@
 // src/pages/TripPlannerPage.jsx
 import { useState, useEffect } from 'react'
 import { itinerary as itineraryApi, agents, sharedWardrobes as swApi } from '../api/index.js'
+import PackingByBag from '../components/PackingByBag.jsx'
 import PlaceAutocomplete from '../components/PlaceAutocomplete.jsx'
 
 export default function TripPlannerPage() {
@@ -211,6 +212,8 @@ export default function TripPlannerPage() {
           {showNew ? '✕ Cancel' : '+ New Trip'}
         </button>
       </div>
+
+      <PackingByBag />
 
       {showNew && (
         <div className="card fade-up" style={{ marginBottom: '24px' }}>

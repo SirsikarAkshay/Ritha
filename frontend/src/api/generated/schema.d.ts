@@ -1728,6 +1728,14 @@ export interface components {
             updated: number;
             errors: string[];
         };
+        /**
+         * @description * `personal_item` - personal_item
+         *     * `backpack` - backpack
+         *     * `carry_on` - carry_on
+         *     * `checked` - checked
+         * @enum {string}
+         */
+        BagTypeEnum: "personal_item" | "backpack" | "carry_on" | "checked";
         /** @enum {unknown} */
         BlankEnum: "";
         BulkUploadResponse: {
@@ -2180,6 +2188,17 @@ export interface components {
             days: number;
             /** @description List of activity types, e.g. ["beach", "hiking", "dinner"] */
             activities?: string[];
+            /** @description Bag volume in liters (e.g. 30 for a 30L backpack). Omit for an unconstrained list. */
+            bag_capacity_liters?: number;
+            /**
+             * @description Preset bag size, mapped to liters when bag_capacity_liters is not given.
+             *
+             *     * `personal_item` - personal_item
+             *     * `backpack` - backpack
+             *     * `carry_on` - carry_on
+             *     * `checked` - checked
+             */
+            bag_type?: components["schemas"]["BagTypeEnum"];
         };
         PackingListResponse: {
             job_id: number;
