@@ -347,7 +347,11 @@ jobs:
   # ─── Deploy: fire Render deploy hooks, only after every gate is green ──────
   # Runs solely on push to main (never on PRs). render.yaml sets autoDeploy:false
   # on each service, so these hooks are the *only* path to production.
-  # Prereq: add the four RENDER_DEPLOY_HOOK_* repo secrets (see repo README/CI docs).
+  #
+  # CD is OPT-IN: until the RENDER_DEPLOY_HOOK_* secrets are added, each step
+  # logs a warning and skips (exit 0) so the pipeline stays green. Add the four
+  # secrets in repo Settings → Secrets and variables → Actions to enable
+  # auto-deploy — no workflow change needed, the steps activate automatically.
   deploy:
     name: Deploy (Render, gated on green CI)
     needs: [backend, web, e2e, mobile, security, codeql, docker]
@@ -360,8 +364,8 @@ jobs:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_API }}
         run: |
           if [ -z "$HOOK" ]; then
-            echo "::error::RENDER_DEPLOY_HOOK_API is not set — add it in repo Settings → Secrets and variables → Actions."
-            exit 1
+            echo "::warning::RENDER_DEPLOY_HOOK_API not set — skipping deploy. Add it in repo Settings → Secrets to enable CD."
+            exit 0
           fi
           curl -fsS -X POST "$HOOK"
 
@@ -370,8 +374,8 @@ jobs:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_WORKER }}
         run: |
           if [ -z "$HOOK" ]; then
-            echo "::error::RENDER_DEPLOY_HOOK_WORKER is not set."
-            exit 1
+            echo "::warning::RENDER_DEPLOY_HOOK_WORKER not set — skipping deploy."
+            exit 0
           fi
           curl -fsS -X POST "$HOOK"
 
@@ -380,8 +384,8 @@ jobs:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_BEAT }}
         run: |
           if [ -z "$HOOK" ]; then
-            echo "::error::RENDER_DEPLOY_HOOK_BEAT is not set."
-            exit 1
+            echo "::warning::RENDER_DEPLOY_HOOK_BEAT not set — skipping deploy."
+            exit 0
           fi
           curl -fsS -X POST "$HOOK"
 
@@ -390,7 +394,7 @@ jobs:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_WEB }}
         run: |
           if [ -z "$HOOK" ]; then
-            echo "::error::RENDER_DEPLOY_HOOK_WEB is not set."
-            exit 1
+            echo "::warning::RENDER_DEPLOY_HOOK_WEB not set — skipping deploy."
+            exit 0
           fi
           curl -fsS -X POST "$HOOK"
