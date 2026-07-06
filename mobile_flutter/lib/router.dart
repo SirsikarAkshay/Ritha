@@ -10,6 +10,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/wardrobe_screen.dart';
 import 'screens/itinerary_screen.dart';
 import 'screens/trip_planner_screen.dart';
+import 'screens/packing_capacity_screen.dart';
 import 'screens/cultural_screen.dart';
 import 'screens/sustainability_screen.dart';
 import 'screens/profile_screen.dart';
@@ -97,6 +98,10 @@ GoRouter buildRouter(AuthProvider auth) {
           GoRoute(
             path: '/trips',
             builder: (_, __) => const TripPlannerScreen(),
+          ),
+          GoRoute(
+            path: '/packing',
+            builder: (_, __) => const PackingCapacityScreen(),
           ),
           GoRoute(
             path: '/cultural',
