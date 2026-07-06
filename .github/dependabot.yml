@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Dependabot — weekly dependency-update PRs across all four ecosystems in the
+# monorepo. Grouped so a week's minor/patch bumps land as one PR per ecosystem
+# instead of a swarm. Majors stay separate so they get individual review.
+# ─────────────────────────────────────────────────────────────────────────────
+version: 2
+updates:
+  # Backend — Django/DRF/etc. Tracks the lean CI set; requirements.txt inherits.
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      backend-minor-patch:
+        update-types: [minor, patch]
+
+  # Web frontend — React/Vite/TypeScript.
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      web-minor-patch:
+        update-types: [minor, patch]
+
+  # Mobile — Flutter/Dart packages.
+  - package-ecosystem: pub
+    directory: /mobile_flutter
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      mobile-minor-patch:
+        update-types: [minor, patch]
+
+  # The GitHub Actions used by the CI workflow itself.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        update-types: [minor, patch]
