@@ -352,6 +352,47 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                     style: TextStyle(color: AppColors.creamDim, fontSize: 14),
                   ),
                   const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: () => context.go('/packing'),
+                    child: ACard(
+                      padding: const EdgeInsets.all(16),
+                      background: AppColors.terraDim,
+                      child: Row(
+                        children: [
+                          const Text('🎒', style: TextStyle(fontSize: 24)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  'Pack by bag size',
+                                  style: TextStyle(
+                                    color: AppColors.cream,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Fit a capsule to your backpack or carry-on.',
+                                  style: TextStyle(
+                                    color: AppColors.creamDim,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: AppColors.creamDim,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   if (_error != null) AlertBanner(message: _error!),
                   if (_trips.isEmpty)
                     const EmptyState(

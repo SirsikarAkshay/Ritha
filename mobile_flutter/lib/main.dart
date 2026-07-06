@@ -35,7 +35,9 @@ Future<void> _bootstrap() async {
     );
     await PushNotificationService.instance.init();
   } catch (e) {
-    debugPrint('Firebase/push notifications unavailable, continuing without: $e');
+    debugPrint(
+      'Firebase/push notifications unavailable, continuing without: $e',
+    );
   }
   await loadOnboardingSkipFlag();
   runApp(const RithaApp());

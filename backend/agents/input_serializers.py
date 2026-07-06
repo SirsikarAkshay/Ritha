@@ -36,6 +36,14 @@ class WeeklyLooksInputSerializer(WeatherInputMixin):
 class PackingListInputSerializer(WeatherInputMixin):
     """Input for POST /api/agents/packing-list/"""
 
+    # Preset bag sizes → liters, used when bag_capacity_liters is omitted.
+    BAG_TYPE_LITERS = {
+        "personal_item": 20,
+        "backpack": 30,
+        "carry_on": 40,
+        "checked": 70,
+    }
+
     days = serializers.IntegerField(
         required=False, default=3, min_value=1, max_value=30, help_text="Trip duration in days"
     )
@@ -45,6 +53,24 @@ class PackingListInputSerializer(WeatherInputMixin):
         default=list,
         help_text='List of activity types, e.g. ["beach", "hiking", "dinner"]',
     )
+    bag_capacity_liters = serializers.IntegerField(
+        required=False,
+        min_value=5,
+        max_value=200,
+        help_text="Bag volume in liters (e.g. 30 for a 30L backpack). Omit for an unconstrained list.",
+    )
+    bag_type = serializers.ChoiceField(
+        choices=["personal_item", "backpack", "carry_on", "checked"],
+        required=False,
+        help_text="Preset bag size, mapped to liters when bag_capacity_liters is not given.",
+    )
+
+    def validate(self, data):
+        data = super().validate(data)
+        # Resolve a preset bag_type into liters unless an explicit capacity was given.
+        if "bag_capacity_liters" not in data and data.get("bag_type"):
+            data["bag_capacity_liters"] = self.BAG_TYPE_LITERS[data["bag_type"]]
+        return data
 
 
 class OutfitPlannerInputSerializer(WeatherInputMixin):

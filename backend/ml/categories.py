@@ -105,3 +105,50 @@ OCCASION_FORMALITY = {
     "wedding": ["formal"],
     "interview": ["formal", "smart"],
 }
+
+# ── Packed-volume model (bag-capacity-aware packing) ──────────────────────────
+# We have no per-item volume field, so we estimate how much space a garment takes
+# once rolled/packed, from its category and (bulky) material. Values are rough
+# liters of packed volume — good enough to rank items and fit them to a bag size.
+CATEGORY_PACKED_VOLUME_LITERS = {
+    "top": 1.2,
+    "bottom": 1.8,
+    "dress": 1.6,
+    "outerwear": 3.5,
+    "footwear": 3.0,
+    "accessory": 0.4,
+    "activewear": 1.0,
+    "formal": 2.2,
+    "other": 1.2,
+}
+
+# Multiplier applied when a bulky (or notably compact) fabric is detected in the
+# item's free-text material. First matching key wins the largest factor.
+MATERIAL_BULK_FACTOR = {
+    "down": 1.7,
+    "puffer": 1.7,
+    "fleece": 1.5,
+    "wool": 1.4,
+    "cashmere": 1.4,
+    "sweater": 1.35,
+    "knit": 1.35,
+    "denim": 1.3,
+    "corduroy": 1.3,
+    "leather": 1.3,
+    "cotton": 1.0,
+    "polyester": 0.95,
+    "nylon": 0.9,
+    "linen": 0.9,
+    "silk": 0.8,
+}
+
+
+def estimate_packed_volume_liters(category: str, material: str = "") -> float:
+    """Approximate packed volume (liters) of a garment from category + material."""
+    base = CATEGORY_PACKED_VOLUME_LITERS.get(category, CATEGORY_PACKED_VOLUME_LITERS["other"])
+    factor = 1.0
+    m = (material or "").lower()
+    for key, mult in MATERIAL_BULK_FACTOR.items():
+        if key in m:
+            factor = max(factor, mult)
+    return round(base * factor, 2)
