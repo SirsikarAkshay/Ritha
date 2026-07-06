@@ -1519,26 +1519,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/wardrobe/background-removal/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Remove background from clothing photo
-         * @description Upload a garment image; returns URL to background-removed version.
-         */
-        post: operations["wardrobe_background_removal_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/wardrobe/bulk-upload/": {
         parameters: {
             query?: never;
@@ -1747,11 +1727,6 @@ export interface components {
             created: number;
             updated: number;
             errors: string[];
-        };
-        BgRemovalResponse: {
-            status: string;
-            message: string;
-            original_filename: string;
         };
         /** @enum {unknown} */
         BlankEnum: "";
@@ -5170,25 +5145,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnalyzeImageResponse"];
-                };
-            };
-        };
-    };
-    wardrobe_background_removal_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BgRemovalResponse"];
                 };
             };
         };
