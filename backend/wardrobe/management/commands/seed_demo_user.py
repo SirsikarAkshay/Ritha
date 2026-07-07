@@ -14,6 +14,7 @@ sustainability stats. Safe to re-run; keyed by email.
 """
 
 import datetime
+import os
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -58,8 +59,10 @@ class Command(BaseCommand):
     help = "Seed a fully-populated demo account for screenshots and demos."
 
     def add_arguments(self, parser):
-        parser.add_argument("--email", default="demo@getritha.com")
-        parser.add_argument("--password", default="RithaDemo2026!")
+        # Defaults fall back to env vars so the entrypoint can seed on deploy
+        # (SEED_DEMO_USER=1) with a per-environment password, no CLI args needed.
+        parser.add_argument("--email", default=os.getenv("DEMO_EMAIL", "demo@getritha.com"))
+        parser.add_argument("--password", default=os.getenv("DEMO_PASSWORD", "RithaDemo2026!"))
         parser.add_argument(
             "--reset", action="store_true", help="Wipe the demo user's wardrobe/trips/history before reseeding."
         )
