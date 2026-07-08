@@ -15,6 +15,7 @@ import yaml
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from wardrobe.images import publish_starter_preview
 from wardrobe.models import RegionCluster, StarterPackItem
 
 DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "starter_packs.yaml"
@@ -112,7 +113,10 @@ class Command(BaseCommand):
                 "is_default": it.get("is_default", True),
                 "is_opt_in": it.get("is_opt_in", False),
                 "opt_in_group": it.get("opt_in_group", ""),
-                "preview_image_url": category_default_image(it["category"]),
+                "preview_image_url": (
+                    publish_starter_preview(it["region"], it["gender"], it["subcategory"])
+                    or category_default_image(it["category"])
+                ),
                 "sort_order": it.get("sort_order", 0),
             }
 

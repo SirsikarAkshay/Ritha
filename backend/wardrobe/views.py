@@ -567,19 +567,20 @@ class StarterPackApplyView(drf_views.APIView):
 
         # Bulk-build ClothingItem rows
         items_to_create = []
+        seed_targets = []  # (ClothingItem, subcategory) — for attaching cached region photos
         for sp in accepted:
-            items_to_create.append(
-                ClothingItem(
-                    user=user,
-                    name=sp.display_name,
-                    category=sp.category,
-                    formality=sp.formality,
-                    season=sp.seasonality,
-                    colors=sp.default_colors,
-                    source="starter_pack",
-                    tags=[sp.subcategory],
-                )
+            ci = ClothingItem(
+                user=user,
+                name=sp.display_name,
+                category=sp.category,
+                formality=sp.formality,
+                season=sp.seasonality,
+                colors=sp.default_colors,
+                source="starter_pack",
+                tags=[sp.subcategory],
             )
+            items_to_create.append(ci)
+            seed_targets.append((ci, sp.subcategory))
 
         # Custom items the user typed in (free-form)
         for c in d.get("custom_added", []):
@@ -596,6 +597,16 @@ class StarterPackApplyView(drf_views.APIView):
             )
 
         ClothingItem.objects.bulk_create(items_to_create)
+
+        # Attach the cached region flat-lay photo to each created starter item, so a
+        # freshly onboarded wardrobe shows real photos (falls back to the category
+        # illustration in the UI when no image is cached). bulk_create populates PKs,
+        # so image.save() updates the row in place.
+        from wardrobe.images import attach_seed_image
+
+        for ci, subcategory in seed_targets:
+            if ci.pk:
+                attach_seed_image(ci, region.code, d["gender"], subcategory)
 
         # Telemetry: which items were proposed, kept, rejected
         all_proposed = StarterPackItem.objects.filter(

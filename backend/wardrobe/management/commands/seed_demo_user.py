@@ -18,7 +18,7 @@ import os
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from itinerary.models import PackingChecklistItem, Trip
 from outfits.models import OutfitItem, OutfitRecommendation
@@ -66,6 +66,15 @@ class Command(BaseCommand):
         parser.add_argument(
             "--reset", action="store_true", help="Wipe the demo user's wardrobe/trips/history before reseeding."
         )
+        parser.add_argument(
+            "--region",
+            default=os.getenv("DEMO_REGION", ""),
+            help="Seed the wardrobe from this region's starter pack (with cached photos) "
+            "instead of the default Western set. E.g. south_asian_north, south_asian_tropical.",
+        )
+        parser.add_argument(
+            "--gender", default=os.getenv("DEMO_GENDER", "women"), help="Gender bucket for --region (default: women)."
+        )
 
     @transaction.atomic
     def handle(self, *args, **opts):
@@ -88,50 +97,53 @@ class Command(BaseCommand):
             user.sustainability_logs.all().delete()
             self.stdout.write("Reset existing demo data.")
 
+        # Resolve the requested region (if any) — drives the onboarding record
+        # and a photo-backed regional wardrobe below.
+        region_code = opts["region"].strip()
+        gender = opts["gender"].strip() or "women"
+        region_obj = None
+        if region_code:
+            try:
+                region_obj = RegionCluster.objects.get(code=region_code)
+            except RegionCluster.DoesNotExist:
+                known = (
+                    ", ".join(RegionCluster.objects.values_list("code", flat=True)) or "(none — run seed_starter_packs)"
+                )
+                raise CommandError(f'Unknown region "{region_code}". Known: {known}') from None
+
         # Mark onboarding complete (the API derives this from an existing
         # StarterPackApplication, so the demo user skips the /onboarding gate).
         if not hasattr(user, "starter_pack_application"):
-            region = RegionCluster.objects.first() or RegionCluster.objects.create(
-                code="demo-europe",
-                display_name="Demo (Western Europe)",
-                climate_zone="C",
-                cultural_cluster="nw_european",
-                country_codes=["CH", "DE", "FR"],
+            region = (
+                region_obj
+                or RegionCluster.objects.first()
+                or RegionCluster.objects.create(
+                    code="demo-europe",
+                    display_name="Demo (Western Europe)",
+                    climate_zone="C",
+                    cultural_cluster="nw_european",
+                    country_codes=["CH", "DE", "FR"],
+                )
             )
             StarterPackApplication.objects.create(
                 user=user,
                 region_cluster=region,
-                gender="unspecified",
+                gender=gender if region_obj else "unspecified",
                 proposed_items=[],
                 custom_added=[],
                 opt_ins=[],
             )
 
         # ── Wardrobe ───────────────────────────────────────────────────────────
-        items = []
-        for i, (name, cat, form, season, colors, mat, wt, brand, tags) in enumerate(DEMO_WARDROBE):
-            item, _ = ClothingItem.objects.update_or_create(
-                user=user,
-                name=name,
-                defaults={
-                    "category": cat,
-                    "formality": form,
-                    "season": season,
-                    "colors": colors,
-                    "material": mat,
-                    "weight_grams": wt,
-                    "brand": brand,
-                    "tags": tags,
-                    "times_worn": (i * 3) % 11,
-                    "last_worn": today - datetime.timedelta(days=i + 1),
-                },
-            )
-            items.append(item)
+        if region_obj:
+            items = self._seed_region_wardrobe(user, region_obj, gender, today)
+            self.stdout.write(f"Wardrobe: {len(items)} {region_obj.code}/{gender} items (photos where cached)")
+        else:
+            items = self._seed_default_wardrobe(user, today)
+            self.stdout.write(f"Wardrobe: {len(items)} items")
 
         def by_cat(c):
             return [it for it in items if it.category == c]
-
-        self.stdout.write(f"Wardrobe: {len(items)} items")
 
         # ── Upcoming trip + packing checklist ───────────────────────────────────
         trip, _ = Trip.objects.update_or_create(
@@ -191,3 +203,61 @@ class Command(BaseCommand):
         self.stdout.write(f"Sustainability: {profile.total_points} pts, {profile.total_co2_saved_kg}kg CO₂ saved")
 
         self.stdout.write(self.style.SUCCESS(f"\nDemo account ready → {email} / {opts['password']}"))
+
+    def _seed_default_wardrobe(self, user, today):
+        """The original hardcoded Western wardrobe (no photos)."""
+        items = []
+        for i, (name, cat, form, season, colors, mat, wt, brand, tags) in enumerate(DEMO_WARDROBE):
+            item, _ = ClothingItem.objects.update_or_create(
+                user=user,
+                name=name,
+                defaults={
+                    "category": cat,
+                    "formality": form,
+                    "season": season,
+                    "colors": colors,
+                    "material": mat,
+                    "weight_grams": wt,
+                    "brand": brand,
+                    "tags": tags,
+                    "times_worn": (i * 3) % 11,
+                    "last_worn": today - datetime.timedelta(days=i + 1),
+                },
+            )
+            items.append(item)
+        return items
+
+    def _seed_region_wardrobe(self, user, region, gender, today):
+        """Build the wardrobe from a region's default starter pack, attaching the
+        cached CC0 flat-lay photo to each item where one is available."""
+        from wardrobe.images import attach_seed_image
+        from wardrobe.models import StarterPackItem
+
+        sp_items = list(
+            StarterPackItem.objects.filter(region_cluster=region, gender=gender, is_default=True).order_by("sort_order")
+        )
+        if not sp_items:
+            raise CommandError(
+                f'No starter items for region "{region.code}" / gender "{gender}". '
+                "Run: python manage.py seed_starter_packs"
+            )
+        items = []
+        for i, sp in enumerate(sp_items):
+            item, _ = ClothingItem.objects.update_or_create(
+                user=user,
+                name=sp.display_name,
+                defaults={
+                    "category": sp.category,
+                    "formality": sp.formality,
+                    "season": sp.seasonality,
+                    "colors": sp.default_colors,
+                    "source": "starter_pack",
+                    "tags": [sp.subcategory],
+                    "times_worn": (i * 3) % 11,
+                    "last_worn": today - datetime.timedelta(days=i + 1),
+                },
+            )
+            if not item.image:
+                attach_seed_image(item, region.code, gender, sp.subcategory)
+            items.append(item)
+        return items
