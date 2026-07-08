@@ -15,9 +15,18 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-import torch
-from PIL import Image
-from torchvision import transforms
+
+try:
+    import torch
+    from PIL import Image
+    from torchvision import transforms
+
+    _HAS_TORCH = True
+except ImportError:  # torch/torchvision absent (lean CI, or a deploy without ML models)
+    torch = None
+    Image = None
+    transforms = None
+    _HAS_TORCH = False
 
 from ml.categories import (
     CATEGORY_TO_IDX,
@@ -80,20 +89,32 @@ def _load_compatibility():
     return data["matrix"]
 
 
-_val_transform = transforms.Compose(
-    [
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    ]
+_val_transform = (
+    transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ]
+    )
+    if _HAS_TORCH
+    else None
 )
 
 
 # ── Public API ───────────────────────────────────────────────────────────────
 
 
+def _require_torch():
+    if not _HAS_TORCH:
+        raise RuntimeError(
+            "Image classification requires torch/torchvision, which are not installed in this environment."
+        )
+
+
 def classify_image(image_path: str) -> dict:
     """Classify a clothing image → {category, confidence, top3}."""
+    _require_torch()
     model, device = _load_model()
     img = Image.open(image_path).convert("RGB")
     tensor = _val_transform(img).unsqueeze(0).to(device)
@@ -112,6 +133,7 @@ def classify_image(image_path: str) -> dict:
 
 def get_embedding(image_path: str) -> np.ndarray:
     """Extract a 1280-d feature vector from the penultimate layer."""
+    _require_torch()
     model, device = _load_model()
     img = Image.open(image_path).convert("RGB")
     tensor = _val_transform(img).unsqueeze(0).to(device)
