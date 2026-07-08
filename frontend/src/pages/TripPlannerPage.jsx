@@ -1,7 +1,16 @@
 // src/pages/TripPlannerPage.jsx
 import { useState, useEffect } from 'react'
-import { itinerary as itineraryApi, agents, sharedWardrobes as swApi } from '../api/index.js'
+import { itinerary as itineraryApi, agents, sharedWardrobes as swApi, resolveImageUrl } from '../api/index.js'
 import PackingByBag from '../components/PackingByBag.jsx'
+
+// Real garment photo when the item has one, else the bundled category illustration.
+const IMG_CATEGORIES = new Set(['top', 'bottom', 'dress', 'outerwear', 'footwear', 'accessory', 'activewear', 'formal', 'other'])
+function categoryDefaultImg(category) {
+  return `/wardrobe-defaults/${IMG_CATEGORIES.has(category) ? category : 'other'}.svg`
+}
+function itemImageSrc(item) {
+  return resolveImageUrl(item?.image_url) || categoryDefaultImg(item?.category)
+}
 import PlaceAutocomplete from '../components/PlaceAutocomplete.jsx'
 
 export default function TripPlannerPage() {
@@ -552,6 +561,9 @@ function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear
   const shopping = cityOutput.shopping_suggestions || []
   const days     = cityOutput.days || []
   const highlights = cultural.highlights || []
+  const placeDestination = isMultiCity
+    ? [output.cities[cityIdx]?.city, output.country].filter(Boolean).join(', ')
+    : (cityOutput.metadata?.destination || output.metadata?.destination || '')
   const wardrobeSummary = output.wardrobe_summary || []
 
   // Counts for tab badges
@@ -741,7 +753,7 @@ function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear
       )}
 
       {activeTab === 'places' && (
-        <PlacesTab highlights={highlights} />
+        <PlacesTab highlights={highlights} destination={placeDestination} />
       )}
 
       {activeTab === 'culture' && (
@@ -824,7 +836,12 @@ function OutfitPlanTab({ days, output }) {
                         padding: '10px 12px', background: 'var(--surface-3)', borderRadius: 'var(--radius-md)',
                         border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px',
                       }}>
-                        <span style={{ fontSize: '1.25rem' }}>{ROLE_ICON[m.role] || '👔'}</span>
+                        <img
+                          src={itemImageSrc(m.item)}
+                          alt={m.item.name}
+                          onError={(e) => { e.currentTarget.src = categoryDefaultImg(m.item.category) }}
+                          style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0, background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+                        />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: '0.8125rem', color: 'var(--cream)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {m.item.name}
@@ -997,52 +1014,121 @@ function ShoppingTab({ shopping, days }) {
 
 /* ─�� Tab: Places to Visit ──────────���─────────────────────────────────── */
 
-function PlacesTab({ highlights }) {
+function placeIcon(t) {
+  return t === 'nature' ? '🌿' : t === 'restaurant' ? '🍽' : t === 'market' ? '🛒'
+    : t === 'museum' ? '🏛' : t === 'religious' ? '🛕' : t === 'landmark' ? '🏛' : '📍'
+}
+
+function PlacesTab({ highlights, destination }) {
+  const [open, setOpen] = useState({})        // idx -> bool
+  const [outfits, setOutfits] = useState({})  // idx -> { loading | data | error }
+
   if (highlights.length === 0) {
     return (
       <div role="tabpanel" className="empty-state" style={{ padding: '32px', textAlign: 'center' }}>
         <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📍</div>
         <div style={{ fontSize: '0.95rem', color: 'var(--cream)', marginBottom: '4px' }}>No places yet</div>
-        <div style={{ fontSize: '0.85rem', color: 'var(--cream-dim)' }}>AI couldn't identify specific places for this destination.</div>
+        <div style={{ fontSize: '0.85rem', color: 'var(--cream-dim)' }}>Generate a recommendation to see places to visit.</div>
       </div>
     )
+  }
+
+  const toggle = async (i, h) => {
+    const isOpen = !open[i]
+    setOpen(o => ({ ...o, [i]: isOpen }))
+    if (!isOpen || outfits[i]?.data || outfits[i]?.loading) return
+    setOutfits(o => ({ ...o, [i]: { loading: true } }))
+    try {
+      const res = await agents.placeOutfit({
+        place: h.name,
+        destination,
+        formality: h.formality || 'casual_smart',
+        place_type: h.type || '',
+        clothing_tip: h.clothing_tip || h.clothing || '',
+      })
+      setOutfits(o => ({ ...o, [i]: { data: res?.output || res } }))
+    } catch (err) {
+      const msg = err?.response?.data?.error?.message || err?.message || 'Could not build an outfit.'
+      setOutfits(o => ({ ...o, [i]: { error: typeof msg === 'string' ? msg : 'Could not build an outfit.' } }))
+    }
   }
 
   return (
     <div role="tabpanel">
       <div style={{ color: 'var(--cream-dim)', fontSize: '0.85rem', marginBottom: 16 }}>
-        Must-visit spots with specific clothing guidance for each.
+        Must-visit spots — tap <strong style={{ color: 'var(--terra-light)' }}>Dress me for this</strong> to build an outfit from your wardrobe for each.
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
-        {highlights.map((h, i) => (
-          <div key={i} className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>
-                {h.type === 'nature' ? '🌿' : h.type === 'restaurant' ? '🍽' : h.type === 'market' ? '🛒' : h.type === 'museum' ? '🏛' : '📍'}
-              </span>
-              <div style={{ flex: 1, minWidth: 0, fontWeight: 500, color: 'var(--cream)', fontSize: '0.95rem' }}>
-                {h.name}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
+        {highlights.map((h, i) => {
+          const tip = h.clothing_tip || h.clothing
+          const st = outfits[i] || {}
+          return (
+            <div key={i} className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{placeIcon(h.type)}</span>
+                <div style={{ flex: 1, minWidth: 0, fontWeight: 500, color: 'var(--cream)', fontSize: '0.95rem' }}>{h.name}</div>
+                {h.formality && (
+                  <span className="badge" style={{ background: 'var(--surface-3)', color: 'var(--cream-dim)', fontSize: '0.65rem' }}>
+                    {h.formality.replace('_', ' ')}
+                  </span>
+                )}
               </div>
-              {h.formality && (
-                <span className="badge" style={{ background: 'var(--surface-3)', color: 'var(--cream-dim)', fontSize: '0.65rem' }}>
-                  {h.formality.replace('_', ' ')}
-                </span>
+              {h.description && (
+                <div style={{ fontSize: '0.8rem', color: 'var(--cream-dim)', lineHeight: 1.4 }}>{h.description}</div>
+              )}
+              {tip && (
+                <div style={{ paddingTop: 10, borderTop: '1px solid var(--border)', fontSize: '0.8rem', color: 'var(--cream)', lineHeight: 1.4 }}>
+                  <span style={{ color: 'var(--terra-light)', fontWeight: 500 }}>👔 What to wear: </span>{tip}
+                </div>
+              )}
+              <button
+                className="btn btn-secondary"
+                style={{ marginTop: 4, fontSize: '0.8rem', padding: '8px 12px', alignSelf: 'flex-start' }}
+                onClick={() => toggle(i, h)}
+              >
+                {open[i] ? '▲ Hide outfit' : '✦ Dress me for this'}
+              </button>
+              {open[i] && (
+                <div style={{ marginTop: 2 }}>
+                  {st.loading && <div style={{ fontSize: '0.8rem', color: 'var(--cream-dim)' }}>Building your outfit…</div>}
+                  {st.error && <div style={{ fontSize: '0.8rem', color: 'var(--danger, #f87171)' }}>⚠ {st.error}</div>}
+                  {st.data && <PlaceOutfit data={st.data} />}
+                </div>
               )}
             </div>
-            {h.description && (
-              <div style={{ fontSize: '0.8rem', color: 'var(--cream-dim)', lineHeight: 1.4 }}>
-                {h.description}
-              </div>
-            )}
-            {h.clothing_tip && (
-              <div style={{
-                marginTop: 'auto', paddingTop: 10, borderTop: '1px solid var(--border)',
-                fontSize: '0.8rem', color: 'var(--cream)', lineHeight: 1.4,
-              }}>
-                <span style={{ color: 'var(--terra-light)', fontWeight: 500 }}>👔 What to wear: </span>
-                {h.clothing_tip}
-              </div>
-            )}
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function PlaceOutfit({ data }) {
+  const matches = data.wardrobe_matches || []
+  if (matches.length === 0) {
+    return (
+      <div style={{ fontSize: '0.8rem', color: 'var(--cream-dim)', lineHeight: 1.4 }}>
+        Nothing in your wardrobe fits this yet — check the Shopping tab for ideas.
+      </div>
+    )
+  }
+  return (
+    <div>
+      {data.notes && (
+        <div style={{ fontSize: '0.78rem', color: 'var(--cream-dim)', marginBottom: 8, lineHeight: 1.4 }}>{data.notes}</div>
+      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {matches.map((m, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface-3)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 10px 6px 6px' }}>
+            <img
+              src={itemImageSrc(m.item)}
+              alt={m.item.name}
+              onError={(e) => { e.currentTarget.src = categoryDefaultImg(m.item.category) }}
+              style={{ width: 34, height: 34, borderRadius: 7, objectFit: 'cover', background: 'var(--surface-2)', flexShrink: 0 }}
+            />
+            <div style={{ fontSize: '0.76rem', color: 'var(--cream)', maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {m.item.name}
+            </div>
           </div>
         ))}
       </div>

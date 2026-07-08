@@ -148,6 +148,8 @@ class AgentsApi {
       _api.post('/agents/cultural-advisor/', data);
   Future smartRecommend(Map<String, dynamic> data) =>
       _api.post('/agents/smart-recommend/', data);
+  Future placeOutfit(Map<String, dynamic> data) =>
+      _api.post('/agents/place-outfit/', data);
 }
 
 // ── Health ──────────────────────────────────────────────────────────────────

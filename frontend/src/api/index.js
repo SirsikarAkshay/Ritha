@@ -102,6 +102,17 @@ export const agents = {
   conflictDetector: (data) => api.post('/agents/conflict-detector/', data),
   culturalAdvisor:  (data) => api.post('/agents/cultural-advisor/', data),
   smartRecommend:   (data) => api.post('/agents/smart-recommend/', data),
+  placeOutfit:      (data) => api.post('/agents/place-outfit/', data),
+}
+
+// Backend origin (strip the trailing "/api") for resolving root-relative
+// "/media/..." image URLs. Absolute (S3/R2) URLs pass through unchanged.
+const MEDIA_ORIGIN = (import.meta.env?.VITE_API_BASE_URL || '/api').replace(/\/api\/?$/, '')
+export function resolveImageUrl(url) {
+  if (!url) return ''
+  if (/^https?:\/\//.test(url)) return url
+  if (url.startsWith('/media')) return MEDIA_ORIGIN + url
+  return url
 }
 
 // ── Weather ───────────────────────────────────────────────────────────────
