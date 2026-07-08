@@ -15,9 +15,18 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-import torch
-from PIL import Image
-from torchvision import transforms
+
+try:
+    import torch
+    from PIL import Image
+    from torchvision import transforms
+
+    _HAS_TORCH = True
+except ImportError:  # torch/torchvision absent (lean CI, or a deploy without ML models)
+    torch = None
+    Image = None
+    transforms = None
+    _HAS_TORCH = False
 
 from ml.categories import (
     CATEGORY_TO_IDX,
@@ -68,27 +77,44 @@ def _load_compatibility():
 
     pkl_path = ARTIFACTS_DIR / "compatibility.pkl"
     if not pkl_path.exists():
-        raise FileNotFoundError(f"No compatibility matrix at {pkl_path}. Run: python -m ml.train")
+        # No trained matrix (e.g. CI, or a fresh deploy without ML artifacts).
+        # Degrade gracefully — callers treat None as neutral compatibility —
+        # rather than raising and 500-ing every recommendation. Cached so we
+        # don't stat the missing file on every call.
+        _compat_cache["matrix"] = None
+        return None
 
     data = joblib.load(pkl_path)
     _compat_cache["matrix"] = data["matrix"]
     return data["matrix"]
 
 
-_val_transform = transforms.Compose(
-    [
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    ]
+_val_transform = (
+    transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ]
+    )
+    if _HAS_TORCH
+    else None
 )
 
 
 # ── Public API ───────────────────────────────────────────────────────────────
 
 
+def _require_torch():
+    if not _HAS_TORCH:
+        raise RuntimeError(
+            "Image classification requires torch/torchvision, which are not installed in this environment."
+        )
+
+
 def classify_image(image_path: str) -> dict:
     """Classify a clothing image → {category, confidence, top3}."""
+    _require_torch()
     model, device = _load_model()
     img = Image.open(image_path).convert("RGB")
     tensor = _val_transform(img).unsqueeze(0).to(device)
@@ -107,6 +133,7 @@ def classify_image(image_path: str) -> dict:
 
 def get_embedding(image_path: str) -> np.ndarray:
     """Extract a 1280-d feature vector from the penultimate layer."""
+    _require_torch()
     model, device = _load_model()
     img = Image.open(image_path).convert("RGB")
     tensor = _val_transform(img).unsqueeze(0).to(device)
@@ -130,6 +157,8 @@ def get_embedding(image_path: str) -> np.ndarray:
 def compatibility_score(cat_a: str, cat_b: str) -> float:
     """Return co-occurrence compatibility score between two categories (0..1)."""
     matrix = _load_compatibility()
+    if matrix is None:
+        return 0.5  # neutral when no trained matrix is available
     idx_a = CATEGORY_TO_IDX.get(cat_a)
     idx_b = CATEGORY_TO_IDX.get(cat_b)
     if idx_a is None or idx_b is None:
@@ -141,7 +170,7 @@ def suggest_compatible(category: str, top_k: int = 5) -> list[dict]:
     """Return top-K categories most compatible with the given category."""
     matrix = _load_compatibility()
     idx = CATEGORY_TO_IDX.get(category)
-    if idx is None:
+    if matrix is None or idx is None:
         return []
 
     scores = matrix[idx].copy()
@@ -164,6 +193,8 @@ def score_outfit(categories: list[str]) -> float:
     if len(categories) < 2:
         return 1.0
     matrix = _load_compatibility()
+    if matrix is None:
+        return 0.5  # neutral when no trained matrix is available
     scores = []
     for i, cat_a in enumerate(categories):
         for cat_b in categories[i + 1 :]:

@@ -6,6 +6,7 @@ from .views import (
     DailyLookView,
     OutfitPlannerView,
     PackingListView,
+    PlaceOutfitView,
     SmartRecommendView,
     WeeklyLooksView,
 )
@@ -18,4 +19,5 @@ urlpatterns = [
     path("cultural-advisor/", CulturalAdvisorView.as_view(), name="agent-cultural-advisor"),
     path("conflict-detector/", ConflictDetectorView.as_view(), name="agent-conflict-detector"),
     path("smart-recommend/", SmartRecommendView.as_view(), name="agent-smart-recommend"),
+    path("place-outfit/", PlaceOutfitView.as_view(), name="agent-place-outfit"),
 ]

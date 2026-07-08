@@ -3,9 +3,67 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../api/api.dart';
+import '../api/api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ui.dart';
 import '../widgets/place_autocomplete.dart';
+
+// Resolve a ClothingItem image_url: absolute (S3) passes through; a root-relative
+// "/media/..." path is prefixed with the API origin. Null when there's no image.
+String? _mediaUrl(String? url) {
+  if (url == null || url.isEmpty) return null;
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/media')) {
+    return kBaseUrl.replaceFirst(RegExp(r'/api/?$'), '') + url;
+  }
+  return url;
+}
+
+const _thumbCatEmoji = {
+  'top': '👕',
+  'bottom': '👖',
+  'dress': '👗',
+  'outerwear': '🧥',
+  'footwear': '👟',
+  'accessory': '💍',
+  'activewear': '🏃',
+  'formal': '🤵',
+  'other': '📦',
+};
+
+/// Item thumbnail: the real photo when present, else the category emoji.
+class _ItemThumb extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final double size;
+  const _ItemThumb({required this.item, this.size = 40});
+
+  @override
+  Widget build(BuildContext context) {
+    final url = _mediaUrl(item['image_url']?.toString());
+    final emoji = _thumbCatEmoji[item['category']?.toString()] ?? '👔';
+    final fallback = Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(emoji, style: TextStyle(fontSize: size * 0.5)),
+    );
+    if (url == null) return fallback;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback,
+      ),
+    );
+  }
+}
 
 class TripPlannerScreen extends StatefulWidget {
   const TripPlannerScreen({super.key});
@@ -1197,9 +1255,14 @@ List<Widget> _placesChildren(Map<String, dynamic> o) {
       ),
     ];
   }
+  final destination = ((o['metadata'] as Map?)?['destination'] ?? '')
+      .toString();
   return [
     for (final h in highlights)
-      _PlaceCard(place: Map<String, dynamic>.from(h as Map)),
+      _PlaceCard(
+        place: Map<String, dynamic>.from(h as Map),
+        destination: destination,
+      ),
   ];
 }
 
@@ -1345,10 +1408,7 @@ class _WardrobeMatchTile extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(
-                  _roleIcon[role] ?? '👔',
-                  style: const TextStyle(fontSize: 20),
-                ),
+                _ItemThumb(item: item, size: 40),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -1539,11 +1599,58 @@ class _LinkChip extends StatelessWidget {
   }
 }
 
-class _PlaceCard extends StatelessWidget {
+class _PlaceCard extends StatefulWidget {
   final Map<String, dynamic> place;
-  const _PlaceCard({required this.place});
+  final String destination;
+  const _PlaceCard({required this.place, this.destination = ''});
+  @override
+  State<_PlaceCard> createState() => _PlaceCardState();
+}
+
+class _PlaceCardState extends State<_PlaceCard> {
+  bool _open = false;
+  bool _loading = false;
+  String? _error;
+  Map<String, dynamic>? _outfit;
+
+  Future<void> _toggle() async {
+    final willOpen = !_open;
+    setState(() => _open = willOpen);
+    if (!willOpen || _outfit != null || _loading) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final h = widget.place;
+      final res =
+          await agentsApi.placeOutfit({
+                'place': h['name']?.toString() ?? '',
+                'destination': widget.destination,
+                'formality': h['formality']?.toString() ?? 'casual_smart',
+                'place_type': h['type']?.toString() ?? '',
+                'clothing_tip': (h['clothing_tip'] ?? h['clothing'] ?? '')
+                    .toString(),
+              })
+              as Map;
+      if (!mounted) return;
+      setState(() {
+        _outfit = Map<String, dynamic>.from((res['output'] ?? res) as Map);
+        _loading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Could not build an outfit.';
+          _loading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final place = widget.place;
     final type = place['type']?.toString() ?? '';
     final icon = type == 'nature'
         ? '🌿'
@@ -1551,10 +1658,13 @@ class _PlaceCard extends StatelessWidget {
         ? '🍽'
         : type == 'market'
         ? '🛒'
-        : type == 'museum'
+        : type == 'museum' || type == 'landmark'
         ? '🏛'
+        : type == 'religious'
+        ? '🛕'
         : '📍';
     final formality = place['formality']?.toString().replaceAll('_', ' ');
+    final tip = (place['clothing_tip'] ?? place['clothing'] ?? '').toString();
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: ACard(
@@ -1590,7 +1700,7 @@ class _PlaceCard extends StatelessWidget {
                 ),
               ),
             ],
-            if ((place['clothing_tip'] ?? '').toString().isNotEmpty) ...[
+            if (tip.isNotEmpty) ...[
               const SizedBox(height: 10),
               const Divider(color: AppColors.border, height: 1),
               const SizedBox(height: 8),
@@ -1609,13 +1719,125 @@ class _PlaceCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    TextSpan(text: place['clothing_tip'].toString()),
+                    TextSpan(text: tip),
                   ],
                 ),
               ),
             ],
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: _toggle,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.terra),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  _open ? '▲ Hide outfit' : '✦ Dress me for this',
+                  style: const TextStyle(
+                    color: AppColors.terraLight,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            if (_open) ...[
+              const SizedBox(height: 12),
+              if (_loading)
+                const Text(
+                  'Building your outfit…',
+                  style: TextStyle(color: AppColors.creamDim, fontSize: 12),
+                ),
+              if (_error != null)
+                Text(
+                  '⚠ $_error',
+                  style: const TextStyle(color: AppColors.danger, fontSize: 12),
+                ),
+              if (_outfit != null) _PlaceOutfitView(outfit: _outfit!),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PlaceOutfitView extends StatelessWidget {
+  final Map<String, dynamic> outfit;
+  const _PlaceOutfitView({required this.outfit});
+  @override
+  Widget build(BuildContext context) {
+    final matches = (outfit['wardrobe_matches'] as List?) ?? const [];
+    final notes = outfit['notes']?.toString() ?? '';
+    if (matches.isEmpty) {
+      return const Text(
+        'Nothing in your wardrobe fits this yet — see the Shopping tab for ideas.',
+        style: TextStyle(color: AppColors.creamDim, fontSize: 12, height: 1.4),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (notes.isNotEmpty) ...[
+          Text(
+            notes,
+            style: const TextStyle(
+              color: AppColors.creamDim,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final m in matches)
+              if (m is Map)
+                _OutfitChip(
+                  item: Map<String, dynamic>.from(
+                    (m['item'] ?? const {}) as Map,
+                  ),
+                ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _OutfitChip extends StatelessWidget {
+  final Map<String, dynamic> item;
+  const _OutfitChip({required this.item});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(6, 6, 10, 6),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ItemThumb(item: item, size: 34),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 120),
+            child: Text(
+              item['name']?.toString() ?? '—',
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppColors.cream, fontSize: 12),
+            ),
+          ),
+        ],
       ),
     );
   }

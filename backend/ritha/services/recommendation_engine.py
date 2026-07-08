@@ -493,15 +493,19 @@ Return a JSON object with these exact keys:
 
 Include 3-5 rules (or fewer if the destination has few dress codes),
 2-4 events happening around {date_str},
-4-6 must-visit highlights with clothing advice,
+8-10 must-visit highlights with clothing advice,
 and 3-5 general tips. Be specific to {destination}, not generic."""
 
     result = chat_json(prompt)
 
+    from ritha.services.places import merge_highlights
+
     return {
         "rules": result.get("rules", []),
         "events": result.get("events", []),
-        "highlights": result.get("highlights", []),
+        # Top up the AI list with curated places so every destination shows a
+        # solid set (and de-dupes overlaps by name).
+        "highlights": merge_highlights(result.get("highlights", []), destination),
         "general_tips": result.get("general_tips", []),
         "overall_dress_code": result.get("overall_dress_code", ""),
         "source": "ai",
@@ -509,10 +513,14 @@ and 3-5 general tips. Be specific to {destination}, not generic."""
 
 
 def _cultural_fallback(destination: str) -> dict:
+    from ritha.services.places import fallback_highlights
+
     return {
         "rules": [],
         "events": [],
-        "highlights": [],
+        # Curated places so the stub path (e.g. the demo, with no Mistral key)
+        # still shows a rich places-to-visit list.
+        "highlights": fallback_highlights(destination),
         "general_tips": [f"Check local dress codes before visiting {destination}."],
         "overall_dress_code": "No data available — check local guidelines.",
         "source": "fallback",
@@ -767,9 +775,10 @@ def _get_user_item_scores(user) -> dict:
 
 
 def _get_wardrobe(user) -> list:
+    from wardrobe.images import attach_image_urls
     from wardrobe.models import ClothingItem
 
-    return list(
+    items = list(
         ClothingItem.objects.filter(user=user, is_active=True).values(
             "id",
             "name",
@@ -785,6 +794,8 @@ def _get_wardrobe(user) -> list:
             "embedding",
         )
     )
+    # `image_url` lets wardrobe_matches render the real garment photo in the UI.
+    return attach_image_urls(items)
 
 
 def _match_wardrobe(
@@ -846,7 +857,10 @@ def _match_wardrobe(
             picked_items.append(best)
             matches.append(
                 {
-                    "item": best,
+                    # Drop the raw ML embedding from the API payload — it's a
+                    # memoryview/bytes on Postgres (not JSON-serializable) and
+                    # internal-only. picked_items keeps the full dict for scoring.
+                    "item": {k: v for k, v in best.items() if k != "embedding"},
                     "role": role,
                     "ideal_category": target_dataset_cat,
                     "reason": f"Matches {role} — {target_dataset_cat} "

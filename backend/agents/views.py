@@ -12,6 +12,7 @@ from .input_serializers import (
     DailyLookInputSerializer,
     OutfitPlannerInputSerializer,
     PackingListInputSerializer,
+    PlaceOutfitInputSerializer,
     SmartRecommendInputSerializer,
     WeeklyLooksInputSerializer,
 )
@@ -199,3 +200,25 @@ class SmartRecommendView(BaseAgentView):
 
     def run(self, user, data):
         return services.run_smart_recommend(user, data)
+
+
+class PlaceOutfitView(BaseAgentView):
+    agent_type = "place_outfit"
+    input_serializer_class = PlaceOutfitInputSerializer
+
+    @extend_schema(
+        summary="Outfit for a specific place",
+        request=PlaceOutfitInputSerializer,
+        responses={200: _agent_schema("PlaceOutfitResponse")},
+        description=(
+            "Builds an outfit for one place (e.g. a mosque, a rooftop bar) by mapping "
+            "the place's dress formality to an occasion and running the recommendation "
+            "engine under that destination's weather + culture. Returns wardrobe_matches "
+            "(with item images), notes, and shopping suggestions for gaps."
+        ),
+    )
+    def post(self, request):
+        return self._run(request)
+
+    def run(self, user, data):
+        return services.run_place_outfit(user, data)

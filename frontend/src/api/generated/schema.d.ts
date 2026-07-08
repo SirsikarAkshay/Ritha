@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/agents/place-outfit/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Outfit for a specific place
+         * @description Builds an outfit for one place (e.g. a mosque, a rooftop bar) by mapping the place's dress formality to an occasion and running the recommendation engine under that destination's weather + culture. Returns wardrobe_matches (with item images), notes, and shopping suggestions for gaps.
+         */
+        post: operations["agents_place_outfit_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/agents/smart-recommend/": {
         parameters: {
             query?: never;
@@ -1805,7 +1825,7 @@ export interface components {
             name: string;
             category: components["schemas"]["CategoryEnum"];
             source?: components["schemas"]["ClothingItemSourceEnum"];
-            formality?: components["schemas"]["FormalityEnum"];
+            formality?: components["schemas"]["FormalityE29Enum"];
             season?: components["schemas"]["SeasonEnum"];
             colors?: unknown;
             material?: string;
@@ -1831,7 +1851,7 @@ export interface components {
             name: string;
             category: components["schemas"]["CategoryEnum"];
             source?: components["schemas"]["ClothingItemSourceEnum"];
-            formality?: components["schemas"]["FormalityEnum"];
+            formality?: components["schemas"]["FormalityE29Enum"];
             season?: components["schemas"]["SeasonEnum"];
             colors?: unknown;
             material?: string;
@@ -1986,7 +2006,7 @@ export interface components {
          *     * `activewear` - Activewear
          * @enum {string}
          */
-        FormalityEnum: "casual" | "casual_smart" | "smart" | "formal" | "activewear";
+        FormalityE29Enum: "casual" | "casual_smart" | "smart" | "formal" | "activewear";
         GoogleSyncResult: {
             created: number;
             updated: number;
@@ -2361,7 +2381,7 @@ export interface components {
             name?: string;
             category?: components["schemas"]["CategoryEnum"];
             source?: components["schemas"]["ClothingItemSourceEnum"];
-            formality?: components["schemas"]["FormalityEnum"];
+            formality?: components["schemas"]["FormalityE29Enum"];
             season?: components["schemas"]["SeasonEnum"];
             colors?: unknown;
             material?: string;
@@ -2434,6 +2454,63 @@ export interface components {
             location_lon?: number | null;
             push_notifications?: boolean;
             style_profile?: unknown;
+        };
+        /**
+         * @description * `casual` - casual
+         *     * `casual_smart` - casual_smart
+         *     * `smart` - smart
+         *     * `formal` - formal
+         * @enum {string}
+         */
+        PlaceOutfitInputFormalityEnum: "casual" | "casual_smart" | "smart" | "formal";
+        /** @description Input for POST /api/agents/place-outfit/ — an outfit for one specific place. */
+        PlaceOutfitInputRequest: {
+            /**
+             * Format: double
+             * @description Latitude for live weather
+             */
+            lat?: number;
+            /**
+             * Format: double
+             * @description Longitude for live weather
+             */
+            lon?: number;
+            /** @description Location name (geocoded) */
+            location?: string;
+            /** @description Weather snapshot dict (overrides live fetch) */
+            weather?: {
+                [key: string]: unknown;
+            };
+            /** @description Name of the place to dress for */
+            place: string;
+            /** @description City or country the place is in (drives weather + culture) */
+            destination: string;
+            /**
+             * Format: date
+             * @description Date (YYYY-MM-DD, defaults to today)
+             */
+            date?: string;
+            /**
+             * @description Dress formality expected at the place
+             *
+             *     * `casual` - casual
+             *     * `casual_smart` - casual_smart
+             *     * `smart` - smart
+             *     * `formal` - formal
+             * @default casual_smart
+             */
+            formality: components["schemas"]["PlaceOutfitInputFormalityEnum"];
+            /** @description landmark | religious | market | museum | nature | restaurant */
+            place_type?: string;
+            /** @description Known dress note for the place (echoed back in the response) */
+            clothing_tip?: string;
+        };
+        PlaceOutfitResponse: {
+            job_id: number;
+            status: string;
+            output: {
+                [key: string]: unknown;
+            };
         };
         ReceiptImportResponse: {
             status: string;
@@ -2610,7 +2687,7 @@ export interface components {
             display_name: string;
             default_colors?: unknown;
             seasonality?: components["schemas"]["SeasonalityEnum"];
-            formality?: components["schemas"]["FormalityEnum"];
+            formality?: components["schemas"]["FormalityE29Enum"];
             /** Format: decimal */
             prevalence_pct?: string | null;
             source_label: string;
@@ -2921,6 +2998,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PackingListResponse"];
+                };
+            };
+        };
+    };
+    agents_place_outfit_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlaceOutfitInputRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PlaceOutfitInputRequest"];
+                "multipart/form-data": components["schemas"]["PlaceOutfitInputRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceOutfitResponse"];
                 };
             };
         };
