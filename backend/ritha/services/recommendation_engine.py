@@ -857,7 +857,10 @@ def _match_wardrobe(
             picked_items.append(best)
             matches.append(
                 {
-                    "item": best,
+                    # Drop the raw ML embedding from the API payload — it's a
+                    # memoryview/bytes on Postgres (not JSON-serializable) and
+                    # internal-only. picked_items keeps the full dict for scoring.
+                    "item": {k: v for k, v in best.items() if k != "embedding"},
                     "role": role,
                     "ideal_category": target_dataset_cat,
                     "reason": f"Matches {role} — {target_dataset_cat} "

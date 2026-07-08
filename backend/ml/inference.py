@@ -68,7 +68,12 @@ def _load_compatibility():
 
     pkl_path = ARTIFACTS_DIR / "compatibility.pkl"
     if not pkl_path.exists():
-        raise FileNotFoundError(f"No compatibility matrix at {pkl_path}. Run: python -m ml.train")
+        # No trained matrix (e.g. CI, or a fresh deploy without ML artifacts).
+        # Degrade gracefully — callers treat None as neutral compatibility —
+        # rather than raising and 500-ing every recommendation. Cached so we
+        # don't stat the missing file on every call.
+        _compat_cache["matrix"] = None
+        return None
 
     data = joblib.load(pkl_path)
     _compat_cache["matrix"] = data["matrix"]
@@ -130,6 +135,8 @@ def get_embedding(image_path: str) -> np.ndarray:
 def compatibility_score(cat_a: str, cat_b: str) -> float:
     """Return co-occurrence compatibility score between two categories (0..1)."""
     matrix = _load_compatibility()
+    if matrix is None:
+        return 0.5  # neutral when no trained matrix is available
     idx_a = CATEGORY_TO_IDX.get(cat_a)
     idx_b = CATEGORY_TO_IDX.get(cat_b)
     if idx_a is None or idx_b is None:
@@ -141,7 +148,7 @@ def suggest_compatible(category: str, top_k: int = 5) -> list[dict]:
     """Return top-K categories most compatible with the given category."""
     matrix = _load_compatibility()
     idx = CATEGORY_TO_IDX.get(category)
-    if idx is None:
+    if matrix is None or idx is None:
         return []
 
     scores = matrix[idx].copy()
@@ -164,6 +171,8 @@ def score_outfit(categories: list[str]) -> float:
     if len(categories) < 2:
         return 1.0
     matrix = _load_compatibility()
+    if matrix is None:
+        return 0.5  # neutral when no trained matrix is available
     scores = []
     for i, cat_a in enumerate(categories):
         for cat_b in categories[i + 1 :]:
