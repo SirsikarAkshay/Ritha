@@ -149,6 +149,28 @@ class SmartRecommendInputSerializer(WeatherInputMixin):
         return data
 
 
+class PlaceOutfitInputSerializer(WeatherInputMixin):
+    """Input for POST /api/agents/place-outfit/ — an outfit for one specific place."""
+
+    place = serializers.CharField(max_length=200, help_text="Name of the place to dress for")
+    destination = serializers.CharField(
+        max_length=200, help_text="City or country the place is in (drives weather + culture)"
+    )
+    date = serializers.DateField(required=False, help_text="Date (YYYY-MM-DD, defaults to today)")
+    formality = serializers.ChoiceField(
+        choices=["casual", "casual_smart", "smart", "formal"],
+        required=False,
+        default="casual_smart",
+        help_text="Dress formality expected at the place",
+    )
+    place_type = serializers.CharField(
+        required=False, allow_blank=True, help_text="landmark | religious | market | museum | nature | restaurant"
+    )
+    clothing_tip = serializers.CharField(
+        required=False, allow_blank=True, help_text="Known dress note for the place (echoed back in the response)"
+    )
+
+
 class LuggageWeightInputSerializer(serializers.Serializer):
     """Input for POST /api/wardrobe/luggage-weight/"""
 
