@@ -2200,17 +2200,30 @@ def run_place_outfit(user, input_data: dict) -> dict:
         if input_data.get(key) is not None:
             payload[key] = input_data[key]
 
-    rec = recommend(user, payload)
-    outfit = rec.get("outfit", {}) or {}
-    return {
-        "status": "ok",
-        "place": place,
-        "destination": destination,
-        "occasion": occasion,
-        "clothing_tip": input_data.get("clothing_tip", "") or "",
-        "wardrobe_matches": rec.get("wardrobe_matches", []),
-        "outfit": outfit,
-        "notes": outfit.get("notes", ""),
-        "shopping_suggestions": rec.get("shopping_suggestions", []),
-        "weather": rec.get("weather", {}),
-    }
+    try:
+        rec = recommend(user, payload)
+        outfit = rec.get("outfit", {}) or {}
+        result = {
+            "status": "ok",
+            "place": place,
+            "destination": destination,
+            "occasion": occasion,
+            "clothing_tip": input_data.get("clothing_tip", "") or "",
+            "wardrobe_matches": rec.get("wardrobe_matches", []),
+            "outfit": outfit,
+            "notes": outfit.get("notes", ""),
+            "shopping_suggestions": rec.get("shopping_suggestions", []),
+            "weather": rec.get("weather", {}),
+        }
+        import json as _dbg_json
+
+        from django.core.serializers.json import DjangoJSONEncoder as _DbgEnc
+
+        _dbg_json.dumps(result, cls=_DbgEnc)  # DEBUG: surface any non-serializable field
+        return result
+    except Exception:
+        import traceback
+
+        print("PLACE_OUTFIT_DEBUG_TRACEBACK >>>")
+        traceback.print_exc()
+        raise
