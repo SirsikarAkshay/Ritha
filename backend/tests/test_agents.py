@@ -233,3 +233,58 @@ class TestPackingList:
         )
         assert r.status_code == 200
         assert r.json()["output"]["bag_capacity_liters"] == 30
+
+
+_MOCK_WEATHER = {
+    "temp_c": 20,
+    "feels_like_c": 20,
+    "condition": "Clear",
+    "is_raining": False,
+    "is_cold": False,
+    "is_hot": False,
+    "is_windy": False,
+}
+
+
+class TestPlaceOutfit:
+    def test_place_outfit_returns_matches_with_image_url(self, client):
+        user = UserFactory()
+        for cat in ["top", "bottom", "footwear", "outerwear"]:
+            ClothingItemFactory(user=user, category=cat)
+        h = auth_header(client, user)
+        r = client.post(
+            "/api/agents/place-outfit/",
+            {
+                "place": "Blue Mosque",
+                "destination": "Istanbul",
+                "place_type": "religious",
+                "formality": "smart",
+                "clothing_tip": "Cover shoulders and knees.",
+                "weather": _MOCK_WEATHER,
+            },
+            content_type="application/json",
+            **h,
+        )
+        assert r.status_code == 200
+        output = r.json()["output"]
+        assert output["place"] == "Blue Mosque"
+        # A religious site maps to the modest 'cultural_visit' occasion.
+        assert output["occasion"] == "cultural_visit"
+        assert isinstance(output["wardrobe_matches"], list)
+        # Every matched item exposes image_url so the UI can render a photo
+        # (empty here -> the UI falls back to the category illustration).
+        for m in output["wardrobe_matches"]:
+            assert "image_url" in m["item"]
+
+    def test_place_outfit_formality_maps_to_occasion(self, client):
+        user = UserFactory()
+        ClothingItemFactory(user=user, category="top")
+        h = auth_header(client, user)
+        r = client.post(
+            "/api/agents/place-outfit/",
+            {"place": "Rooftop Bar", "destination": "Singapore", "formality": "smart", "weather": _MOCK_WEATHER},
+            content_type="application/json",
+            **h,
+        )
+        assert r.status_code == 200
+        assert r.json()["output"]["occasion"] == "business"

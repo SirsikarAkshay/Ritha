@@ -145,6 +145,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/PackingListResponse'
           description: ''
+  /api/agents/place-outfit/:
+    post:
+      operationId: agents_place_outfit_create
+      description: Builds an outfit for one place (e.g. a mosque, a rooftop bar) by
+        mapping the place's dress formality to an occasion and running the recommendation
+        engine under that destination's weather + culture. Returns wardrobe_matches
+        (with item images), notes, and shopping suggestions for gaps.
+      summary: Outfit for a specific place
+      tags:
+      - agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOutfitInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlaceOutfitInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PlaceOutfitInputRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaceOutfitResponse'
+          description: ''
   /api/agents/smart-recommend/:
     post:
       operationId: agents_smart_recommend_create
@@ -2781,7 +2812,7 @@ components:
         source:
           $ref: '#/components/schemas/ClothingItemSourceEnum'
         formality:
-          $ref: '#/components/schemas/FormalityEnum'
+          $ref: '#/components/schemas/FormalityE29Enum'
         season:
           $ref: '#/components/schemas/SeasonEnum'
         colors: {}
@@ -2848,7 +2879,7 @@ components:
         source:
           $ref: '#/components/schemas/ClothingItemSourceEnum'
         formality:
-          $ref: '#/components/schemas/FormalityEnum'
+          $ref: '#/components/schemas/FormalityE29Enum'
         season:
           $ref: '#/components/schemas/SeasonEnum'
         colors: {}
@@ -3113,7 +3144,7 @@ components:
         * `interview` - Interview
         * `date` - Date
         * `other` - Other
-    FormalityEnum:
+    FormalityE29Enum:
       enum:
       - casual
       - casual_smart
@@ -3836,7 +3867,7 @@ components:
         source:
           $ref: '#/components/schemas/ClothingItemSourceEnum'
         formality:
-          $ref: '#/components/schemas/FormalityEnum'
+          $ref: '#/components/schemas/FormalityE29Enum'
         season:
           $ref: '#/components/schemas/SeasonEnum'
         colors: {}
@@ -3995,6 +4026,86 @@ components:
         push_notifications:
           type: boolean
         style_profile: {}
+    PlaceOutfitInputFormalityEnum:
+      enum:
+      - casual
+      - casual_smart
+      - smart
+      - formal
+      type: string
+      description: |-
+        * `casual` - casual
+        * `casual_smart` - casual_smart
+        * `smart` - smart
+        * `formal` - formal
+    PlaceOutfitInputRequest:
+      type: object
+      description: Input for POST /api/agents/place-outfit/ — an outfit for one specific
+        place.
+      properties:
+        lat:
+          type: number
+          format: double
+          description: Latitude for live weather
+        lon:
+          type: number
+          format: double
+          description: Longitude for live weather
+        location:
+          type: string
+          description: Location name (geocoded)
+        weather:
+          type: object
+          additionalProperties: {}
+          description: Weather snapshot dict (overrides live fetch)
+        place:
+          type: string
+          minLength: 1
+          description: Name of the place to dress for
+          maxLength: 200
+        destination:
+          type: string
+          minLength: 1
+          description: City or country the place is in (drives weather + culture)
+          maxLength: 200
+        date:
+          type: string
+          format: date
+          description: Date (YYYY-MM-DD, defaults to today)
+        formality:
+          allOf:
+          - $ref: '#/components/schemas/PlaceOutfitInputFormalityEnum'
+          default: casual_smart
+          description: |-
+            Dress formality expected at the place
+
+            * `casual` - casual
+            * `casual_smart` - casual_smart
+            * `smart` - smart
+            * `formal` - formal
+        place_type:
+          type: string
+          description: landmark | religious | market | museum | nature | restaurant
+        clothing_tip:
+          type: string
+          description: Known dress note for the place (echoed back in the response)
+      required:
+      - destination
+      - place
+    PlaceOutfitResponse:
+      type: object
+      properties:
+        job_id:
+          type: integer
+        status:
+          type: string
+        output:
+          type: object
+          additionalProperties: {}
+      required:
+      - job_id
+      - output
+      - status
     ReceiptImportResponse:
       type: object
       properties:
@@ -4320,7 +4431,7 @@ components:
         seasonality:
           $ref: '#/components/schemas/SeasonalityEnum'
         formality:
-          $ref: '#/components/schemas/FormalityEnum'
+          $ref: '#/components/schemas/FormalityE29Enum'
         prevalence_pct:
           type: string
           format: decimal
