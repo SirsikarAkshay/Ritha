@@ -1,0 +1,202 @@
+<style>
+  :root{--midnight:#0d0f14;--surface:#161921;--surface2:#1c2029;--surface3:#252833;--line:rgba(245,240,232,.10);
+    --cream:#f5f0e8;--dim:#9a97a0;--faint:#6b6a73;--terra:#d4724a;--terra-lt:#e8956e;
+    --sage:#7ba67e;--sky:#6fa8c7;--gold:#c9a84c;--sakura:#e79ab0;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  *{box-sizing:border-box}html,body{margin:0;min-height:100%}
+  body{min-height:100vh;background:radial-gradient(100% 60% at 50% 0%,rgba(201,168,76,.14),transparent 60%),#08090c;color:var(--cream);font-family:var(--sans);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:22px 14px;-webkit-font-smoothing:antialiased}
+  .frame{position:relative;height:min(86vh,884px);aspect-ratio:9/16;border-radius:26px;overflow:hidden;background:var(--midnight);box-shadow:0 40px 90px -30px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.05)}
+  .frame::before{content:"";position:absolute;inset:0;background:radial-gradient(110% 55% at 50% -6%,rgba(201,168,76,.14),transparent 60%);pointer-events:none;z-index:0}
+  .scene{position:absolute;inset:0;padding:58px 34px 46px;opacity:0;transform:translateY(12px);transition:opacity .55s ease,transform .55s ease;pointer-events:none;display:flex;flex-direction:column;z-index:1}
+  .scene.is-active{opacity:1;transform:none;pointer-events:auto}
+  .kicker{font-family:var(--mono);font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:13px}
+  .hook{justify-content:center}
+  .hook h1{font-size:2.85rem;line-height:1.05;letter-spacing:-.03em;font-weight:660;margin:0;text-wrap:balance}
+  .hook h1 em{font-style:normal;color:var(--terra)}
+  .hook .sub{color:var(--dim);margin-top:18px;font-size:1.1rem;line-height:1.5}
+  .wordmark{margin-top:30px;font-family:var(--mono);letter-spacing:.32em;text-transform:uppercase;font-size:.82rem;color:var(--faint)}
+  .h-title{font-size:1.55rem;font-weight:620;letter-spacing:-.01em;margin:0 0 4px}
+  .h-sub{color:var(--dim);font-size:.96rem;margin:0 0 18px}
+  .label{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 0 9px}
+  .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .rchip{font-size:.86rem;padding:12px 13px;border-radius:12px;border:1px solid var(--line);color:var(--dim);background:var(--surface);display:flex;align-items:center;gap:8px}
+  .rchip.sel{background:var(--terra);color:var(--cream);border-color:var(--terra);box-shadow:0 8px 22px -10px rgba(212,114,74,.7)}
+  .rchip .fl{font-size:1rem}
+  .gsel{display:flex;gap:8px;margin-top:16px}
+  .gpill{flex:1;text-align:center;font-size:.9rem;padding:11px;border-radius:11px;border:1px solid var(--line);color:var(--dim);background:var(--surface)}
+  .gpill.sel{background:var(--surface3);color:var(--cream);border-color:var(--terra-lt)}
+  .toggle{display:flex;align-items:center;gap:12px;padding:14px 15px;background:var(--surface);border:1px solid var(--line);border-radius:13px;margin-bottom:10px}
+  .toggle .t-body{flex:1}.toggle h4{margin:0 0 3px;font-size:1rem;color:var(--cream);font-weight:600}
+  .toggle p{margin:0;font-size:.82rem;color:var(--dim)}
+  .sw{width:44px;height:26px;border-radius:14px;background:var(--surface3);position:relative;flex:none;transition:background .3s}
+  .sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--faint);transition:transform .3s,background .3s}
+  .sw.on{background:var(--terra)}.sw.on::after{transform:translateX(18px);background:var(--cream)}
+  .cta{margin-top:auto;background:var(--terra);color:var(--cream);border-radius:15px;padding:16px;text-align:center;font-weight:600;font-size:1.12rem;box-shadow:0 14px 34px -12px rgba(212,114,74,.7)}
+  .frame [data-scene="2"].is-active .cta{animation:tap 1.1s ease 1.7s both}
+  @keyframes tap{0%,100%{transform:none}45%{transform:scale(.955);filter:brightness(.9)}}
+  .think{align-items:center;justify-content:center;text-align:center}
+  .spinner{width:54px;height:54px;border-radius:50%;border:4px solid var(--surface2);border-top-color:var(--terra);animation:spin .9s linear infinite;margin-bottom:22px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .think p{color:var(--dim);font-size:1.12rem;margin:0;line-height:1.5}
+  .sec-h{font-size:1.4rem;font-weight:620;letter-spacing:-.01em;margin:0 0 4px;text-wrap:balance}
+  .sec-h b{color:var(--terra-lt);font-weight:620}
+  .region-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;padding:5px 11px;border-radius:20px;margin-bottom:12px;align-self:flex-start}
+  .region-tag.warm{color:var(--sky);background:rgba(111,168,199,.14)}
+  .region-tag.trop{color:var(--sage);background:rgba(123,166,126,.14)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;overflow:hidden}
+  .card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:11px 6px;background:var(--surface);border:1px solid var(--line);border-radius:13px;opacity:0;transform:translateY(10px)}
+  .is-active .card{animation:pop .45s ease forwards}
+  @keyframes pop{to{opacity:1;transform:none}}
+  .card .thumb{width:56px;height:56px;border-radius:11px;background:linear-gradient(150deg,#f2ede3,#e1dacc);border:1px solid rgba(0,0,0,.12);display:grid;place-items:center;overflow:hidden}
+  .card .thumb svg{width:50px;height:50px}
+  .card .cn{font-size:.76rem;color:var(--cream);text-align:center;line-height:1.2}
+  .item{display:flex;align-items:center;gap:11px;padding:7px 11px 7px 7px;background:var(--surface);border:1px solid var(--line);border-radius:12px;opacity:0;transform:translateX(-10px)}
+  .is-active .item{animation:slidein .45s ease forwards}
+  @keyframes slidein{to{opacity:1;transform:none}}
+  .list{display:flex;flex-direction:column;gap:7px}
+  .item .thumb{width:40px;height:40px;border-radius:9px;background:linear-gradient(150deg,#f2ede3,#e1dacc);border:1px solid rgba(0,0,0,.12);flex:none;display:grid;place-items:center;overflow:hidden}
+  .item .thumb svg{width:36px;height:36px}
+  .item .nm{flex:1;color:var(--cream);font-size:.92rem}
+  .item .tag{font-family:var(--mono);color:var(--faint);font-size:.7rem}
+  .item.rm{opacity:.4}.item.rm .nm{text-decoration:line-through}
+  .item .x{font-family:var(--mono);font-size:.82rem;color:var(--terra-lt)}
+  .eco-note{margin-top:auto;font-size:.84rem;color:var(--sage);background:rgba(123,166,126,.12);border:1px solid rgba(123,166,126,.28);border-radius:12px;padding:11px 13px;line-height:1.4}
+  .eco-note b{color:#9fce9f;font-weight:600}
+  .outro{align-items:flex-start;justify-content:center}
+  .outro h2{font-size:2.3rem;font-weight:660;letter-spacing:-.03em;margin:0;line-height:1.08;text-wrap:balance}
+  .outro h2 em{font-style:normal;color:var(--terra)}
+  .outro p{color:var(--dim);margin:15px 0 0;font-size:1.05rem;line-height:1.5}
+  .outro p em.eco{font-style:normal;color:var(--sage)}
+  .outro .mark{margin-top:24px;font-family:var(--mono);letter-spacing:.26em;text-transform:uppercase;font-size:.82rem;color:var(--terra-lt)}
+  .controls{display:flex;align-items:center;gap:16px}
+  .dots{display:flex;gap:6px}
+  .dot{width:8px;height:8px;border-radius:50%;background:rgba(245,240,232,.2);border:none;padding:0;cursor:pointer;transition:all .3s ease}
+  .dot.on{background:var(--terra);width:22px;border-radius:4px}
+  .replay{font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);background:#12141a;border:1px solid var(--line);border-radius:9px;padding:8px 13px;cursor:pointer}
+  .replay:hover{color:var(--cream);border-color:var(--terra)}
+  .replay:focus-visible,.dot:focus-visible{outline:2px solid var(--terra);outline-offset:3px}
+  .caption{color:var(--faint);font-size:.8rem;text-align:center;max-width:360px;line-height:1.5}
+  .caption .kbd{font-family:var(--mono);color:var(--dim);background:#12141a;border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+  @media (prefers-reduced-motion:reduce){.scene,.card,.item,.dot{transition:none;animation:none;opacity:1;transform:none}.spinner,.frame [data-scene="2"].is-active .cta{animation:none}}
+</style>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="fsh" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.4" flood-color="#3a2a1a" flood-opacity="0.28"/></filter>
+  <linearGradient id="gCream" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6efdc"/><stop offset="1" stop-color="#e3d7ba"/></linearGradient>
+  <linearGradient id="gTeal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#31938e"/><stop offset="1" stop-color="#1e5b58"/></linearGradient>
+  <linearGradient id="gBeige" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9c8a1"/><stop offset="1" stop-color="#b6a276"/></linearGradient>
+  <linearGradient id="gMustard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dca23a"/><stop offset="1" stop-color="#b8862a"/></linearGradient>
+  <linearGradient id="gGrey" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ba1a9"/><stop offset="1" stop-color="#767c86"/></linearGradient>
+  <linearGradient id="gTanS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b17e48"/><stop offset="1" stop-color="#855c30"/></linearGradient>
+  <linearGradient id="gBeigeC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4c4a1"/><stop offset="1" stop-color="#af9970"/></linearGradient>
+  <linearGradient id="gWhiteS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcfdff"/><stop offset="1" stop-color="#dee3ea"/></linearGradient>
+  <linearGradient id="gNavyK" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#37456a"/><stop offset="1" stop-color="#212b45"/></linearGradient>
+  <linearGradient id="gCharcoal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4c515a"/><stop offset="1" stop-color="#2f333a"/></linearGradient>
+
+  <g id="gs-kurta" filter="url(#fsh)"><path d="M37 24 L22 32 L28 46 L35 42 V87 H65 V42 L72 46 L78 32 L63 24 Z" fill="url(#gCream)" stroke="#c9bfa8" stroke-width="1.3" stroke-linejoin="round"/><path d="M44 24 H56 V29 H44 Z" fill="#efe7d4" stroke="#c9bfa8" stroke-width="1"/><line x1="50" y1="29" x2="50" y2="62" stroke="#c9bfa8" stroke-width="1"/><path d="M35 75 V87 M65 75 V87" stroke="#c9bfa8" stroke-width="1"/></g>
+  <g id="gs-salwar" filter="url(#fsh)"><path d="M33 24 H67 V32 Q64 56 58 84 L50 84 L49 55 L48 84 L42 84 Q36 56 33 32 Z" fill="url(#gBeige)" stroke="#a8946f" stroke-width="1.3" stroke-linejoin="round"/><rect x="33" y="24" width="34" height="5" fill="#c9b892"/></g>
+  <g id="gs-dupatta" filter="url(#fsh)"><path d="M23 40 Q40 30 51 41 Q62 52 78 44 Q70 56 55 50 Q41 44 28 56 Q20 50 23 40 Z" fill="url(#gMustard)" stroke="#a9781f" stroke-width="1.2" stroke-linejoin="round"/><path d="M23 40 Q40 30 51 41 Q62 52 78 44" fill="none" stroke="#e6c96a" stroke-width="1.3" opacity="0.85"/></g>
+  <g id="gs-saree" filter="url(#fsh)"><path d="M25 40 L74 33 L79 74 L30 81 Z" fill="url(#gTeal)" stroke="#1a4f4d" stroke-width="1.3" stroke-linejoin="round"/><path d="M29 48 L76 41 M30 56 L77 49 M31 64 L78 57 M32 72 L79 65" stroke="#3a9d98" stroke-width="0.7" opacity="0.7"/><path d="M25 40 L74 33" stroke="#c9a84c" stroke-width="2.4"/><path d="M30 81 L79 74" stroke="#c9a84c" stroke-width="2.4"/></g>
+  <g id="gs-tee" filter="url(#fsh)"><path d="M37 28 L24 36 L30 49 L37 45 V83 H63 V45 L70 49 L76 36 L63 28 C57 34 43 34 37 28 Z" fill="url(#gGrey)" stroke="#6a707a" stroke-width="1.2" stroke-linejoin="round"/><path d="M42 29 C45 34 55 34 58 29" fill="none" stroke="#5c626c" stroke-width="2.2"/></g>
+  <g id="gs-sandals" filter="url(#fsh)"><path d="M40 26 Q55 25 56 42 Q58 68 46 76 Q34 74 34 52 Q34 32 40 26 Z" fill="url(#gTanS)" stroke="#6f4f2c" stroke-width="1.2" stroke-linejoin="round"/><path d="M36 44 Q45 50 53 44 M37 56 Q45 61 52 56" fill="none" stroke="#5a3f22" stroke-width="2.4"/><path d="M46 28 V40" stroke="#5a3f22" stroke-width="1.8"/></g>
+  <g id="gs-sweater" filter="url(#fsh)"><path d="M37 27 L21 35 L28 49 L36 45 V83 H64 V45 L72 49 L79 35 L63 27 C57 33 43 33 37 27 Z" fill="url(#gNavyK)" stroke="#1a2338" stroke-width="1.2" stroke-linejoin="round"/><path d="M42 28 C45 34 55 34 58 28" fill="none" stroke="#46567c" stroke-width="2.6"/><path d="M36 79 H64" stroke="#2a3552" stroke-width="2.4"/><path d="M43 50 V78 M49 50 V78 M55 50 V78" stroke="#3a496b" stroke-width="0.5" opacity="0.6"/></g>
+  <g id="gs-cardigan" filter="url(#fsh)"><path d="M35 25 L19 33 L27 50 L34 46 V85 H66 V46 L73 50 L81 33 L65 25 L50 30 Z" fill="url(#gBeigeC)" stroke="#96805c" stroke-width="1.3" stroke-linejoin="round"/><line x1="50" y1="30" x2="50" y2="85" stroke="#8a7550" stroke-width="1.2"/><circle cx="46" cy="41" r="1" fill="#7a6647"/><circle cx="46" cy="53" r="1" fill="#7a6647"/><circle cx="46" cy="65" r="1" fill="#7a6647"/></g>
+  <g id="gs-coat" filter="url(#fsh)"><path d="M34 24 L18 32 L27 50 L33 46 V88 H67 V46 L73 50 L82 32 L66 24 L50 30 Z" fill="url(#gCharcoal)" stroke="#22262c" stroke-width="1.3" stroke-linejoin="round"/><path d="M41 24 L50 30 L43 48 Z" fill="#3d434b" stroke="#22262c" stroke-width="1"/><path d="M59 24 L50 30 L57 48 Z" fill="#3d434b" stroke="#22262c" stroke-width="1"/><circle cx="45" cy="52" r="1.1" fill="#1c1f24"/><circle cx="55" cy="52" r="1.1" fill="#1c1f24"/></g>
+  <g id="gs-sneakers" filter="url(#fsh)"><path d="M18 58 C18 50 27 48 39 48 L52 41 C58 41 62 46 65 52 L74 56 C79 58 79 64 73 65 H21 C18 65 17 61 18 58 Z" fill="url(#gWhiteS)" stroke="#b4b9c1" stroke-width="1.2" stroke-linejoin="round"/><path d="M20 63 H74" stroke="#3a3f47" stroke-width="3" stroke-linecap="round"/><path d="M41 49 L46 56 M47 47 L52 54 M53 45 L57 52" stroke="#c3c7cf" stroke-width="1.4"/></g>
+</defs></svg>
+
+<div class="frame" id="frame">
+  <div class="scene hook" data-scene="1"><div>
+    <p class="kicker">Ritha · Onboarding</p>
+    <h1>A styled closet,<br>in <em>60 seconds</em>.</h1>
+    <p class="sub">Tell us where you live —<br>we fill it with real pieces.</p>
+    <p class="wordmark">Ritha</p></div></div>
+
+  <div class="scene" data-scene="2">
+    <p class="kicker">Step 1 · Where you live</p>
+    <h2 class="h-title">Pick your region</h2>
+    <p class="h-sub">We tune the wardrobe to your climate &amp; culture.</p>
+    <p class="label">Region</p>
+    <div class="rgrid">
+      <span class="rchip"><span class="fl">🌎</span>North America</span>
+      <span class="rchip"><span class="fl">🇪🇺</span>NW Europe</span>
+      <span class="rchip sel"><span class="fl">🇮🇳</span>North India</span>
+      <span class="rchip"><span class="fl">🌴</span>South India</span>
+      <span class="rchip"><span class="fl">🕌</span>MENA</span>
+      <span class="rchip"><span class="fl">🏯</span>East Asia</span>
+    </div>
+    <div class="gsel"><span class="gpill">Men</span><span class="gpill sel">Women</span><span class="gpill">Kids</span></div>
+    <div class="cta">Continue</div></div>
+
+  <div class="scene" data-scene="3">
+    <p class="kicker">Step 2 · Your style</p>
+    <h2 class="h-title">Anything to add?</h2>
+    <p class="h-sub">Optional — off by default, yours to enable.</p>
+    <div class="toggle"><div class="t-body"><h4>Traditional &amp; festive</h4><p>Sarees, anarkalis, sherwani</p></div><span class="sw on"></span></div>
+    <div class="toggle"><div class="t-body"><h4>Modest dress</h4><p>Longer hems, covered shoulders</p></div><span class="sw"></span></div>
+    <div class="toggle"><div class="t-body"><h4>Activewear</h4><p>Gym &amp; running kit</p></div><span class="sw"></span></div>
+    <div class="cta">Build my wardrobe</div></div>
+
+  <div class="scene think" data-scene="4"><div class="spinner"></div><p>Filling your closet with real<br>North-India pieces…</p></div>
+
+  <div class="scene" data-scene="5">
+    <p class="kicker">Your starter wardrobe</p>
+    <span class="region-tag warm">❄ North India · real winters</span>
+    <p class="sec-h" style="margin-bottom:12px">15 pieces, <b>with photos</b></p>
+    <div class="grid2">
+      <div class="card" style="animation-delay:.05s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-kurta"/></svg></span><span class="cn">Kurta</span></div>
+      <div class="card" style="animation-delay:.13s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-salwar"/></svg></span><span class="cn">Salwar</span></div>
+      <div class="card" style="animation-delay:.21s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-sweater"/></svg></span><span class="cn">Woollen sweater</span></div>
+      <div class="card" style="animation-delay:.29s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-cardigan"/></svg></span><span class="cn">Cardigan</span></div>
+      <div class="card" style="animation-delay:.37s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-coat"/></svg></span><span class="cn">Woollen coat</span></div>
+      <div class="card" style="animation-delay:.45s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-dupatta"/></svg></span><span class="cn">Dupatta</span></div>
+    </div></div>
+
+  <div class="scene" data-scene="6">
+    <p class="kicker">Live down south instead?</p>
+    <span class="region-tag trop">🌴 South India · tropical</span>
+    <p class="sec-h" style="margin-bottom:12px">Same tap, a <b>very different closet</b></p>
+    <div class="grid2">
+      <div class="card" style="animation-delay:.05s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-saree"/></svg></span><span class="cn">Cotton saree</span></div>
+      <div class="card" style="animation-delay:.13s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-kurta"/></svg></span><span class="cn">Cotton kurta</span></div>
+      <div class="card" style="animation-delay:.21s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-tee"/></svg></span><span class="cn">Cotton tee</span></div>
+      <div class="card" style="animation-delay:.29s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-salwar"/></svg></span><span class="cn">Salwar</span></div>
+      <div class="card" style="animation-delay:.37s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-dupatta"/></svg></span><span class="cn">Dupatta</span></div>
+      <div class="card" style="animation-delay:.45s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-sandals"/></svg></span><span class="cn">Flat sandals</span></div>
+    </div>
+    <div class="eco-note">🌿 <b>No shopping to start:</b> it maps what you already own — the greenest wardrobe is the one in your closet.</div></div>
+
+  <div class="scene" data-scene="7">
+    <p class="kicker">Step 3 · Make it yours</p>
+    <p class="sec-h" style="margin-bottom:12px">Keep, drop, or <b>add your own</b></p>
+    <div class="list">
+      <div class="item" style="animation-delay:.05s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-kurta"/></svg></span><span class="nm">Cotton Kurta</span><span class="tag">kept</span></div>
+      <div class="item rm" style="animation-delay:.15s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-saree"/></svg></span><span class="nm">Cotton Saree</span><span class="x">removed ✕</span></div>
+      <div class="item" style="animation-delay:.25s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-sneakers"/></svg></span><span class="nm">White Sneakers</span><span class="tag">＋ added</span></div>
+      <div class="item" style="animation-delay:.35s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-salwar"/></svg></span><span class="nm">Salwar / churidar</span><span class="tag">kept</span></div>
+    </div></div>
+
+  <div class="scene outro" data-scene="8"><div>
+    <h2>From empty to<br><em>styled</em> — in a tap.</h2>
+    <p>Your region, your gender, your pieces — real photos from day one, and <em class="eco">nothing new to buy</em>.</p>
+    <p class="mark">Ritha · getritha.com</p></div></div>
+</div>
+
+<div class="controls"><div class="dots" id="dots"></div><button class="replay" id="replay" type="button">↻ Replay</button></div>
+<p class="caption">9:16 · record the frame with <span class="kbd">⌘⇧5</span> → Reel-ready MP4.</p>
+
+<script>
+(function(){
+  var scenes=[].slice.call(document.querySelectorAll('.scene'));
+  var durations=[3200,4400,4200,1900,4800,5200,4200,3800];
+  var dotsWrap=document.getElementById('dots'),replay=document.getElementById('replay');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;var timer=null,i=0;
+  scenes.forEach(function(_,n){var d=document.createElement('button');d.className='dot';d.type='button';d.setAttribute('aria-label','Scene '+(n+1));d.addEventListener('click',function(){jump(n)});dotsWrap.appendChild(d)});
+  var dots=[].slice.call(dotsWrap.children);
+  function show(n){scenes.forEach(function(s,k){s.classList.toggle('is-active',k===n)});dots.forEach(function(d,k){d.classList.toggle('on',k===n)});i=n}
+  function next(){show((i+1)%scenes.length);schedule()}
+  function schedule(){clearTimeout(timer);if(reduce)return;timer=setTimeout(next,durations[i])}
+  function jump(n){show(n);schedule()}
+  replay.addEventListener('click',function(){jump(0)});show(0);schedule();
+})();
+</script>
