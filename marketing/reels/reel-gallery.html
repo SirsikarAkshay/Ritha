@@ -1,0 +1,148 @@
+<style>
+  :root{
+    --midnight:#0d0f14;--surface:#161921;--surface2:#1c2029;--surface3:#252833;--line:rgba(245,240,232,.09);
+    --cream:#f5f0e8;--dim:#9a97a0;--faint:#6b6a73;--terra:#d4724a;--terra-lt:#e8956e;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(120% 70% at 50% -10%,rgba(212,114,74,.13),transparent 55%),#08090c;color:var(--cream);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:1120px;margin:0 auto;padding:clamp(28px,6vw,72px) clamp(18px,4vw,40px) 80px}
+  /* hero */
+  .brand{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);letter-spacing:.28em;text-transform:uppercase;font-size:.78rem;color:var(--terra-lt);margin-bottom:26px}
+  .brand .dotmark{width:9px;height:9px;border-radius:50%;background:var(--terra);box-shadow:0 0 12px var(--terra)}
+  h1{font-size:clamp(2.1rem,5.2vw,3.6rem);line-height:1.03;letter-spacing:-.035em;font-weight:680;margin:0;text-wrap:balance;max-width:16ch}
+  h1 em{font-style:normal;color:var(--terra)}
+  .lede{color:var(--dim);font-size:clamp(1rem,1.5vw,1.2rem);line-height:1.6;margin:20px 0 0;max-width:56ch}
+  .meta-strip{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:26px;font-family:var(--mono);font-size:.8rem;color:var(--faint)}
+  .meta-strip b{color:var(--cream);font-weight:600}
+  .howto{margin-top:22px;display:inline-flex;align-items:center;gap:10px;font-size:.86rem;color:var(--dim);background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:11px 15px;max-width:100%}
+  .howto .kbd{font-family:var(--mono);color:var(--cream);background:#0e1016;border:1px solid var(--line);border-radius:5px;padding:2px 7px;font-size:.8rem}
+  /* section */
+  .sec-label{display:flex;align-items:baseline;gap:12px;margin:56px 0 20px}
+  .sec-label h2{font-size:1.24rem;font-weight:640;letter-spacing:-.01em;margin:0}
+  .sec-label .n{font-family:var(--mono);font-size:.78rem;color:var(--faint)}
+  .sec-label .rule{flex:1;height:1px;background:var(--line)}
+  /* grid + cards */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:18px}
+  .card{--accent:var(--terra);display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+  .card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 55%,var(--line));box-shadow:0 22px 44px -24px rgba(0,0,0,.8)}
+  .card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .poster{position:relative;aspect-ratio:4/3;display:flex;flex-direction:column;justify-content:space-between;padding:16px;overflow:hidden;
+    background:radial-gradient(120% 90% at 78% 15%,color-mix(in srgb,var(--accent) 34%,transparent),transparent 60%),linear-gradient(150deg,#12141b,#191c25)}
+  .poster::after{content:"";position:absolute;right:-30px;bottom:-40px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 26%,transparent),transparent 70%);filter:blur(6px)}
+  .p-top{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center}
+  .fmt{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--accent) 75%,var(--cream));background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);padding:4px 9px;border-radius:20px}
+  .dur{font-family:var(--mono);font-size:.66rem;color:var(--faint)}
+  .p-emoji{position:relative;z-index:1;font-size:2.9rem;line-height:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));margin:2px 0}
+  .p-head{position:relative;z-index:1;font-size:1.12rem;font-weight:640;letter-spacing:-.01em;line-height:1.15;text-wrap:balance}
+  .cbody{padding:15px 16px 16px;display:flex;flex-direction:column;flex:1}
+  .cbody h3{font-size:1.02rem;font-weight:620;margin:0 0 5px;letter-spacing:-.01em}
+  .cbody p{color:var(--dim);font-size:.86rem;line-height:1.5;margin:0 0 13px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:15px}
+  .tags span{font-family:var(--mono);font-size:.64rem;letter-spacing:.03em;color:var(--dim);background:var(--surface3);border:1px solid var(--line);border-radius:12px;padding:3px 9px}
+  .tags .eco{color:#9fce9f;background:rgba(123,166,126,.13);border-color:rgba(123,166,126,.28)}
+  .watch{margin-top:auto;display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:.78rem;letter-spacing:.04em;color:color-mix(in srgb,var(--accent) 78%,var(--cream));font-weight:600}
+  .card:hover .watch{gap:11px}
+  .watch .arr{transition:transform .25s ease}
+  .card:hover .watch .arr{transform:translateX(3px)}
+  footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:space-between;align-items:center;color:var(--faint);font-family:var(--mono);font-size:.76rem}
+  footer b{color:var(--cream)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <div class="brand"><span class="dotmark"></span> Ritha</div>
+  <h1>The demo reel <em>library</em>.</h1>
+  <p class="lede">Nine self-playing product reels plus a landing-page cut — every one showing a different side of the app: region-aware wardrobes, cross-climate packing, cultural dress codes, tap-a-place outfits, family trips, snap-to-add, real-time chat, and a sustainability thread throughout.</p>
+  <div class="meta-strip">
+    <span><b>10</b> pieces</span><span><b>8</b> vertical reels · <b>2</b> landing cuts</span><span>real garment flat-lays</span><span>self-contained HTML</span>
+  </div>
+  <div class="howto">🎬&nbsp; Each opens as a looping animation — record the phone frame with <span class="kbd">⌘⇧5</span> to export an MP4.</div>
+
+  <!-- ── Travel demos ─────────────────────────────────────────── -->
+  <div class="sec-label"><h2>Travel demos</h2><span class="n">origin → destination</span><span class="rule"></span></div>
+  <div class="grid">
+
+    <a class="card" style="--accent:#d4724a" href="https://claude.ai/code/artifact/d1593eaf-5a67-4726-8849-b11606698443" target="_blank" rel="noopener">
+      <div class="poster"><div class="p-top"><span class="fmt">9:16 reel</span><span class="dur">~42s</span></div><div class="p-emoji">🛍️</div><div class="p-head">Bengaluru → Tokyo</div></div>
+      <div class="cbody"><h3>What to buy for the cold</h3><p>A mild-climate closet meets Tokyo's 8°C sakura nights — pack what works, then buy the 4 warm things it's missing.</p>
+        <div class="tags"><span>packing</span><span>gap → buy</span><span>tap-a-place</span><span class="eco">eco</span></div>
+        <span class="watch">Watch reel <span class="arr">→</span></span></div>
+    </a>
+
+    <a class="card" style="--accent:#6fa8c7" href="https://claude.ai/code/artifact/58b9d5b1-a784-4f90-99d2-a18c18e217bb" target="_blank" rel="noopener">
+      <div class="poster"><div class="p-top"><span class="fmt">16:9 landing</span><span class="dur">~30s</span></div><div class="p-emoji">🖥️</div><div class="p-head">Bengaluru → Tokyo</div></div>
+      <div class="cbody"><h3>Landing-page hero cut</h3><p>Copy on the left, the app on a phone on the right — the same story reshaped as a widescreen website hero.</p>
+        <div class="tags"><span>16:9</span><span>website</span><span>hero</span><span class="eco">eco</span></div>
+        <span class="watch">Watch cut <span class="arr">→</span></span></div>
+    </a>
+
+    <a class="card" style="--accent:#e79ab0" href="https://claude.ai/code/artifact/05ad4f03-8122-4bf2-8707-d13ece6fee82" target="_blank" rel="noopener">
+      <div class="poster"><div class="p-top"><span class="fmt">9:16 reel</span><span class="dur">~41s</span></div><div class="p-emoji">🌸</div><div class="p-head">South India → Japan</div></div>
+      <div class="cbody"><h3>Sarees to sakura</h3><p>A tropical wardrobe (kurtas, cotton saree, sandals) adapts to Tokyo's cool spring — with gaps to fill and outfits per place.</p>
+        <div class="tags"><span>region wardrobe</span><span>cross-climate</span><span class="eco">eco</span></div>
+        <span class="watch">Watch reel <span class="arr">→</span></span></div>
+    </a>
+
+    <a class="card" style="--accent:#c9a84c" href="https://claude.ai/code/artifact/a8f2ca46-57e9-44fb-b0b5-7373bf51e7f1" target="_blank" rel="noopener">
+      <div class="poster"><div class="p-top"><span class="fmt">9:16 reel</span><span class="dur">~34s</span></div><div class="p-emoji">⛩️</div><div class="p-head">3 days in Tokyo</div></div>
+      <div class="cbody"><h3>Cherry-blossom long weekend</h3><p>A light carry-on capsule, the local dress code, peak sakura spots, and an outfit for the Meiji Shrine.</p>
+        <div class="tags"><span>packing</span><span>dress code</span><span>places</span><span class="eco">eco</span></div>
+        <span class="watch">Watch reel <span class="arr">→</span></span></div>
+    </a>
+
+  </div>
+
+  <!-- ── Feature & persona demos ──────────────────────────────── -->
+  <div class="sec-label"><h2>Feature &amp; persona demos</h2><span class="n">what the app can do</span><span class="rule"></span></div>
+  <div class="grid">
+
+    <a class="card" style="--accent:#7ba67e" href="https://claude.ai/code/artifact/5b5534b1-17dc-47b4-860f-da6eab9b1c32" target="_blank" rel="noopener">
+      <div class="poster"><div class="p-top"><span class="fmt">9:16 reel</span><span class="dur">~32s</span></div><div class="p-emoji">✨</div><div class="p-head">Onboarding in 60s</div></div>
+      <div class="cbody"><h3>Region starter wardrobe</h3><p>Pick where you live → a photo-backed closet appears. Ends on the North-India vs South-India contrast.</p>
+        <div class="tags"><span>onboarding</span><span>region packs</span><span>real photos</span><span class="eco">eco</span></div>
+        <span class="watch">Watch reel <span class="arr">→</span></span></div>
+    </a>
+
+    <a class="card" style="--accent:#4fae8b" href="https://claude.ai/code/artifact/bc98a10a-b181-4918-824d-2105f02267c6" target="_blank" rel="noopener">
+      <div class="poster"><div class="p-top"><span class="fmt">9:16 reel</span><span class="dur">~42s</span></div><div class="p-emoji">🛕</div><div class="p-head">London → Bali</div></div>
+      <div class="cbody"><h3>Cold → warm, plus temple rules</h3><p>Swap wool for linen, then handle Bali's strict temple dress code — sarong and sash required to get in.</p>
+        <div class="tags"><span>cross-climate</span><span>cultural</span><span>gap → buy</span><span class="eco">eco</span></div>
+        <span class="watch">Watch reel <span class="arr">→</span></span></div>
+    </a>
+
+    <a class="card" style="--accent:#e88a6a" href="https://claude.ai/code/artifact/83e707df-0574-4719-be4e-eab7d5274e3a" target="_blank" rel="noopener">
+      <div class="poster"><div class="p-top"><span class="fmt">9:16 reel</span><span class="dur">~37s</span></div><div class="p-emoji">👨‍👩‍👧‍👦</div><div class="p-head">Family trip</div></div>
+      <div class="cbody"><h3>Shared wardrobe, four capsules</h3><p>Pack the whole family at once, share essentials instead of ×4, and buy only what the kids outgrew.</p>
+        <div class="tags"><span>shared wardrobe</span><span>family</span><span>hand-me-downs</span><span class="eco">eco</span></div>
+        <span class="watch">Watch reel <span class="arr">→</span></span></div>
+    </a>
+
+    <a class="card" style="--accent:#b98cd8" href="https://claude.ai/code/artifact/44f68109-9792-468d-ad9a-64579d323fe0" target="_blank" rel="noopener">
+      <div class="poster"><div class="p-top"><span class="fmt">9:16 reel</span><span class="dur">~33s</span></div><div class="p-emoji">📸</div><div class="p-head">Snap to add</div></div>
+      <div class="cbody"><h3>Photograph it, AI tags it</h3><p>Point at a garment → auto-detected category, colour, formality and material → a digital wardrobe that styles you.</p>
+        <div class="tags"><span>AI vision</span><span>wardrobe</span><span>the wow moment</span><span class="eco">eco</span></div>
+        <span class="watch">Watch reel <span class="arr">→</span></span></div>
+    </a>
+
+    <a class="card" style="--accent:#7c86e8" href="https://claude.ai/code/artifact/15c319c4-1479-4072-8bf5-ab8599f9c973" target="_blank" rel="noopener">
+      <div class="poster"><div class="p-top"><span class="fmt">9:16 reel</span><span class="dur">~25s</span></div><div class="p-emoji">💬</div><div class="p-head">Chat in the closet</div></div>
+      <div class="cbody"><h3>Coordinate &amp; borrow, in real time</h3><p>1:1 messaging inside the shared wardrobe — borrow a blazer, avoid clashing outfits, and start a shared packing list, with read receipts.</p>
+        <div class="tags"><span>real-time chat</span><span>shared wardrobe</span><span>borrow</span><span class="eco">eco</span></div>
+        <span class="watch">Watch reel <span class="arr">→</span></span></div>
+    </a>
+
+    <a class="card" style="--accent:#7c86e8" href="https://claude.ai/code/artifact/5d2b21da-9fb3-431e-929c-8b7d9d5ad9f9" target="_blank" rel="noopener">
+      <div class="poster"><div class="p-top"><span class="fmt">16:9 landing</span><span class="dur">~26s</span></div><div class="p-emoji">💬</div><div class="p-head">Chat</div></div>
+      <div class="cbody"><h3>Chat — landing-page cut</h3><p>The chat story reshaped for a website hero: copy on the left, the live conversation on a phone on the right.</p>
+        <div class="tags"><span>16:9</span><span>website</span><span>hero</span><span class="eco">eco</span></div>
+        <span class="watch">Watch cut <span class="arr">→</span></span></div>
+    </a>
+
+  </div>
+
+  <footer>
+    <span>Ritha · demo reel library</span>
+    <span><b>10</b> pieces · updated for the region + place-outfit + chat + sustainability features</span>
+    <span>getritha.com</span>
+  </footer>
+</div>

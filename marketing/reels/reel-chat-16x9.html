@@ -1,0 +1,210 @@
+<style>
+  :root{--midnight:#0d0f14;--surface:#161921;--surface2:#1c2029;--surface3:#252833;--line:rgba(245,240,232,.09);
+    --cream:#f5f0e8;--dim:#9a97a0;--faint:#6b6a73;--terra:#d4724a;--terra-lt:#e8956e;
+    --sage:#7ba67e;--sky:#6fa8c7;--gold:#c9a84c;--indigo:#7c86e8;--online:#5ec98a;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}html,body{margin:0;min-height:100%}
+  body{min-height:100vh;background:#08090c;color:var(--cream);font-family:var(--sans);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;-webkit-font-smoothing:antialiased}
+  .stage{position:relative;width:min(95vw,1180px);aspect-ratio:16/9;border-radius:22px;overflow:hidden;
+    background:radial-gradient(120% 90% at 82% 20%,rgba(124,134,232,.16),transparent 55%),linear-gradient(120deg,#0c0e13 0%,#12141b 60%,#171a22 100%);
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.05);display:flex}
+  .copy{position:relative;flex:0 0 45%;padding:6% 5% 6% 6%;display:flex;flex-direction:column;justify-content:center}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--mono);letter-spacing:.28em;text-transform:uppercase;font-size:.8rem;color:var(--indigo);margin-bottom:auto}
+  .brand .dotmark{width:9px;height:9px;border-radius:50%;background:var(--terra);box-shadow:0 0 12px var(--terra)}
+  .copy-wrap{position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+  .cslide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease;pointer-events:none}
+  .cslide.on{opacity:1;transform:none;pointer-events:auto}
+  .cs-kick{font-family:var(--mono);font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:var(--indigo);margin-bottom:16px}
+  .cs-h{font-size:clamp(1.7rem,3.4vw,2.85rem);line-height:1.06;letter-spacing:-.03em;font-weight:660;margin:0;text-wrap:balance}
+  .cs-h em{font-style:normal;color:var(--terra)}
+  .cs-p{color:var(--dim);font-size:clamp(.92rem,1.25vw,1.12rem);line-height:1.55;margin:18px 0 0;max-width:32ch}
+  .cs-p em.eco{font-style:normal;color:var(--sage)}
+  .cs-cta{margin-top:26px;display:inline-flex;align-items:center;gap:10px;align-self:flex-start;background:var(--terra);color:var(--cream);border-radius:13px;padding:13px 20px;font-weight:600;font-size:1rem;box-shadow:0 14px 30px -12px rgba(212,114,74,.7)}
+  .foot{margin-top:auto;font-family:var(--mono);font-size:.74rem;letter-spacing:.05em;color:var(--faint)}
+  .device{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:4% 5%}
+  .device::before{content:"";position:absolute;width:70%;height:70%;border-radius:50%;background:radial-gradient(circle,rgba(124,134,232,.18),transparent 65%);filter:blur(10px)}
+  .phone{position:relative;height:90%;aspect-ratio:9/18.6;background:var(--midnight);border-radius:26px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(0,0,0,.8),inset 0 0 0 1.5px rgba(255,255,255,.08),0 0 0 8px #05060a}
+  .phone::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);width:34%;height:5px;border-radius:5px;background:rgba(255,255,255,.14);z-index:6}
+  .screen{position:absolute;inset:0;padding:28px 14px 14px;opacity:0;transform:scale(.985);transition:opacity .55s ease,transform .55s ease;pointer-events:none;display:flex;flex-direction:column;overflow:hidden}
+  .screen.on{opacity:1;transform:none;pointer-events:auto}
+  /* chat */
+  .chead{display:flex;align-items:center;gap:8px;padding-bottom:9px;border-bottom:1px solid var(--line);margin-bottom:10px}
+  .av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:1rem;background:var(--surface3);border:1px solid var(--line);flex:none;position:relative}
+  .av .odot{position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;background:var(--online);border:2px solid var(--midnight)}
+  .cinfo{flex:1;min-width:0}
+  .cname{font-size:.82rem;font-weight:620;color:var(--cream)}
+  .cstat{font-family:var(--mono);font-size:.56rem;color:var(--online);margin-top:1px}
+  .cshare{font-family:var(--mono);font-size:.52rem;color:var(--indigo);background:rgba(124,134,232,.14);border:1px solid rgba(124,134,232,.3);padding:3px 7px;border-radius:12px;white-space:nowrap}
+  .thread{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:7px;overflow:hidden}
+  .bubble{max-width:84%;padding:8px 11px;font-size:.76rem;line-height:1.38;border-radius:14px;opacity:0;transform:translateY(8px)}
+  .on .bubble{animation:pop .45s cubic-bezier(.3,.8,.4,1) forwards}
+  @keyframes pop{to{opacity:1;transform:none}}
+  .bubble.in{align-self:flex-start;background:var(--surface2);border:1px solid var(--line);border-bottom-left-radius:4px;color:var(--cream)}
+  .bubble.out{align-self:flex-end;background:linear-gradient(160deg,#d97a52,#c96238);border-bottom-right-radius:4px;color:#fff}
+  .bmeta{align-self:flex-end;font-family:var(--mono);font-size:.54rem;color:var(--sky);margin-top:-3px}
+  .typing{align-self:flex-start;background:var(--surface2);border:1px solid var(--line);border-radius:14px;border-bottom-left-radius:4px;padding:10px 12px;display:inline-flex;gap:4px}
+  .typing i{width:5px;height:5px;border-radius:50%;background:var(--dim);animation:blink 1.3s infinite}
+  .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+  .item-card{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);border-radius:9px;padding:6px;margin-top:6px}
+  .item-card .th{width:36px;height:36px;border-radius:7px;background:linear-gradient(150deg,#f2ede3,#e1dacc);display:grid;place-items:center;overflow:hidden;flex:none}
+  .item-card .th svg{width:33px;height:33px}
+  .item-card .ic-nm{font-size:.72rem;font-weight:600;color:#fff}
+  .item-card .ic-sub{font-size:.56rem;color:rgba(255,255,255,.75);font-family:var(--mono);margin-top:1px}
+  .trip-card{display:flex;align-items:center;gap:8px;background:var(--surface3);border:1px solid var(--line);border-radius:9px;padding:7px;margin-top:6px}
+  .trip-card .tci{font-size:1.2rem}
+  .trip-card .tc-nm{font-size:.72rem;font-weight:600;color:var(--cream)}
+  .trip-card .tc-sub{font-size:.56rem;color:var(--dim);font-family:var(--mono);margin-top:1px}
+  .trip-card .tc-go{margin-left:auto;font-family:var(--mono);font-size:.56rem;color:var(--indigo)}
+  /* recap screen */
+  .recap{margin:auto 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:9px}
+  .recap .big{font-size:2.4rem}
+  .recap .rt{font-size:.92rem;font-weight:620;color:var(--cream)}
+  .stat-row{display:flex;gap:6px;margin-top:4px;width:100%}
+  .stat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:8px 3px}
+  .stat .v{font-size:.98rem;font-weight:700;color:var(--terra-lt);font-family:var(--mono)}
+  .stat .l{font-size:.52rem;color:var(--faint);text-transform:uppercase;letter-spacing:.03em;margin-top:2px}
+  .eco-pill{margin-top:12px;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.62rem;color:#9fce9f;background:rgba(123,166,126,.14);border:1px solid rgba(123,166,126,.32);border-radius:16px;padding:6px 11px}
+  .controls{display:flex;align-items:center;gap:16px}
+  .dots{display:flex;gap:7px}
+  .dot{width:8px;height:8px;border-radius:50%;background:rgba(245,240,232,.2);border:none;padding:0;cursor:pointer;transition:all .3s ease}
+  .dot.on{background:var(--terra);width:22px;border-radius:4px}
+  .replay{font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);background:#12141a;border:1px solid var(--line);border-radius:9px;padding:8px 13px;cursor:pointer}
+  .replay:hover{color:var(--cream);border-color:var(--terra)}
+  .replay:focus-visible,.dot:focus-visible{outline:2px solid var(--terra);outline-offset:3px}
+  .caption{color:var(--faint);font-size:.8rem;text-align:center;max-width:520px;line-height:1.5}
+  .caption .kbd{font-family:var(--mono);color:var(--dim);background:#12141a;border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+  @media (prefers-reduced-motion:reduce){.cslide,.screen,.bubble,.dot{transition:none;animation:none;opacity:1;transform:none}.typing i{animation:none}}
+</style>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="fsh" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.4" flood-color="#3a2a1a" flood-opacity="0.28"/></filter>
+  <linearGradient id="gNavyB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#37456a"/><stop offset="1" stop-color="#212b45"/></linearGradient>
+  <g id="gs-blazer" filter="url(#fsh)"><path d="M34 20 L26 26 L30 46 L34 44 V80 H66 V44 L70 46 L74 26 L66 20 L50 30 Z" fill="url(#gNavyB)" stroke="#161d30" stroke-width="1.3" stroke-linejoin="round"/><path d="M42 22 L50 30 L44 47 Z" fill="#2c3a5c" stroke="#161d30" stroke-width="1"/><path d="M58 22 L50 30 L56 47 Z" fill="#2c3a5c" stroke="#161d30" stroke-width="1"/><circle cx="48" cy="53" r="1.2" fill="#0f1626"/><circle cx="48" cy="63" r="1.2" fill="#0f1626"/></g>
+</defs></svg>
+
+<div class="stage" id="stage">
+  <div class="copy">
+    <div class="brand"><span class="dotmark"></span> Ritha · Chat</div>
+    <div class="copy-wrap">
+      <div class="cslide on" data-c="0">
+        <p class="cs-kick">Chat</p>
+        <h1 class="cs-h">Coordinate your closet, <em>together</em>.</h1>
+        <p class="cs-p">Real-time messaging built into the wardrobe you share — borrow, coordinate and plan without leaving the app.</p>
+        <span class="cs-cta">getritha.com →</span>
+      </div>
+      <div class="cslide" data-c="1">
+        <p class="cs-kick">Borrow, don't buy</p>
+        <h1 class="cs-h">One blazer, <em>two</em> wardrobes.</h1>
+        <p class="cs-p">See what's in the shared closet, send it in the chat, reserve it in a tap — no "can I borrow?" guilt.</p>
+      </div>
+      <div class="cslide" data-c="2">
+        <p class="cs-kick">Never clash</p>
+        <h1 class="cs-h">Sort it <em>before</em> the party.</h1>
+        <p class="cs-p">A quick heads-up and nobody turns up in the same green dress.</p>
+      </div>
+      <div class="cslide" data-c="3">
+        <p class="cs-kick">Plan together</p>
+        <h1 class="cs-h">Trips, packed <em>side by side</em>.</h1>
+        <p class="cs-p">Spin up a shared packing list right inside the conversation.</p>
+      </div>
+      <div class="cslide" data-c="4">
+        <p class="cs-kick">Lighter together</p>
+        <h1 class="cs-h">Share more.<br>Buy <em>less</em>.</h1>
+        <p class="cs-p">Borrowing beats buying — <em class="eco">kinder on your wallet and the planet</em>.</p>
+      </div>
+      <div class="cslide" data-c="5">
+        <p class="cs-kick">Ready</p>
+        <h1 class="cs-h">Your clothes.<br>Your <em>people</em>.</h1>
+        <p class="cs-p">One chat, right where your wardrobe lives.</p>
+        <span class="cs-cta">Start free →</span>
+      </div>
+    </div>
+    <div class="foot">Ritha · getritha.com</div>
+  </div>
+
+  <div class="device"><div class="phone" id="phone">
+    <!-- 0 borrow -->
+    <div class="screen on" data-s="0">
+      <div class="chead"><span class="av">👩🏽<span class="odot"></span></span><div class="cinfo"><div class="cname">Meera</div><div class="cstat">● online now</div></div><span class="cshare">shared closet</span></div>
+      <div class="thread">
+        <div class="bubble in" style="animation-delay:.2s">Can I borrow your navy blazer for Friday's interview? 🙏</div>
+        <div class="bubble out" style="animation-delay:1.1s">Of course! It's in our shared closet 👔</div>
+        <div class="bmeta" style="animation-delay:1.5s">Seen ✓✓</div>
+      </div>
+    </div>
+    <!-- 1 share item -->
+    <div class="screen" data-s="1">
+      <div class="chead"><span class="av">👩🏽<span class="odot"></span></span><div class="cinfo"><div class="cname">Meera</div><div class="cstat">● online now</div></div><span class="cshare">shared closet</span></div>
+      <div class="thread">
+        <div class="bubble out" style="animation-delay:.2s">this one 👇
+          <div class="item-card"><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-blazer"/></svg></span><div><div class="ic-nm">Navy Blazer</div><div class="ic-sub">shared · tap to reserve</div></div></div>
+        </div>
+        <div class="bubble in" style="animation-delay:1.3s">perfect, lifesaver 🙌</div>
+        <div class="bubble in" style="animation-delay:2s">reserved for Fri ✅</div>
+      </div>
+    </div>
+    <!-- 2 coordinate -->
+    <div class="screen" data-s="2">
+      <div class="chead"><span class="av">👩🏽<span class="odot"></span></span><div class="cinfo"><div class="cname">Meera</div><div class="cstat">● online now</div></div><span class="cshare">shared closet</span></div>
+      <div class="thread">
+        <div class="bubble in" style="animation-delay:.2s">wait — green dress to Sara's party? 😅</div>
+        <div class="bubble out" style="animation-delay:1.1s">was gonna! we'd clash 🙈</div>
+        <div class="bubble in" style="animation-delay:2s">you take green, I'll do terracotta 🙌</div>
+        <div class="typing" style="animation-delay:2.7s"><i></i><i></i><i></i></div>
+      </div>
+    </div>
+    <!-- 3 trip -->
+    <div class="screen" data-s="3">
+      <div class="chead"><span class="av">👩🏽<span class="odot"></span></span><div class="cinfo"><div class="cname">Meera</div><div class="cstat">● online now</div></div><span class="cshare">shared closet</span></div>
+      <div class="thread">
+        <div class="bubble out" style="animation-delay:.2s">Goa next month?? 🌴</div>
+        <div class="bubble in" style="animation-delay:1s">YES — shared packing list 👇
+          <div class="trip-card"><span class="tci">🧳</span><div><div class="tc-nm">Goa · packing list</div><div class="tc-sub">2 people · 4 days</div></div><span class="tc-go">open →</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- 4 recap -->
+    <div class="screen" data-s="4">
+      <div class="chead"><span class="av">👩🏽<span class="odot"></span></span><div class="cinfo"><div class="cname">Meera</div><div class="cstat">● online now</div></div><span class="cshare">shared closet</span></div>
+      <div class="recap">
+        <div class="big">🤝</div>
+        <div class="rt">Sorted, together</div>
+        <div class="stat-row">
+          <div class="stat"><div class="v">1</div><div class="l">borrowed</div></div>
+          <div class="stat"><div class="v">0</div><div class="l">clashes</div></div>
+          <div class="stat"><div class="v">1</div><div class="l">trip</div></div>
+        </div>
+        <div class="eco-pill">🌿 borrowed, not bought</div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<div class="controls"><div class="dots" id="dots"></div><button class="replay" id="replay" type="button">↻ Replay</button></div>
+<p class="caption">16:9 chat cut · record the stage with <span class="kbd">⌘⇧5</span> → landscape MP4 for a hero embed.</p>
+
+<script>
+(function(){
+  var screenForBeat=[0,1,2,3,4,4];
+  var durations=[4200,4400,4600,4200,4200,4000];
+  var cslides=[].slice.call(document.querySelectorAll('.cslide'));
+  var screens=[].slice.call(document.querySelectorAll('.screen'));
+  var dotsWrap=document.getElementById('dots'),replay=document.getElementById('replay');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;var timer=null,i=0;
+  var byS={};screens.forEach(function(s){byS[s.dataset.s]=s});
+  cslides.forEach(function(_,n){var d=document.createElement('button');d.className='dot';d.type='button';d.setAttribute('aria-label','Beat '+(n+1));d.addEventListener('click',function(){jump(n)});dotsWrap.appendChild(d)});
+  var dots=[].slice.call(dotsWrap.children);
+  function show(n){
+    cslides.forEach(function(c,k){c.classList.toggle('on',k===n)});
+    var sid=String(screenForBeat[n]);
+    screens.forEach(function(s){s.classList.remove('on')});
+    if(byS[sid]){var el=byS[sid];el.classList.remove('on');void el.offsetWidth;el.classList.add('on');}
+    dots.forEach(function(d,k){d.classList.toggle('on',k===n)});i=n;
+  }
+  function next(){show((i+1)%cslides.length);schedule()}
+  function schedule(){clearTimeout(timer);if(reduce)return;timer=setTimeout(next,durations[i])}
+  function jump(n){show(n);schedule()}
+  replay.addEventListener('click',function(){jump(0)});show(0);schedule();
+})();
+</script>

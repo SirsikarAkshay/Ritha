@@ -1,0 +1,282 @@
+<style>
+  :root{--midnight:#0d0f14;--surface:#161921;--surface2:#1c2029;--surface3:#252833;--line:rgba(245,240,232,.10);
+    --cream:#f5f0e8;--dim:#9a97a0;--faint:#6b6a73;--terra:#d4724a;--terra-lt:#e8956e;
+    --sage:#7ba67e;--sky:#6fa8c7;--gold:#c9a84c;--sakura:#e79ab0;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  *{box-sizing:border-box}html,body{margin:0;min-height:100%}
+  body{min-height:100vh;background:#08090c;color:var(--cream);font-family:var(--sans);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;-webkit-font-smoothing:antialiased}
+  .stage{position:relative;width:min(95vw,1180px);aspect-ratio:16/9;border-radius:22px;overflow:hidden;
+    background:radial-gradient(120% 90% at 82% 20%,rgba(231,154,176,.14),transparent 55%),linear-gradient(120deg,#0c0e13 0%,#12141b 60%,#171a22 100%);
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.05);display:flex}
+  /* ── Left: marketing copy ─────────────────────────────────────────── */
+  .copy{position:relative;flex:0 0 45%;padding:6% 5% 6% 6%;display:flex;flex-direction:column;justify-content:center}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--mono);letter-spacing:.28em;text-transform:uppercase;font-size:.8rem;color:var(--terra-lt);margin-bottom:auto}
+  .brand .dotmark{width:9px;height:9px;border-radius:50%;background:var(--terra);box-shadow:0 0 12px var(--terra)}
+  .copy-wrap{position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+  .cslide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease;pointer-events:none}
+  .cslide.on{opacity:1;transform:none;pointer-events:auto}
+  .cs-kick{font-family:var(--mono);font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sakura);margin-bottom:16px}
+  .cs-h{font-size:clamp(1.7rem,3.4vw,2.85rem);line-height:1.06;letter-spacing:-.03em;font-weight:660;margin:0;text-wrap:balance}
+  .cs-h em{font-style:normal;color:var(--terra)}
+  .cs-p{color:var(--dim);font-size:clamp(.92rem,1.25vw,1.12rem);line-height:1.55;margin:18px 0 0;max-width:30ch}
+  .cs-cta{margin-top:26px;display:inline-flex;align-items:center;gap:10px;align-self:flex-start;background:var(--terra);color:var(--cream);border-radius:13px;padding:13px 20px;font-weight:600;font-size:1rem;box-shadow:0 14px 30px -12px rgba(212,114,74,.7)}
+  .foot{margin-top:auto;font-family:var(--mono);font-size:.74rem;letter-spacing:.05em;color:var(--faint)}
+  /* ── Right: phone with app screens ────────────────────────────────── */
+  .device{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:4% 5%}
+  .device::before{content:"";position:absolute;width:70%;height:70%;border-radius:50%;background:radial-gradient(circle,rgba(231,154,176,.16),transparent 65%);filter:blur(10px)}
+  .phone{position:relative;height:90%;aspect-ratio:9/18.6;background:var(--midnight);border-radius:26px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(0,0,0,.8),inset 0 0 0 1.5px rgba(255,255,255,.08),0 0 0 8px #05060a}
+  .phone::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);width:34%;height:5px;border-radius:5px;background:rgba(255,255,255,.14);z-index:6}
+  .screen{position:absolute;inset:0;padding:30px 15px 16px;opacity:0;transform:scale(.985);transition:opacity .55s ease,transform .55s ease;pointer-events:none;display:flex;flex-direction:column;overflow:hidden}
+  .screen.on{opacity:1;transform:none;pointer-events:auto}
+  .sc-head{font-size:.72rem;font-family:var(--mono);letter-spacing:.04em;color:var(--faint);text-transform:uppercase;margin-bottom:4px}
+  .sc-title{font-size:1.06rem;font-weight:620;color:var(--cream);letter-spacing:-.01em;margin:0 0 11px}
+  .sc-title b{color:var(--terra-lt);font-weight:620}
+  .region-tag{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.62rem;letter-spacing:.03em;color:var(--gold);background:rgba(201,168,76,.13);padding:4px 9px;border-radius:16px;margin-bottom:9px;align-self:flex-start}
+  .list{display:flex;flex-direction:column;gap:6px;overflow:hidden}
+  .item{display:flex;align-items:center;gap:9px;padding:6px 8px 6px 6px;background:var(--surface);border:1px solid var(--line);border-radius:11px;opacity:0;transform:translateX(-10px)}
+  .on .item{animation:slidein .45s ease forwards}
+  @keyframes slidein{to{opacity:1;transform:none}}
+  .thumb{width:34px;height:34px;border-radius:8px;background:linear-gradient(150deg,#f2ede3,#e1dacc);border:1px solid rgba(0,0,0,.12);flex:none;display:grid;place-items:center;overflow:hidden}
+  .thumb svg{width:31px;height:31px}
+  .nm{flex:1;color:var(--cream);font-size:.8rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tag{font-family:var(--mono);color:var(--faint);font-size:.6rem;white-space:nowrap}
+  .tag.warm{color:var(--sky)}
+  .field{margin-bottom:9px}
+  .field label{font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:5px}
+  .input{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:.82rem;color:var(--cream)}
+  .chips{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+  .chip{font-size:.66rem;padding:6px 10px;border-radius:16px;border:1px solid var(--line);color:var(--dim);background:var(--surface)}
+  .chip.sel{background:var(--terra);color:var(--cream);border-color:var(--terra)}
+  .cta-btn{margin-top:auto;background:var(--terra);color:var(--cream);border-radius:11px;padding:11px;text-align:center;font-weight:600;font-size:.86rem}
+  .gauge-row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:.66rem;color:var(--dim);margin:2px 0 6px}
+  .gauge-row .pct{color:var(--terra);font-size:.82rem;font-weight:600}
+  .track{height:8px;border-radius:8px;background:var(--surface2);overflow:hidden;margin-bottom:10px}
+  .gfill{height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,var(--terra),var(--terra-lt))}
+  .on .gfill{animation:fill 1.2s cubic-bezier(.3,.7,.3,1) .2s forwards}
+  @keyframes fill{to{width:54%}}
+  .trim{margin-top:9px;font-size:.68rem;color:var(--dim);padding:8px 10px;border:1px dashed rgba(245,240,232,.18);border-radius:10px;line-height:1.35}
+  .trim b{color:var(--terra-lt);font-weight:600}
+  .shop{display:flex;align-items:center;gap:9px;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:11px;margin-bottom:7px;opacity:0;transform:translateY(9px)}
+  .on .shop{animation:slidein .5s ease forwards}
+  .shop .thumb{width:40px;height:40px}.shop .thumb svg{width:37px;height:37px}
+  .shop .s-body{flex:1;min-width:0}
+  .shop .s-name{color:var(--cream);font-size:.82rem;font-weight:550}
+  .shop .s-why{color:var(--dim);font-size:.64rem;margin-top:1px;line-height:1.3}
+  .shop .s-side{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}
+  .buy-badge{font-family:var(--mono);font-size:.55rem;letter-spacing:.04em;text-transform:uppercase;color:var(--sky);background:rgba(111,168,199,.15);padding:2px 7px;border-radius:12px;white-space:nowrap}
+  .buy-price{font-family:var(--mono);font-size:.68rem;color:var(--cream)}
+  .ochip{display:flex;align-items:center;gap:9px;padding:7px 9px 7px 6px;background:var(--surface);border:1px solid var(--line);border-radius:11px;margin-bottom:7px;opacity:0;transform:translateY(8px)}
+  .on .ochip{animation:slidein .5s ease forwards}
+  .ochip .thumb{width:38px;height:38px}.ochip .thumb svg{width:35px;height:35px}
+  .ochip .o-nm{flex:1;color:var(--cream);font-size:.8rem}
+  .ochip .o-role{font-family:var(--mono);font-size:.6rem;color:var(--faint)}
+  .ochip .o-role.buy{color:var(--sage)}
+  .note{color:var(--dim);font-size:.72rem;line-height:1.4;margin:0 0 10px}
+  .note b{color:var(--terra-lt)}
+  .ready{margin:auto;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .ready .big{font-size:2.6rem}
+  .ready .rt{font-size:1.05rem;font-weight:620;color:var(--cream)}
+  .ready .rs{font-size:.74rem;color:var(--dim);line-height:1.5}
+  .stat-row{display:flex;gap:7px;margin-top:6px}
+  .stat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 4px}
+  .stat .v{font-size:1.05rem;font-weight:700;color:var(--terra-lt);font-family:var(--mono)}
+  .stat .l{font-size:.56rem;color:var(--faint);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+  .eco-note{margin-top:9px;font-size:.63rem;color:var(--sage);background:rgba(123,166,126,.12);border:1px solid rgba(123,166,126,.28);border-radius:9px;padding:7px 9px;line-height:1.4}
+  .eco-note b{color:#9fce9f;font-weight:600}
+  .eco-pill{margin-top:12px;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.66rem;color:#9fce9f;background:rgba(123,166,126,.14);border:1px solid rgba(123,166,126,.32);border-radius:16px;padding:6px 12px}
+  .cs-p em.eco{font-style:normal;color:var(--sage)}
+  /* controls */
+  .controls{display:flex;align-items:center;gap:16px}
+  .dots{display:flex;gap:7px}
+  .dot{width:8px;height:8px;border-radius:50%;background:rgba(245,240,232,.2);border:none;padding:0;cursor:pointer;transition:all .3s ease}
+  .dot.on{background:var(--terra);width:22px;border-radius:4px}
+  .replay{font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);background:#12141a;border:1px solid var(--line);border-radius:9px;padding:8px 13px;cursor:pointer}
+  .replay:hover{color:var(--cream);border-color:var(--terra)}
+  .replay:focus-visible,.dot:focus-visible{outline:2px solid var(--terra);outline-offset:3px}
+  .caption{color:var(--faint);font-size:.8rem;text-align:center;max-width:520px;line-height:1.5}
+  .caption .kbd{font-family:var(--mono);color:var(--dim);background:#12141a;border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+  @media (prefers-reduced-motion:reduce){.cslide,.screen,.gfill,.item,.shop,.ochip,.dot{transition:none;animation:none;opacity:1;transform:none}}
+</style>
+
+<!-- realistic flat-lay garments -->
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="fsh" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.4" flood-color="#3a2a1a" flood-opacity="0.28"/></filter>
+  <linearGradient id="gGrey" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ba1a9"/><stop offset="1" stop-color="#767c86"/></linearGradient>
+  <linearGradient id="gCream" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6efdc"/><stop offset="1" stop-color="#e3d7ba"/></linearGradient>
+  <linearGradient id="gShirt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#edf3fa"/><stop offset="1" stop-color="#ccdcec"/></linearGradient>
+  <linearGradient id="gDenim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#41516d"/><stop offset="1" stop-color="#2b384f"/></linearGradient>
+  <linearGradient id="gChino" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ccbb8f"/><stop offset="1" stop-color="#a8946a"/></linearGradient>
+  <linearGradient id="gTan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b6a878"/><stop offset="1" stop-color="#8f8155"/></linearGradient>
+  <linearGradient id="gWhiteS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcfdff"/><stop offset="1" stop-color="#dee3ea"/></linearGradient>
+  <linearGradient id="gNavyK" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#37456a"/><stop offset="1" stop-color="#212b45"/></linearGradient>
+  <linearGradient id="gCharcoal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4c515a"/><stop offset="1" stop-color="#2f333a"/></linearGradient>
+  <linearGradient id="gMustard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dca23a"/><stop offset="1" stop-color="#b8862a"/></linearGradient>
+  <linearGradient id="gGreyS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b919a"/><stop offset="1" stop-color="#6a7078"/></linearGradient>
+
+  <g id="gs-tee" filter="url(#fsh)"><path d="M37 28 L24 36 L30 49 L37 45 V83 H63 V45 L70 49 L76 36 L63 28 C57 34 43 34 37 28 Z" fill="url(#gGrey)" stroke="#6a707a" stroke-width="1.2" stroke-linejoin="round"/><path d="M42 29 C45 34 55 34 58 29" fill="none" stroke="#5c626c" stroke-width="2.2"/></g>
+  <g id="gs-shirt" filter="url(#fsh)"><path d="M36 26 L20 34 L27 50 L35 45 L35 84 H65 V45 L73 50 L80 34 L64 26 Z" fill="url(#gShirt)" stroke="#b7c6d6" stroke-width="1.3" stroke-linejoin="round"/><path d="M43 26 L50 35 L57 26 L52 24 H48 Z" fill="#e2edf6" stroke="#b7c6d6" stroke-width="1.1" stroke-linejoin="round"/><line x1="50" y1="35" x2="50" y2="84" stroke="#c2d0de" stroke-width="1.1"/><circle cx="50" cy="45" r="1.1" fill="#9fb2c4"/><circle cx="50" cy="57" r="1.1" fill="#9fb2c4"/><circle cx="50" cy="69" r="1.1" fill="#9fb2c4"/></g>
+  <g id="gs-kurta" filter="url(#fsh)"><path d="M37 24 L22 32 L28 46 L35 42 V87 H65 V42 L72 46 L78 32 L63 24 Z" fill="url(#gCream)" stroke="#c9bfa8" stroke-width="1.3" stroke-linejoin="round"/><path d="M44 24 H56 V29 H44 Z" fill="#efe7d4" stroke="#c9bfa8" stroke-width="1"/><line x1="50" y1="29" x2="50" y2="62" stroke="#c9bfa8" stroke-width="1"/><path d="M35 75 V87 M65 75 V87" stroke="#c9bfa8" stroke-width="1"/></g>
+  <g id="gs-jeans" filter="url(#fsh)"><path d="M34 22 H66 V33 L60 86 H51 L50 50 L49 86 H40 L34 33 Z" fill="url(#gDenim)" stroke="#212c40" stroke-width="1.2" stroke-linejoin="round"/><rect x="34" y="22" width="32" height="5.5" fill="#4a5b78"/><path d="M50 27 V41" stroke="#c59a5b" stroke-width="0.8" stroke-dasharray="1.6 1.2"/><line x1="40.5" y1="34" x2="45" y2="84" stroke="#c59a5b" stroke-width="0.6" stroke-dasharray="1.6 1.2"/><line x1="59.5" y1="34" x2="55" y2="84" stroke="#c59a5b" stroke-width="0.6" stroke-dasharray="1.6 1.2"/></g>
+  <g id="gs-chinos" filter="url(#fsh)"><path d="M34 22 H66 V33 L60 86 H51 L50 50 L49 86 H40 L34 33 Z" fill="url(#gChino)" stroke="#8a7a52" stroke-width="1.2" stroke-linejoin="round"/><rect x="34" y="22" width="32" height="6" fill="#d8c79a"/><line x1="44.5" y1="30" x2="45.5" y2="84" stroke="#b8a978" stroke-width="1"/><line x1="55.5" y1="30" x2="54.5" y2="84" stroke="#b8a978" stroke-width="1"/></g>
+  <g id="gs-jacket" filter="url(#fsh)"><path d="M35 25 L19 33 L27 50 L34 46 V85 H66 V46 L73 50 L81 33 L65 25 L50 32 Z" fill="url(#gTan)" stroke="#786b48" stroke-width="1.3" stroke-linejoin="round"/><path d="M42 25 L50 32 L44.5 45 Z" fill="#a9996b" stroke="#786b48" stroke-width="1"/><path d="M58 25 L50 32 L55.5 45 Z" fill="#a9996b" stroke="#786b48" stroke-width="1"/><line x1="50" y1="32" x2="50" y2="85" stroke="#6c603e" stroke-width="1.4"/></g>
+  <g id="gs-sneakers" filter="url(#fsh)"><path d="M18 58 C18 50 27 48 39 48 L52 41 C58 41 62 46 65 52 L74 56 C79 58 79 64 73 65 H21 C18 65 17 61 18 58 Z" fill="url(#gWhiteS)" stroke="#b4b9c1" stroke-width="1.2" stroke-linejoin="round"/><path d="M20 63 H74" stroke="#3a3f47" stroke-width="3" stroke-linecap="round"/><path d="M41 49 L46 56 M47 47 L52 54 M53 45 L57 52" stroke="#c3c7cf" stroke-width="1.4"/></g>
+  <g id="gs-sweater" filter="url(#fsh)"><path d="M37 27 L21 35 L28 49 L36 45 V83 H64 V45 L72 49 L79 35 L63 27 C57 33 43 33 37 27 Z" fill="url(#gNavyK)" stroke="#1a2338" stroke-width="1.2" stroke-linejoin="round"/><path d="M42 28 C45 34 55 34 58 28" fill="none" stroke="#46567c" stroke-width="2.6"/><path d="M36 79 H64" stroke="#2a3552" stroke-width="2.4"/><path d="M43 50 V78 M49 50 V78 M55 50 V78" stroke="#3a496b" stroke-width="0.5" opacity="0.6"/></g>
+  <g id="gs-coat" filter="url(#fsh)"><path d="M34 24 L18 32 L27 50 L33 46 V88 H67 V46 L73 50 L82 32 L66 24 L50 30 Z" fill="url(#gCharcoal)" stroke="#22262c" stroke-width="1.3" stroke-linejoin="round"/><path d="M41 24 L50 30 L43 48 Z" fill="#3d434b" stroke="#22262c" stroke-width="1"/><path d="M59 24 L50 30 L57 48 Z" fill="#3d434b" stroke="#22262c" stroke-width="1"/><circle cx="45" cy="52" r="1.1" fill="#1c1f24"/><circle cx="55" cy="52" r="1.1" fill="#1c1f24"/><circle cx="45" cy="64" r="1.1" fill="#1c1f24"/><circle cx="55" cy="64" r="1.1" fill="#1c1f24"/></g>
+  <g id="gs-scarf" filter="url(#fsh)"><path d="M40 26 L60 26 L58 62 Q58 76 50 76 Q42 76 42 62 Z" fill="url(#gGreyS)" stroke="#565c64" stroke-width="1.2" stroke-linejoin="round"/><path d="M42 34 H58 M42 42 H58 M42 50 H58 M43 58 H57" stroke="#6f757d" stroke-width="0.8" opacity="0.6"/><path d="M43 76 V80 M50 76 V81 M57 76 V80" stroke="#565c64" stroke-width="1"/></g>
+  <g id="gs-beanie" filter="url(#fsh)"><path d="M31 58 Q31 32 50 32 Q69 32 69 58 Z" fill="url(#gMustard)" stroke="#a9781f" stroke-width="1.3" stroke-linejoin="round"/><rect x="28" y="54" width="44" height="11" rx="5" fill="#e0ad4a" stroke="#a9781f" stroke-width="1.2"/><path d="M33 58 V64 M41 57 V65 M50 57 V65 M59 57 V65 M67 58 V64" stroke="#b8862a" stroke-width="0.9" opacity="0.7"/></g>
+</defs></svg>
+
+<div class="stage" id="stage">
+  <!-- LEFT: copy -->
+  <div class="copy">
+    <div class="brand"><span class="dotmark"></span> Ritha</div>
+    <div class="copy-wrap">
+      <div class="cslide on" data-c="0">
+        <p class="cs-kick">Your travel stylist</p>
+        <h1 class="cs-h">Pack for anywhere.<br>Buy only what you <em>need</em>.</h1>
+        <p class="cs-p">Ritha reads your wardrobe and the weather, packs what works, and tells you exactly what's missing.</p>
+        <span class="cs-cta">getritha.com →</span>
+      </div>
+      <div class="cslide" data-c="1">
+        <p class="cs-kick">It knows your wardrobe</p>
+        <h1 class="cs-h">Starts with <em>your</em> closet.</h1>
+        <p class="cs-p">Seeded for where you live — real photos, not guesses. This is a mild-climate Bengaluru wardrobe.</p>
+      </div>
+      <div class="cslide" data-c="2">
+        <p class="cs-kick">It feels the weather</p>
+        <h1 class="cs-h">Plans for the <em>drop</em>.</h1>
+        <p class="cs-p">Bengaluru 26° → Tokyo 8° at night, cherry-blossom season. Ritha sees the gap coming.</p>
+      </div>
+      <div class="cslide" data-c="3">
+        <p class="cs-kick">It packs light</p>
+        <h1 class="cs-h">Only what <em>works</em>.</h1>
+        <p class="cs-p">His cottons layer up nicely — but a light jacket won't survive an 8°C evening.</p>
+      </div>
+      <div class="cslide" data-c="4">
+        <p class="cs-kick">The part everyone forgets</p>
+        <h1 class="cs-h">Tells you what to <em>buy</em>.</h1>
+        <p class="cs-p">The four warm things your closet doesn't have — sorted before you fly, not shivering on arrival.</p>
+      </div>
+      <div class="cslide" data-c="5">
+        <p class="cs-kick">It dresses you there</p>
+        <h1 class="cs-h">An outfit for every <em>stop</em>.</h1>
+        <p class="cs-p">Tap a place, get the outfit — your pieces and your new buys, sorted for the dress code.</p>
+      </div>
+      <div class="cslide" data-c="6">
+        <p class="cs-kick">Ready to go</p>
+        <h1 class="cs-h">Pack smart.<br>Travel <em>light</em>.</h1>
+        <p class="cs-p">From a Bengaluru closet to Tokyo in bloom — packed light, buying only what's needed, <em class="eco">lighter on the planet</em>.</p>
+        <span class="cs-cta">Plan your first trip →</span>
+      </div>
+    </div>
+    <div class="foot">Ritha · getritha.com</div>
+  </div>
+
+  <!-- RIGHT: phone -->
+  <div class="device"><div class="phone" id="phone">
+    <!-- 0 & 1: wardrobe -->
+    <div class="screen on" data-s="0">
+      <div class="sc-head">Wardrobe · Bengaluru</div>
+      <span class="region-tag">📍 South India · mild</span>
+      <div class="list">
+        <div class="item" style="animation-delay:.05s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-shirt"/></svg></span><span class="nm">Formal Shirt</span><span class="tag">smart</span></div>
+        <div class="item" style="animation-delay:.13s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-tee"/></svg></span><span class="nm">Cotton T-shirt ×3</span><span class="tag">casual</span></div>
+        <div class="item" style="animation-delay:.21s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-kurta"/></svg></span><span class="nm">Cotton Kurta</span><span class="tag">smart</span></div>
+        <div class="item" style="animation-delay:.29s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-jeans"/></svg></span><span class="nm">Indigo Jeans</span><span class="tag">casual</span></div>
+        <div class="item" style="animation-delay:.37s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-chinos"/></svg></span><span class="nm">Beige Chinos</span><span class="tag">smart</span></div>
+        <div class="item" style="animation-delay:.45s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-jacket"/></svg></span><span class="nm">Light Jacket</span><span class="tag">for AC</span></div>
+        <div class="item" style="animation-delay:.53s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-sneakers"/></svg></span><span class="nm">White Sneakers</span><span class="tag">casual</span></div>
+      </div>
+    </div>
+    <!-- 2: trip -->
+    <div class="screen" data-s="2">
+      <div class="sc-head">New trip</div>
+      <p class="sc-title">Bengaluru → <b>Tokyo</b></p>
+      <div class="field"><label>Dates</label><div class="input">Apr 6–12, 2027 · 🇯🇵</div></div>
+      <div class="field"><label>Climate shift</label><div class="input">26°C 🌤 → 12° / 8° 🌸</div></div>
+      <div class="field"><label>Bag</label><div class="chips"><span class="chip">30L</span><span class="chip sel">Carry-on · 40L</span><span class="chip">60L</span></div></div>
+      <div class="cta-btn">Plan my trip</div>
+    </div>
+    <!-- 3: packing -->
+    <div class="screen" data-s="3">
+      <div class="sc-head">Packing · 40L carry-on</div>
+      <p class="sc-title">Packs from <b>your closet</b></p>
+      <div class="gauge-row"><span>12.8 L · 6 items</span><span class="pct">54%</span></div>
+      <div class="track"><div class="gfill"></div></div>
+      <div class="list">
+        <div class="item" style="animation-delay:.05s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-shirt"/></svg></span><span class="nm">Formal Shirt</span><span class="tag">layer it</span></div>
+        <div class="item" style="animation-delay:.13s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-tee"/></svg></span><span class="nm">Cotton T-shirt ×3</span><span class="tag">base</span></div>
+        <div class="item" style="animation-delay:.21s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-jeans"/></svg></span><span class="nm">Indigo Jeans</span><span class="tag">warm</span></div>
+        <div class="item" style="animation-delay:.29s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-chinos"/></svg></span><span class="nm">Beige Chinos</span><span class="tag">smart</span></div>
+        <div class="item" style="animation-delay:.37s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-sneakers"/></svg></span><span class="nm">White Sneakers</span><span class="tag">walking</span></div>
+      </div>
+      <div class="trim">Light jacket won't cut 8°C — gap ↓</div>
+    </div>
+    <!-- 4: buy (hero) -->
+    <div class="screen" data-s="4">
+      <div class="sc-head">Before you fly</div>
+      <p class="sc-title">Buy these <b>4 warm things</b></p>
+      <div class="shop" style="animation-delay:.05s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-sweater"/></svg></span><div class="s-body"><div class="s-name">Merino sweater</div><div class="s-why">Warm mid-layer you don't own.</div></div><div class="s-side"><span class="buy-badge">buy</span><span class="buy-price">₹3,500</span></div></div>
+      <div class="shop" style="animation-delay:.16s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-coat"/></svg></span><div class="s-body"><div class="s-name">Wool overcoat</div><div class="s-why">A real coat for 8°C nights.</div></div><div class="s-side"><span class="buy-badge">buy</span><span class="buy-price">₹6,000</span></div></div>
+      <div class="shop" style="animation-delay:.27s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-scarf"/></svg></span><div class="s-body"><div class="s-name">Knit scarf</div><div class="s-why">Makes cotton work in the cold.</div></div><div class="s-side"><span class="buy-badge">buy</span><span class="buy-price">₹900</span></div></div>
+      <div class="shop" style="animation-delay:.38s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-beanie"/></svg></span><div class="s-body"><div class="s-name">Knit beanie</div><div class="s-why">Windy hanami mornings.</div></div><div class="s-side"><span class="buy-badge">buy</span><span class="buy-price">₹700</span></div></div>
+      <div class="eco-note">🌿 <b>Pre-loved first:</b> Ritha surfaces secondhand &amp; rentals — up to ~70% less CO₂ per buy.</div>
+    </div>
+    <!-- 5: outfit -->
+    <div class="screen" data-s="5">
+      <div class="sc-head">⛩ Meiji Shrine</div>
+      <p class="sc-title">Dressed for the <b>place</b></p>
+      <p class="note">Warm, neat, <b>easy to slip off</b> at the shrine:</p>
+      <div class="ochip" style="animation-delay:.05s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-shirt"/></svg></span><span class="o-nm">Formal Shirt</span><span class="o-role">base</span></div>
+      <div class="ochip" style="animation-delay:.16s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-sweater"/></svg></span><span class="o-nm">Merino Sweater</span><span class="o-role buy">new · buy</span></div>
+      <div class="ochip" style="animation-delay:.27s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-chinos"/></svg></span><span class="o-nm">Beige Chinos</span><span class="o-role">bottom</span></div>
+      <div class="ochip" style="animation-delay:.38s"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#gs-sneakers"/></svg></span><span class="o-nm">White Sneakers</span><span class="o-role">slip-off</span></div>
+    </div>
+    <!-- 6: ready -->
+    <div class="screen" data-s="6">
+      <div class="sc-head">Tokyo · Apr 2027</div>
+      <div class="ready">
+        <div class="big">🌸</div>
+        <div class="rt">You're trip-ready</div>
+        <div class="rs">Packed light, gaps filled,<br>dressed for every stop.</div>
+        <div class="stat-row">
+          <div class="stat"><div class="v">6</div><div class="l">packed</div></div>
+          <div class="stat"><div class="v">4</div><div class="l">to buy</div></div>
+          <div class="stat"><div class="v">4</div><div class="l">places</div></div>
+        </div>
+        <div class="eco-pill">🌿 2.6 kg CO₂ saved · carry-on + rewears</div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<div class="controls"><div class="dots" id="dots"></div><button class="replay" id="replay" type="button">↻ Replay</button></div>
+<p class="caption">16:9 landing cut · record the stage with <span class="kbd">⌘⇧5</span> → landscape MP4 for a hero embed.</p>
+
+<script>
+(function(){
+  // beat i → copy slide data-c=i and phone screen data-s (0/1 share the wardrobe screen)
+  var screenForBeat=[0,0,2,3,4,5,6];
+  var durations=[4200,4000,3800,4200,5200,4600,4200];
+  var cslides=[].slice.call(document.querySelectorAll('.cslide'));
+  var screens=[].slice.call(document.querySelectorAll('.screen'));
+  var dotsWrap=document.getElementById('dots'),replay=document.getElementById('replay');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;var timer=null,i=0;
+  var byS={};screens.forEach(function(s){byS[s.dataset.s]=s});
+  cslides.forEach(function(_,n){var d=document.createElement('button');d.className='dot';d.type='button';d.setAttribute('aria-label','Beat '+(n+1));d.addEventListener('click',function(){jump(n)});dotsWrap.appendChild(d)});
+  var dots=[].slice.call(dotsWrap.children);
+  function show(n){
+    cslides.forEach(function(c,k){c.classList.toggle('on',k===n)});
+    var sid=String(screenForBeat[n]);
+    screens.forEach(function(s){s.classList.remove('on')});
+    if(byS[sid]){ // retrigger item animations
+      var el=byS[sid];el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+    }
+    dots.forEach(function(d,k){d.classList.toggle('on',k===n)});i=n;
+  }
+  function next(){show((i+1)%cslides.length);schedule()}
+  function schedule(){clearTimeout(timer);if(reduce)return;timer=setTimeout(next,durations[i])}
+  function jump(n){show(n);schedule()}
+  replay.addEventListener('click',function(){jump(0)});show(0);schedule();
+})();
+</script>

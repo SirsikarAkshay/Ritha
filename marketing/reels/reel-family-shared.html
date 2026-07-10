@@ -1,0 +1,190 @@
+<style>
+  :root{--midnight:#0d0f14;--surface:#161921;--surface2:#1c2029;--surface3:#252833;--line:rgba(245,240,232,.10);
+    --cream:#f5f0e8;--dim:#9a97a0;--faint:#6b6a73;--terra:#d4724a;--terra-lt:#e8956e;
+    --sage:#7ba67e;--sky:#6fa8c7;--gold:#c9a84c;--coral:#e88a6a;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  *{box-sizing:border-box}html,body{margin:0;min-height:100%}
+  body{min-height:100vh;background:radial-gradient(100% 60% at 50% 0%,rgba(111,168,199,.16),transparent 60%),#08090c;color:var(--cream);font-family:var(--sans);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:22px 14px;-webkit-font-smoothing:antialiased}
+  .frame{position:relative;height:min(86vh,884px);aspect-ratio:9/16;border-radius:26px;overflow:hidden;background:var(--midnight);box-shadow:0 40px 90px -30px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.05)}
+  .frame::before{content:"";position:absolute;inset:0;background:radial-gradient(110% 55% at 50% -6%,rgba(111,168,199,.14),transparent 60%);pointer-events:none;z-index:0}
+  .scene{position:absolute;inset:0;padding:58px 34px 46px;opacity:0;transform:translateY(12px);transition:opacity .55s ease,transform .55s ease;pointer-events:none;display:flex;flex-direction:column;z-index:1}
+  .scene.is-active{opacity:1;transform:none;pointer-events:auto}
+  .kicker{font-family:var(--mono);font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--sky);margin-bottom:13px}
+  .hook{justify-content:center}
+  .hook h1{font-size:2.8rem;line-height:1.06;letter-spacing:-.03em;font-weight:660;margin:0;text-wrap:balance}
+  .hook h1 em{font-style:normal;color:var(--terra)}
+  .hook .sub{color:var(--dim);margin-top:18px;font-size:1.1rem;line-height:1.5}
+  .wordmark{margin-top:30px;font-family:var(--mono);letter-spacing:.32em;text-transform:uppercase;font-size:.82rem;color:var(--faint)}
+  .h-title{font-size:1.6rem;font-weight:620;letter-spacing:-.01em;margin:0 0 4px}
+  .h-sub{color:var(--dim);font-size:.96rem;margin:0 0 18px}
+  .field{margin-bottom:14px}
+  .field label{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:8px}
+  .input{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px;font-size:1.08rem;color:var(--cream)}
+  .chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .chip{font-size:.82rem;padding:8px 13px;border-radius:18px;border:1px solid var(--line);color:var(--dim);background:var(--surface)}
+  .chip.sel{background:var(--terra);color:var(--cream);border-color:var(--terra)}
+  .cta{margin-top:auto;background:var(--terra);color:var(--cream);border-radius:15px;padding:16px;text-align:center;font-weight:600;font-size:1.12rem;box-shadow:0 14px 34px -12px rgba(212,114,74,.7)}
+  .frame [data-scene="3"].is-active .cta{animation:tap 1.1s ease 1.6s both}
+  @keyframes tap{0%,100%{transform:none}45%{transform:scale(.955);filter:brightness(.9)}}
+  .think{align-items:center;justify-content:center;text-align:center}
+  .spinner{width:54px;height:54px;border-radius:50%;border:4px solid var(--surface2);border-top-color:var(--terra);animation:spin .9s linear infinite;margin-bottom:22px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .think p{color:var(--dim);font-size:1.12rem;margin:0;line-height:1.5}
+  .sec-h{font-size:1.4rem;font-weight:620;letter-spacing:-.01em;margin:0 0 4px;text-wrap:balance}
+  .sec-h b{color:var(--terra-lt);font-weight:620}
+  .sec-sub{color:var(--dim);font-size:.96rem;margin:0 0 13px;line-height:1.45}
+  .tag-row{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;color:var(--sky);background:rgba(111,168,199,.13);padding:5px 11px;border-radius:20px;margin-bottom:14px;align-self:flex-start}
+  .member{display:flex;align-items:center;gap:11px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:9px;opacity:0;transform:translateX(-12px)}
+  .is-active .member{animation:slidein .45s ease forwards}
+  @keyframes slidein{to{opacity:1;transform:none}}
+  .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:1.25rem;flex:none;background:var(--surface3);border:1px solid var(--line)}
+  .m-info{flex:1;min-width:0}
+  .m-name{color:var(--cream);font-size:.98rem;font-weight:560}
+  .m-sub{color:var(--faint);font-size:.74rem;font-family:var(--mono);margin-top:1px}
+  .m-items{display:flex;gap:5px}
+  .th{width:32px;height:32px;border-radius:7px;background:linear-gradient(150deg,#f2ede3,#e1dacc);border:1px solid rgba(0,0,0,.12);display:grid;place-items:center;overflow:hidden;flex:none}
+  .th svg{width:29px;height:29px}
+  .m-count{font-family:var(--mono);font-size:.78rem;color:var(--terra-lt);flex:none}
+  .shared{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:6px}
+  .shared .sh-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+  .sh-item{display:flex;align-items:center;gap:9px;font-size:.9rem;color:var(--cream);opacity:0;transform:translateY(8px)}
+  .is-active .sh-item{animation:slidein .45s ease forwards}
+  .sh-item .ic{font-size:1.3rem}
+  .sh-item .n1{font-family:var(--mono);color:var(--sage);font-size:.72rem}
+  .big-stat{text-align:center;margin:14px 0 2px}
+  .big-stat .v{font-size:2.4rem;font-weight:700;letter-spacing:-.02em;color:var(--terra-lt)}
+  .big-stat .v s{color:var(--faint);font-weight:500;font-size:1.5rem;text-decoration-thickness:2px}
+  .big-stat .l{color:var(--dim);font-size:.86rem;margin-top:2px}
+  .shop{display:flex;align-items:center;gap:12px;padding:11px;background:var(--surface);border:1px solid var(--line);border-radius:13px;margin-bottom:9px;opacity:0;transform:translateY(11px)}
+  .is-active .shop{animation:slidein .5s ease forwards}
+  .shop .th{width:44px;height:44px}.shop .th svg{width:40px;height:40px}
+  .shop .s-body{flex:1;min-width:0}
+  .shop .s-name{color:var(--cream);font-size:.96rem;font-weight:550}
+  .shop .s-why{color:var(--dim);font-size:.78rem;margin-top:1px;line-height:1.3}
+  .who{font-family:var(--mono);font-size:.62rem;color:var(--sky);background:rgba(111,168,199,.15);padding:3px 8px;border-radius:12px;flex:none}
+  .eco-note{margin-top:11px;font-size:.82rem;color:var(--sage);background:rgba(123,166,126,.12);border:1px solid rgba(123,166,126,.28);border-radius:12px;padding:10px 13px;line-height:1.4}
+  .eco-note b{color:#9fce9f;font-weight:600}
+  .eco-pill{margin-top:16px;display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:.82rem;color:#9fce9f;background:rgba(123,166,126,.14);border:1px solid rgba(123,166,126,.32);border-radius:20px;padding:8px 15px;align-self:flex-start}
+  .outro{align-items:flex-start;justify-content:center}
+  .outro h2{font-size:2.3rem;font-weight:660;letter-spacing:-.03em;margin:0;line-height:1.08;text-wrap:balance}
+  .outro h2 em{font-style:normal;color:var(--terra)}
+  .outro p{color:var(--dim);margin:15px 0 0;font-size:1.05rem;line-height:1.5}
+  .outro p em.eco{font-style:normal;color:var(--sage)}
+  .outro .mark{margin-top:22px;font-family:var(--mono);letter-spacing:.26em;text-transform:uppercase;font-size:.82rem;color:var(--terra-lt)}
+  .controls{display:flex;align-items:center;gap:16px}
+  .dots{display:flex;gap:6px}
+  .dot{width:8px;height:8px;border-radius:50%;background:rgba(245,240,232,.2);border:none;padding:0;cursor:pointer;transition:all .3s ease}
+  .dot.on{background:var(--terra);width:22px;border-radius:4px}
+  .replay{font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);background:#12141a;border:1px solid var(--line);border-radius:9px;padding:8px 13px;cursor:pointer}
+  .replay:hover{color:var(--cream);border-color:var(--terra)}
+  .replay:focus-visible,.dot:focus-visible{outline:2px solid var(--terra);outline-offset:3px}
+  .caption{color:var(--faint);font-size:.8rem;text-align:center;max-width:360px;line-height:1.5}
+  .caption .kbd{font-family:var(--mono);color:var(--dim);background:#12141a;border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+  @media (prefers-reduced-motion:reduce){.scene,.member,.sh-item,.shop,.dot{transition:none;animation:none;opacity:1;transform:none}.spinner,.frame [data-scene="3"].is-active .cta{animation:none}}
+</style>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="fsh" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="1.4" stdDeviation="1.4" flood-color="#3a2a1a" flood-opacity="0.28"/></filter>
+  <linearGradient id="gShirt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#edf3fa"/><stop offset="1" stop-color="#ccdcec"/></linearGradient>
+  <linearGradient id="gChino" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ccbb8f"/><stop offset="1" stop-color="#a8946a"/></linearGradient>
+  <linearGradient id="gKhaki" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d0c299"/><stop offset="1" stop-color="#a89a6c"/></linearGradient>
+  <linearGradient id="gGrey" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ba1a9"/><stop offset="1" stop-color="#767c86"/></linearGradient>
+  <linearGradient id="gCoral" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ec9375"/><stop offset="1" stop-color="#cf6a4a"/></linearGradient>
+  <linearGradient id="gTanS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b17e48"/><stop offset="1" stop-color="#855c30"/></linearGradient>
+  <linearGradient id="gWhiteS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcfdff"/><stop offset="1" stop-color="#dee3ea"/></linearGradient>
+
+  <g id="gs-shirt" filter="url(#fsh)"><path d="M36 26 L20 34 L27 50 L35 45 L35 84 H65 V45 L73 50 L80 34 L64 26 Z" fill="url(#gShirt)" stroke="#b7c6d6" stroke-width="1.3" stroke-linejoin="round"/><path d="M43 26 L50 35 L57 26 L52 24 H48 Z" fill="#e2edf6" stroke="#b7c6d6" stroke-width="1.1" stroke-linejoin="round"/><line x1="50" y1="35" x2="50" y2="84" stroke="#c2d0de" stroke-width="1.1"/><circle cx="50" cy="47" r="1" fill="#9fb2c4"/><circle cx="50" cy="60" r="1" fill="#9fb2c4"/><circle cx="50" cy="73" r="1" fill="#9fb2c4"/></g>
+  <g id="gs-chinos" filter="url(#fsh)"><path d="M34 22 H66 V33 L60 86 H51 L50 50 L49 86 H40 L34 33 Z" fill="url(#gChino)" stroke="#8a7a52" stroke-width="1.2" stroke-linejoin="round"/><rect x="34" y="22" width="32" height="6" fill="#d8c79a"/></g>
+  <g id="gs-shorts" filter="url(#fsh)"><path d="M34 30 H66 V38 L61 63 H51 L50 46 L49 63 H39 L34 38 Z" fill="url(#gKhaki)" stroke="#8a7a52" stroke-width="1.2" stroke-linejoin="round"/><rect x="34" y="30" width="32" height="5.5" fill="#e0d3a8"/></g>
+  <g id="gs-tee" filter="url(#fsh)"><path d="M37 28 L24 36 L30 49 L37 45 V83 H63 V45 L70 49 L76 36 L63 28 C57 34 43 34 37 28 Z" fill="url(#gGrey)" stroke="#6a707a" stroke-width="1.2" stroke-linejoin="round"/><path d="M42 29 C45 34 55 34 58 29" fill="none" stroke="#5c626c" stroke-width="2.2"/></g>
+  <g id="gs-dress" filter="url(#fsh)"><path d="M40 24 C43 29 57 29 60 24 L66 40 L60 46 L70 83 H30 L40 46 L34 40 Z" fill="url(#gCoral)" stroke="#b5573c" stroke-width="1.3" stroke-linejoin="round"/><path d="M43 46 H57" stroke="#b5573c" stroke-width="1" opacity="0.55"/><path d="M46 25 C48 29 52 29 54 25" fill="none" stroke="#b5573c" stroke-width="1.6"/></g>
+  <g id="gs-sandals" filter="url(#fsh)"><path d="M40 26 Q55 25 56 42 Q58 68 46 76 Q34 74 34 52 Q34 32 40 26 Z" fill="url(#gTanS)" stroke="#6f4f2c" stroke-width="1.2" stroke-linejoin="round"/><path d="M36 44 Q45 50 53 44 M37 56 Q45 61 52 56" fill="none" stroke="#5a3f22" stroke-width="2.4"/><path d="M46 28 V40" stroke="#5a3f22" stroke-width="1.8"/></g>
+  <g id="gs-sneakers" filter="url(#fsh)"><path d="M18 58 C18 50 27 48 39 48 L52 41 C58 41 62 46 65 52 L74 56 C79 58 79 64 73 65 H21 C18 65 17 61 18 58 Z" fill="url(#gWhiteS)" stroke="#b4b9c1" stroke-width="1.2" stroke-linejoin="round"/><path d="M20 63 H74" stroke="#3a3f47" stroke-width="3" stroke-linecap="round"/><path d="M41 49 L46 56 M47 47 L52 54 M53 45 L57 52" stroke="#c3c7cf" stroke-width="1.4"/></g>
+</defs></svg>
+
+<div class="frame" id="frame">
+  <div class="scene hook" data-scene="1"><div>
+    <p class="kicker">Ritha · Shared wardrobe</p>
+    <h1>One trip.<br>The whole <em>family</em>.</h1>
+    <p class="sub">Four capsules packed at once —<br>and not a single duplicate.</p>
+    <p class="wordmark">Ritha</p></div></div>
+
+  <div class="scene" data-scene="2">
+    <p class="kicker">Your shared wardrobe</p>
+    <span class="tag-row">👨‍👩‍👧‍👦 4 members · one closet</span>
+    <p class="sec-h" style="margin-bottom:14px">Everyone's clothes, <b>in one place</b></p>
+    <div class="member" style="animation-delay:.05s"><span class="av">👨</span><div class="m-info"><div class="m-name">Rohan</div><div class="m-sub">Dad · 24 items</div></div><span class="m-count">→</span></div>
+    <div class="member" style="animation-delay:.16s"><span class="av">👩</span><div class="m-info"><div class="m-name">Priya</div><div class="m-sub">Mum · 28 items</div></div><span class="m-count">→</span></div>
+    <div class="member" style="animation-delay:.27s"><span class="av">👧</span><div class="m-info"><div class="m-name">Maya</div><div class="m-sub">8 yrs · 19 items</div></div><span class="m-count">→</span></div>
+    <div class="member" style="animation-delay:.38s"><span class="av">👦</span><div class="m-info"><div class="m-name">Arjun</div><div class="m-sub">5 yrs · 16 items</div></div><span class="m-count">→</span></div></div>
+
+  <div class="scene" data-scene="3">
+    <p class="kicker">✈️ Plan your trip</p>
+    <h2 class="h-title">Family → Singapore</h2>
+    <p class="h-sub">5 days, warm &amp; humid, one big city.</p>
+    <div class="field"><label>Dates &amp; who</label><div class="input">Jul 2–7, 2027 · all 4 members 🇸🇬</div></div>
+    <div class="field"><label>Weather</label><div class="input">30°C ☀ · humid · afternoon showers</div></div>
+    <div class="field"><label>Bags</label><div class="chips"><span class="chip sel">2 × check-in</span><span class="chip">4 × carry-on</span></div></div>
+    <div class="cta">Pack for everyone</div></div>
+
+  <div class="scene think" data-scene="4"><div class="spinner"></div><p>Packing 4 capsules at once —<br>and skipping the duplicates…</p></div>
+
+  <div class="scene" data-scene="5">
+    <p class="kicker">Step 1 · Four capsules</p>
+    <p class="sec-h" style="margin-bottom:14px">A capsule <b>per person</b></p>
+    <div class="member" style="animation-delay:.05s"><span class="av">👨</span><div class="m-info" style="flex:0 0 auto;margin-right:auto"><div class="m-name">Rohan</div><div class="m-sub">7 pcs</div></div>
+      <div class="m-items"><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-shirt"/></svg></span><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-tee"/></svg></span><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-chinos"/></svg></span><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-sneakers"/></svg></span></div></div>
+    <div class="member" style="animation-delay:.18s"><span class="av">👩</span><div class="m-info" style="flex:0 0 auto;margin-right:auto"><div class="m-name">Priya</div><div class="m-sub">7 pcs</div></div>
+      <div class="m-items"><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-dress"/></svg></span><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-tee"/></svg></span><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-shorts"/></svg></span><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-sandals"/></svg></span></div></div>
+    <div class="member" style="animation-delay:.31s"><span class="av">👧</span><div class="m-info" style="flex:0 0 auto;margin-right:auto"><div class="m-name">Maya</div><div class="m-sub">6 pcs</div></div>
+      <div class="m-items"><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-dress"/></svg></span><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-shorts"/></svg></span><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-sneakers"/></svg></span></div></div>
+    <div class="member" style="animation-delay:.44s"><span class="av">👦</span><div class="m-info" style="flex:0 0 auto;margin-right:auto"><div class="m-name">Arjun</div><div class="m-sub">6 pcs</div></div>
+      <div class="m-items"><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-tee"/></svg></span><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-shorts"/></svg></span><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-sandals"/></svg></span></div></div></div>
+
+  <div class="scene" data-scene="6">
+    <p class="kicker">Step 2 · Shared, not ×4</p>
+    <p class="sec-h">Pack these <b>once</b> for everyone</p>
+    <div class="big-stat"><div class="v"><s>×4</s> → ×1</div><div class="l">of every family essential</div></div>
+    <div class="shared">
+      <div class="sh-grid">
+        <div class="sh-item" style="animation-delay:.1s"><span class="ic">🧴</span><div>Sunscreen<div class="n1">1 shared</div></div></div>
+        <div class="sh-item" style="animation-delay:.2s"><span class="ic">🔌</span><div>Travel adapter<div class="n1">1 shared</div></div></div>
+        <div class="sh-item" style="animation-delay:.3s"><span class="ic">💊</span><div>First-aid kit<div class="n1">1 shared</div></div></div>
+        <div class="sh-item" style="animation-delay:.4s"><span class="ic">☂️</span><div>Travel umbrella<div class="n1">1 shared</div></div></div>
+      </div>
+    </div>
+    <div class="eco-note">🌿 <b>No overpacking:</b> one bag lighter across the family — less to haul, a smaller flight footprint.</div></div>
+
+  <div class="scene" data-scene="7">
+    <p class="kicker">Step 3 · Only the gaps</p>
+    <p class="sec-h">The kids <b>grew</b> — buy just 2</p>
+    <p class="sec-sub">Everything else is a hand-me-down or already packed.</p>
+    <div class="shop" style="animation-delay:.05s"><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-sandals"/></svg></span><div class="s-body"><div class="s-name">Kids' sandals</div><div class="s-why">Maya outgrew last summer's pair.</div></div><span class="who">👧 Maya</span></div>
+    <div class="shop" style="animation-delay:.18s"><span class="th"><svg viewBox="0 0 100 100"><use href="#gs-tee"/></svg></span><div class="s-body"><div class="s-name">UV rash guard</div><div class="s-why">Pool days — sun-safe for little ones.</div></div><span class="who">👦 Arjun</span></div>
+    <div class="eco-note">🌿 <b>Hand-me-downs first:</b> Arjun inherits Maya's old tees — Ritha tracks who's grown into what.</div></div>
+
+  <div class="scene outro" data-scene="8"><div>
+    <h2>Four packed.<br>Nothing <em>doubled</em>.</h2>
+    <p>One shared closet, a capsule each, essentials packed once — <em class="eco">lighter bags, lighter footprint</em>.</p>
+    <div class="eco-pill">🌿 hand-me-downs + shared kit · less to buy, less to fly</div>
+    <p class="mark">Ritha · getritha.com</p></div></div>
+</div>
+
+<div class="controls"><div class="dots" id="dots"></div><button class="replay" id="replay" type="button">↻ Replay</button></div>
+<p class="caption">9:16 · record the frame with <span class="kbd">⌘⇧5</span> → Reel-ready MP4.</p>
+
+<script>
+(function(){
+  var scenes=[].slice.call(document.querySelectorAll('.scene'));
+  var durations=[3300,4600,4000,1900,5400,5000,4800,4000];
+  var dotsWrap=document.getElementById('dots'),replay=document.getElementById('replay');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;var timer=null,i=0;
+  scenes.forEach(function(_,n){var d=document.createElement('button');d.className='dot';d.type='button';d.setAttribute('aria-label','Scene '+(n+1));d.addEventListener('click',function(){jump(n)});dotsWrap.appendChild(d)});
+  var dots=[].slice.call(dotsWrap.children);
+  function show(n){scenes.forEach(function(s,k){s.classList.toggle('is-active',k===n)});dots.forEach(function(d,k){d.classList.toggle('on',k===n)});i=n}
+  function next(){show((i+1)%scenes.length);schedule()}
+  function schedule(){clearTimeout(timer);if(reduce)return;timer=setTimeout(next,durations[i])}
+  function jump(n){show(n);schedule()}
+  replay.addEventListener('click',function(){jump(0)});show(0);schedule();
+})();
+</script>
