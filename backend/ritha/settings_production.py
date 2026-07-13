@@ -60,6 +60,11 @@ REST_FRAMEWORK = {
         "anon": "20/hour",
         "user": "500/day",
         "ai_agents": "50/day",
+        # Required by the auth throttle classes — omitting these makes login/reset/
+        # resend raise ImproperlyConfigured (500) at request time.
+        "login_attempts": "20/hour",
+        "password_reset": "5/hour",
+        "resend_verification": "3/hour",
     },
 }
 

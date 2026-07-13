@@ -55,6 +55,15 @@ def _analyze_clothing_image(image_file):
             },
         }
 
+    # Reject oversized / non-image uploads before reading into memory — bounds the
+    # per-request memory (files bypass DATA_UPLOAD_MAX_MEMORY_SIZE) and the Mistral bill.
+    MAX_IMAGE_BYTES = 6 * 1024 * 1024
+    if getattr(image_file, "size", 0) and image_file.size > MAX_IMAGE_BYTES:
+        return False, {"error": {"code": "file_too_large", "message": "Image must be under 6 MB."}}
+    _ctype = getattr(image_file, "content_type", "") or ""
+    if _ctype and not _ctype.startswith("image/"):
+        return False, {"error": {"code": "invalid_type", "message": "Please upload an image file (JPEG or PNG)."}}
+
     try:
         image_file.seek(0)
     except Exception:

@@ -32,3 +32,19 @@ class OutfitRecommendationSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["created_at"]
+
+    def _check_owned(self, obj, label):
+        # `trip` and `event` are client-supplied writable FKs — don't let a user
+        # attach their recommendation to another user's trip/event.
+        if obj is None:
+            return obj
+        request = self.context.get("request")
+        if request and getattr(obj, "user_id", None) != request.user.id:
+            raise serializers.ValidationError(f"That {label} isn't yours.")
+        return obj
+
+    def validate_trip(self, value):
+        return self._check_owned(value, "trip")
+
+    def validate_event(self, value):
+        return self._check_owned(value, "event")
