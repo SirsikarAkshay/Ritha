@@ -1,5 +1,6 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx'
 import { ThemeProvider } from './hooks/useTheme.jsx'
 import Layout from './components/Layout.jsx'
@@ -20,6 +21,7 @@ import SharedWardrobeDetailPage from './pages/SharedWardrobeDetailPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import OutfitHistoryPage from './pages/OutfitHistoryPage.jsx'
 import OnboardingPage from './pages/OnboardingPage.jsx'
+import StartPage from './pages/StartPage.jsx'
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 import TermsOfService from './pages/TermsOfService.jsx'
 import ConsentBanner from './components/ConsentBanner.jsx'
@@ -44,21 +46,28 @@ function Spinner() {
   )
 }
 
-function ProtectedRoute({ children, allowDuringOnboarding = false }) {
+function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <Spinner />
   if (!user)   return <Navigate to="/login" replace />
-  // First-time users land on /onboarding until they apply (or skip) a starter pack.
-  if (!allowDuringOnboarding
-      && user.has_completed_onboarding === false
-      && !localStorage.getItem('ritha_onboarding_skipped')) {
-    return <Navigate to="/onboarding" replace />
-  }
+  // Onboarding is no longer forced up-front — new users go straight into the app
+  // (the destination-first Start page is the real hook). Closet setup is an
+  // optional nudge, reachable at /onboarding.
   return children
 }
 
 function AppRoutes() {
   const { user } = useAuth()
+  const navigate = useNavigate()
+  // After a guest signs up, drop them straight onto the trip planner for the
+  // destination they previewed (stashed by StartPage) — no re-entry, no empty
+  // dashboard.
+  useEffect(() => {
+    if (user && localStorage.getItem('ritha_pending_trip')) {
+      localStorage.removeItem('ritha_pending_trip')
+      navigate('/trips', { replace: true })
+    }
+  }, [user, navigate])
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
@@ -74,9 +83,12 @@ function AppRoutes() {
         <ProtectedRoute allowDuringOnboarding><OnboardingPage /></ProtectedRoute>
       } />
 
+      {/* Anonymous visitors land on the destination-first Start page (the hook);
+          signed-in users get the app. Value before signup. */}
       <Route path="/" element={
-        <ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>
+        user ? <ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute> : <StartPage />
       } />
+      <Route path="/start" element={<StartPage />} />
       <Route path="/wardrobe" element={
         <ProtectedRoute><Layout><WardrobePage /></Layout></ProtectedRoute>
       } />

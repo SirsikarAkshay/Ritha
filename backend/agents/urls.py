@@ -7,6 +7,7 @@ from .views import (
     OutfitPlannerView,
     PackingListView,
     PlaceOutfitView,
+    PublicTripInsightsView,
     SmartRecommendView,
     WeeklyLooksView,
 )
@@ -20,4 +21,6 @@ urlpatterns = [
     path("conflict-detector/", ConflictDetectorView.as_view(), name="agent-conflict-detector"),
     path("smart-recommend/", SmartRecommendView.as_view(), name="agent-smart-recommend"),
     path("place-outfit/", PlaceOutfitView.as_view(), name="agent-place-outfit"),
+    # Public — no auth required (destination-first onboarding hook).
+    path("trip-insights/", PublicTripInsightsView.as_view(), name="agent-trip-insights"),
 ]
