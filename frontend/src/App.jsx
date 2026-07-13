@@ -64,7 +64,7 @@ function AppRoutes() {
   // dashboard.
   useEffect(() => {
     if (user && localStorage.getItem('ritha_pending_trip')) {
-      localStorage.removeItem('ritha_pending_trip')
+      // TripPlannerPage consumes + clears the stash and pre-fills the form.
       navigate('/trips', { replace: true })
     }
   }, [user, navigate])

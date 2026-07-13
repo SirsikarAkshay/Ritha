@@ -45,6 +45,30 @@ export default function TripPlannerPage() {
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
+  // Guest → sign-up handoff: a trip previewed on the public Start page is stashed
+  // in localStorage. On arrival, open the new-trip form pre-filled with the
+  // previewed (structured) destination + dates — no re-entry — then clear it.
+  useEffect(() => {
+    let pending
+    try { pending = JSON.parse(localStorage.getItem('ritha_pending_trip') || 'null') } catch { pending = null }
+    if (!pending) return
+    localStorage.removeItem('ritha_pending_trip')
+    const p = pending.place || {}
+    setForm(f => ({
+      ...f,
+      name: pending.destination ? `Trip to ${pending.destination}` : f.name,
+      country: p.country || '',
+      countryCode: p.countryCode || '',
+      cities: p.city ? [p.city] : [],
+      start_date: pending.date || '',
+      end_date: pending.date || '',
+    }))
+    setShowNew(true)
+    if (typeof window !== 'undefined' && window.__toast) {
+      window.__toast(`Picking up your trip to ${pending.destination}`, 'success')
+    }
+  }, [])
+
   const deriveDestination = (country, cities) => {
     const parts = [...(cities || []).filter(Boolean)]
     if (country) parts.push(country)

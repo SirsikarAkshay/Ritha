@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { agents } from '../api/index.js'
 import { useAuth } from '../hooks/useAuth.jsx'
+import PlaceAutocomplete from '../components/PlaceAutocomplete.jsx'
 
 const IMG_CATS = new Set(['top', 'bottom', 'dress', 'outerwear', 'footwear', 'accessory', 'activewear', 'formal', 'other'])
 const catImg = (c) => `/wardrobe-defaults/${IMG_CATS.has(c) ? c : 'other'}.svg`
@@ -21,7 +22,7 @@ function stashPendingTrip(payload) {
 export default function StartPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [form, setForm] = useState({ destination: '', date: '', gender: 'women' })
+  const [form, setForm] = useState({ destination: '', place: null, date: '', gender: 'women' })
   const [insights, setInsights] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -73,8 +74,17 @@ export default function StartPage() {
 
         {/* Form */}
         <form onSubmit={run} className="card" style={{ padding: 18, display: 'grid', gap: 12, gridTemplateColumns: '1fr', marginBottom: 26 }}>
-          <input value={form.destination} onChange={set('destination')} placeholder="e.g. Tokyo, Japan" aria-label="Destination"
-            style={{ padding: '14px 16px', fontSize: '1.1rem', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface, #161921)', color: 'var(--cream)' }} />
+          {/* Structured city pick (free Open-Meteo geocoding, no auth) → carries
+              straight into the trip planner after sign-up, no re-entry. */}
+          <PlaceAutocomplete
+            mode="city"
+            value={form.destination}
+            onChange={(v) => setForm((f) => ({ ...f, destination: v, place: null }))}
+            onSelect={(p) => setForm((f) => ({ ...f, destination: `${p.name}, ${p.country}`, place: { city: p.name, country: p.country, countryCode: p.country_code } }))}
+            placeholder="e.g. Tokyo"
+            className="input"
+            autoFocus
+          />
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <input type="date" value={form.date} onChange={set('date')} aria-label="Trip date"
               style={{ flex: '1 1 150px', padding: '12px 14px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--cream)', colorScheme: 'dark' }} />
