@@ -51,17 +51,19 @@ class TestTripWriteIDOR:
         trip = make_trip(owner, sw)
         m = hdr(login(client, member))
 
-        assert client.get(f"/api/itinerary/trips/{trip.id}/", **m).status_code == 200  # read OK
-        assert (
-            client.patch(
-                f"/api/itinerary/trips/{trip.id}/",
-                {"destination": "Hacked"},
-                content_type="application/json",
-                **m,
-            ).status_code
-            == 403
+        read = client.get(f"/api/itinerary/trips/{trip.id}/", **m)
+        assert read.status_code == 200  # read OK
+
+        patched = client.patch(
+            f"/api/itinerary/trips/{trip.id}/",
+            {"destination": "Hacked"},
+            content_type="application/json",
+            **m,
         )
-        assert client.delete(f"/api/itinerary/trips/{trip.id}/", **m).status_code == 403
+        assert patched.status_code == 403
+
+        deleted = client.delete(f"/api/itinerary/trips/{trip.id}/", **m)
+        assert deleted.status_code == 403
 
         trip.refresh_from_db()
         assert trip.destination == "Tokyo, Japan"
