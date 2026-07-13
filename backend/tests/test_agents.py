@@ -288,3 +288,38 @@ class TestPlaceOutfit:
         )
         assert r.status_code == 200
         assert r.json()["output"]["occasion"] == "business"
+
+
+class TestPublicTripInsights:
+    """The destination-first onboarding hook — must work with NO auth, NO wardrobe."""
+
+    def test_unauthenticated_returns_full_insight(self, client):
+        w = {"temp_c": 6, "condition": "Cloudy", "is_raining": True, "is_cold": True, "is_hot": False}
+        r = client.post(
+            "/api/agents/trip-insights/",
+            {"destination": "Tokyo, Japan", "date": "2027-04-06", "gender": "men", "weather": w},
+            content_type="application/json",
+            # deliberately NO Authorization header
+        )
+        assert r.status_code == 200, r.content
+        out = r.json()["output"]
+        assert out["is_preview"] is True
+        assert out["capsule"] and out["gaps"] and out["places"]
+        assert "personalise" in out["capsule_note"].lower()
+        # cold + rain → a warm coat and a rain shell appear
+        names = " ".join(i["name"].lower() for i in out["capsule"])
+        assert "coat" in names and "rain" in names
+
+    def test_capsule_adapts_to_climate(self, client):
+        r = client.post(
+            "/api/agents/trip-insights/",
+            {"destination": "Singapore", "weather": {"temp_c": 31, "is_hot": True, "condition": "Clear"}},
+            content_type="application/json",
+        )
+        assert r.status_code == 200
+        names = " ".join(i["name"].lower() for i in r.json()["output"]["capsule"])
+        assert "sandals" in names and "coat" not in names
+
+    def test_destination_required(self, client):
+        r = client.post("/api/agents/trip-insights/", {}, content_type="application/json")
+        assert r.status_code == 400

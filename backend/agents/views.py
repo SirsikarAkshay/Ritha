@@ -4,6 +4,7 @@ import json
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, views
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 
 from . import services
 from .input_serializers import (
@@ -13,6 +14,7 @@ from .input_serializers import (
     OutfitPlannerInputSerializer,
     PackingListInputSerializer,
     PlaceOutfitInputSerializer,
+    PublicTripInsightsInputSerializer,
     SmartRecommendInputSerializer,
     WeeklyLooksInputSerializer,
 )
@@ -222,3 +224,40 @@ class PlaceOutfitView(BaseAgentView):
 
     def run(self, user, data):
         return services.run_place_outfit(user, data)
+
+
+class PublicTripInsightsView(views.APIView):
+    """Unauthenticated 'instant insight' — the destination-first onboarding hook.
+
+    Given only a destination (+ optional date), returns weather, cultural
+    dress-code alerts, places to visit, a standard packing capsule, and a gap
+    analysis — with NO account and NO wardrobe, so a visitor gets the payoff
+    before signing up. The capsule is clearly labelled as generic (see
+    `capsule_note`); personalisation happens after they create an account.
+    """
+
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []  # public — never require/parse a token
+    throttle_classes = [AnonRateThrottle]
+
+    @extend_schema(
+        summary="Public destination insights (no auth)",
+        description="Weather + dress code + places + a standard packing capsule + gap analysis for a destination.",
+        request=PublicTripInsightsInputSerializer,
+        responses={
+            200: inline_serializer(name="PublicTripInsightsResponse", fields={"output": serializers.DictField()})
+        },
+    )
+    def post(self, request):
+        from ritha.services.public_insights import trip_insights
+
+        ser = PublicTripInsightsInputSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        output = trip_insights(
+            destination=d["destination"],
+            date=d["date"].isoformat() if d.get("date") else None,
+            gender=d.get("gender", "women"),
+            weather=d.get("weather"),
+        )
+        return Response({"output": output})

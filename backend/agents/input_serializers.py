@@ -183,3 +183,16 @@ class LuggageWeightInputSerializer(serializers.Serializer):
         default="default",
         help_text="Airline for carry-on limit comparison",
     )
+
+
+class PublicTripInsightsInputSerializer(serializers.Serializer):
+    """Unauthenticated instant-insight preview: destination-first, no wardrobe."""
+
+    destination = serializers.CharField(max_length=200, help_text="City / country the user is travelling to")
+    date = serializers.DateField(required=False, help_text="Trip start date (optional)")
+    gender = serializers.ChoiceField(
+        choices=[("men", "men"), ("women", "women"), ("kids", "kids")],
+        required=False,
+        default="women",
+    )
+    weather = serializers.DictField(required=False, help_text="Optional weather override (skips the live fetch)")

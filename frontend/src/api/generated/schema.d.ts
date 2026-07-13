@@ -144,6 +144,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/agents/trip-insights/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Public destination insights (no auth)
+         * @description Weather + dress code + places + a standard packing capsule + gap analysis for a destination.
+         */
+        post: operations["agents_trip_insights_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/agents/weekly-looks/": {
         parameters: {
             query?: never;
@@ -2512,6 +2532,34 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /**
+         * @description * `men` - men
+         *     * `women` - women
+         *     * `kids` - kids
+         * @enum {string}
+         */
+        PublicTripInsightsInputGenderEnum: "men" | "women" | "kids";
+        /** @description Unauthenticated instant-insight preview: destination-first, no wardrobe. */
+        PublicTripInsightsInputRequest: {
+            /** @description City / country the user is travelling to */
+            destination: string;
+            /**
+             * Format: date
+             * @description Trip start date (optional)
+             */
+            date?: string;
+            /** @default women */
+            gender: components["schemas"]["PublicTripInsightsInputGenderEnum"];
+            /** @description Optional weather override (skips the live fetch) */
+            weather?: {
+                [key: string]: unknown;
+            };
+        };
+        PublicTripInsightsResponse: {
+            output: {
+                [key: string]: unknown;
+            };
+        };
         ReceiptImportResponse: {
             status: string;
             items_created: number;
@@ -3048,6 +3096,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SmartRecommendResponse"];
+                };
+            };
+        };
+    };
+    agents_trip_insights_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublicTripInsightsInputRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PublicTripInsightsInputRequest"];
+                "multipart/form-data": components["schemas"]["PublicTripInsightsInputRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicTripInsightsResponse"];
                 };
             };
         };

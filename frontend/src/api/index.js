@@ -103,6 +103,8 @@ export const agents = {
   culturalAdvisor:  (data) => api.post('/agents/cultural-advisor/', data),
   smartRecommend:   (data) => api.post('/agents/smart-recommend/', data),
   placeOutfit:      (data) => api.post('/agents/place-outfit/', data),
+  // Public — no auth. Powers the destination-first "instant insight" landing.
+  publicTripInsights: (data) => api.post('/agents/trip-insights/', data),
 }
 
 // Backend origin (strip the trailing "/api") for resolving root-relative

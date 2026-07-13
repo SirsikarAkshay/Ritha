@@ -173,10 +173,13 @@ test.describe('Forgot password', () => {
 })
 
 test.describe('Auth redirects', () => {
-  test('unauthenticated user is redirected to /login', async ({ page }) => {
+  test('unauthenticated user landing on / sees the destination-first start page', async ({ page }) => {
+    // Value before signup: anonymous visitors get the instant-insight landing,
+    // not a login wall. (Protected routes still redirect — see the next test.)
     await mockAuthMeUnauthorized(page)
     await page.goto('/')
-    await expect(page).toHaveURL('/login')
+    await expect(page).toHaveURL('/')
+    await expect(page.getByRole('heading', { name: /where are you headed/i })).toBeVisible()
   })
 
   test('unauthenticated user visiting /wardrobe is redirected', async ({ page }) => {

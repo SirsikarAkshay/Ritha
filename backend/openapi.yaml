@@ -207,6 +207,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/SmartRecommendResponse'
           description: ''
+  /api/agents/trip-insights/:
+    post:
+      operationId: agents_trip_insights_create
+      description: Weather + dress code + places + a standard packing capsule + gap
+        analysis for a destination.
+      summary: Public destination insights (no auth)
+      tags:
+      - agents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicTripInsightsInputRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PublicTripInsightsInputRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PublicTripInsightsInputRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicTripInsightsResponse'
+          description: ''
   /api/agents/weekly-looks/:
     post:
       operationId: agents_weekly_looks_create
@@ -4106,6 +4135,48 @@ components:
       - job_id
       - output
       - status
+    PublicTripInsightsInputGenderEnum:
+      enum:
+      - men
+      - women
+      - kids
+      type: string
+      description: |-
+        * `men` - men
+        * `women` - women
+        * `kids` - kids
+    PublicTripInsightsInputRequest:
+      type: object
+      description: 'Unauthenticated instant-insight preview: destination-first, no
+        wardrobe.'
+      properties:
+        destination:
+          type: string
+          minLength: 1
+          description: City / country the user is travelling to
+          maxLength: 200
+        date:
+          type: string
+          format: date
+          description: Trip start date (optional)
+        gender:
+          allOf:
+          - $ref: '#/components/schemas/PublicTripInsightsInputGenderEnum'
+          default: women
+        weather:
+          type: object
+          additionalProperties: {}
+          description: Optional weather override (skips the live fetch)
+      required:
+      - destination
+    PublicTripInsightsResponse:
+      type: object
+      properties:
+        output:
+          type: object
+          additionalProperties: {}
+      required:
+      - output
     ReceiptImportResponse:
       type: object
       properties:
