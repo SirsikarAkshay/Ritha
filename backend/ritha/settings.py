@@ -221,6 +221,10 @@ CORS_ALLOWED_ORIGINS = [
     os.getenv("WEB_APP_URL", "http://localhost:3000"),
     os.getenv("MOBILE_APP_URL", "http://localhost:8081"),
 ]
+# In production, drop any localhost/127.0.0.1 origin that slipped in via an unset
+# *_APP_URL default — a localhost entry must never sit in a credentialed allowlist.
+if not DEBUG:
+    CORS_ALLOWED_ORIGINS = [o for o in CORS_ALLOWED_ORIGINS if "localhost" not in o and "127.0.0.1" not in o]
 # Localhost origins are only trusted in development. In production (DEBUG=False)
 # these regexes are dropped so the prod API never honours a localhost Origin
 # alongside CORS_ALLOW_CREDENTIALS.

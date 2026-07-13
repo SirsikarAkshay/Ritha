@@ -253,7 +253,9 @@ class TestResetPassword:
         r = client.post("/api/auth/reset-password/", {}, content_type="application/json")
         assert r.status_code == 400
 
-    def test_unknown_email_returns_404(self, client):
+    def test_unknown_email_returns_generic_400_not_404(self, client):
+        # Anti-enumeration: an unknown email is indistinguishable from a bad token
+        # (both → generic 400 invalid_token) — never a 404 that confirms non-existence.
         r = client.post(
             "/api/auth/reset-password/",
             {
@@ -263,4 +265,5 @@ class TestResetPassword:
             },
             content_type="application/json",
         )
-        assert r.status_code == 404
+        assert r.status_code == 400
+        assert r.json()["error"]["code"] == "invalid_token"

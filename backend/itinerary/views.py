@@ -136,10 +136,28 @@ class TripViewSet(viewsets.ModelViewSet):
                 raise PermissionDenied("You are not a member of this shared wardrobe.")
         serializer.save(user=self.request.user)
 
+    def _require_owner(self, trip):
+        # get_queryset intentionally includes trips shared with the user (read access),
+        # so every WRITE path must re-check ownership — a collaborator must not be able
+        # to edit/delete/overwrite the trip owner's record.
+        if trip.user_id != self.request.user.id:
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied("Only the trip owner can modify this trip.")
+
+    def perform_update(self, serializer):
+        self._require_owner(serializer.instance)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._require_owner(instance)
+        instance.delete()
+
     @decorators.action(detail=True, methods=["post", "delete"], url_path="save-recommendation")
     def save_recommendation(self, request, pk=None):
         """Save or clear an AI recommendation on this trip."""
         trip = self.get_object()
+        self._require_owner(trip)
         if request.method == "DELETE":
             trip.saved_recommendation = None
             trip.save(update_fields=["saved_recommendation"])
@@ -194,6 +212,7 @@ class TripViewSet(viewsets.ModelViewSet):
             ci.id: ci
             for ci in ClothingItem.objects.filter(
                 id__in=[i[0] for i in items_to_add],
+                user=user,  # only the acting user's own items — never leak another user's items
             )
         }
 
@@ -237,6 +256,26 @@ class PackingChecklistViewSet(viewsets.ModelViewSet):
         if trip_id:
             qs = qs.filter(trip_id=trip_id)
         return qs.select_related("clothing_item", "trip")
+
+    def _validate_ownership(self, serializer):
+        # `trip` and `clothing_item` are client-supplied writable FKs — a user could
+        # point them at another user's records. Enforce ownership on create/update.
+        from rest_framework.exceptions import PermissionDenied
+
+        trip = serializer.validated_data.get("trip")
+        if trip is not None and trip.user_id != self.request.user.id:
+            raise PermissionDenied("You can only add items to your own trips.")
+        ci = serializer.validated_data.get("clothing_item")
+        if ci is not None and ci.user_id != self.request.user.id:
+            raise PermissionDenied("That wardrobe item isn't yours.")
+
+    def perform_create(self, serializer):
+        self._validate_ownership(serializer)
+        serializer.save()
+
+    def perform_update(self, serializer):
+        self._validate_ownership(serializer)
+        serializer.save()
 
     @decorators.action(detail=False, methods=["post"], url_path="from-packing-list")
     def from_packing_list(self, request):

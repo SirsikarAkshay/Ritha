@@ -9,9 +9,6 @@ import time
 
 logger = logging.getLogger("ritha.requests")
 
-# Paths whose request bodies should never appear in logs
-_REDACT_PATHS = {"/api/auth/login/", "/api/auth/register/", "/api/auth/me/password/"}
-
 
 class RequestLoggingMiddleware:
     def __init__(self, get_response):
@@ -22,7 +19,8 @@ class RequestLoggingMiddleware:
         response = self.get_response(request)
         duration = round((time.monotonic() - start) * 1000, 1)
 
-        user = request.user.email if hasattr(request, "user") and request.user.is_authenticated else "anon"
+        # Log the user id, not the email — avoid PII in request logs / Sentry breadcrumbs.
+        user = request.user.id if hasattr(request, "user") and request.user.is_authenticated else "anon"
 
         logger.info(
             "%s %s %s %sms user=%s",

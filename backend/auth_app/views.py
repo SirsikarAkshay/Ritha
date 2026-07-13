@@ -71,14 +71,9 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
-        import logging
-
-        logging.basicConfig(level=logging.INFO)
-        logging.info(f"Register request data: {request.data}")
         serializer = self.get_serializer(data=request.data)
 
         if not serializer.is_valid():
-            logging.error(f"Serializer errors: {serializer.errors}")
             # Return clear, human-readable field errors
             errors = {}
             for field, msgs in serializer.errors.items():
@@ -129,9 +124,10 @@ class VerifyEmailView(APIView):
         try:
             user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
+            # Anti-enumeration: an unknown email is indistinguishable from a bad token.
             return Response(
-                {"error": {"code": "not_found", "message": "No account found for this email."}},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": {"code": "invalid_token", "message": "This verification link is invalid or has expired."}},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if user.is_email_verified:
@@ -216,21 +212,21 @@ class ForgotPasswordView(APIView):
 
         sent = send_password_reset_email(user)
         if not sent:
-            # Real account, but SMTP failed — surface so user/ops can act.
-            return Response(
-                {
-                    "error": {
-                        "code": "email_send_failed",
-                        "message": (
-                            "We could not send the password reset email. "
-                            "Check the server logs for the SMTP error (most often: "
-                            "Gmail requires an App Password, not your account password)."
-                        ),
-                    }
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            # Log server-side, but still return the SAME generic response — a distinguishing
+            # 500 for real accounts would defeat the anti-enumeration guarantee above.
+            import logging
+
+            logging.getLogger(__name__).error("Password-reset email failed to send for user %s", user.pk)
         return generic_ok
+
+
+def _revoke_refresh_tokens(user):
+    """Blacklist all of a user's outstanding refresh tokens — forces re-auth on every
+    device after a password reset/change, limiting post-compromise session persistence."""
+    from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+
+    for token in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=token)
 
 
 # ── Reset password — consume token ────────────────────────────────────────
@@ -276,9 +272,10 @@ class ResetPasswordView(APIView):
         try:
             user = User.objects.get(email__iexact=email, is_active=True)
         except User.DoesNotExist:
+            # Anti-enumeration: an unknown email is indistinguishable from a bad token.
             return Response(
-                {"error": {"code": "not_found", "message": "No account found for this email."}},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": {"code": "invalid_token", "message": "This reset link is invalid or has expired."}},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         ok, error_msg = verify_reset_token(user, token)
@@ -289,6 +286,7 @@ class ResetPasswordView(APIView):
             )
 
         consume_reset_token(user, new_password)
+        _revoke_refresh_tokens(user)  # invalidate any existing sessions on password reset
         return Response({"message": "Password reset successfully. You can now log in."})
 
 
@@ -311,6 +309,7 @@ class PasswordChangeView(APIView):
         serializer.is_valid(raise_exception=True)
         request.user.set_password(serializer.validated_data["new_password"])
         request.user.save()
+        _revoke_refresh_tokens(request.user)  # invalidate other sessions on password change
         return Response({"detail": "Password changed successfully."})
 
 
