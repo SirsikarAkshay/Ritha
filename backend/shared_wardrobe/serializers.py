@@ -15,11 +15,18 @@ class SharedWardrobeItemSerializer(serializers.ModelSerializer):
 
 class SharedWardrobeMemberSerializer(serializers.ModelSerializer):
     user = PublicUserSerializer(read_only=True)
+    wardrobe_item_count = serializers.SerializerMethodField()
 
     class Meta:
         model = SharedWardrobeMember
-        fields = ["id", "user", "role", "joined_at"]
-        read_only_fields = ["id", "joined_at"]
+        fields = ["id", "user", "role", "joined_at", "wardrobe_item_count"]
+        read_only_fields = ["id", "joined_at", "wardrobe_item_count"]
+
+    def get_wardrobe_item_count(self, obj):
+        # Per-member personal wardrobe size — powers the reel's "Aditi · 26 items".
+        from wardrobe.models import ClothingItem
+
+        return ClothingItem.objects.filter(user_id=obj.user_id).count()
 
 
 class SharedWardrobeSerializer(serializers.ModelSerializer):
@@ -41,8 +48,9 @@ class SharedWardrobeSerializer(serializers.ModelSerializer):
             "item_count",
             "my_role",
             "pending_invitee_ids",
+            "invite_token",
         ]
-        read_only_fields = ["id", "created_by", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at", "invite_token"]
 
     def get_item_count(self, obj):
         return obj.items.count()

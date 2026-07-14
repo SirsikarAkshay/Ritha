@@ -8,14 +8,18 @@ from .views import (
     MemberAddView,
     MemberRemoveView,
     WardrobeDetailView,
+    WardrobeInviteLinkView,
+    WardrobeJoinView,
     WardrobeListCreateView,
 )
 
 urlpatterns = [
     path("", WardrobeListCreateView.as_view()),
+    path("join/", WardrobeJoinView.as_view()),
     path("invitations/", InvitationListView.as_view()),
     path("invitations/<int:pk>/respond/", InvitationRespondView.as_view()),
     path("<int:pk>/", WardrobeDetailView.as_view()),
+    path("<int:pk>/invite-link/", WardrobeInviteLinkView.as_view()),
     path("<int:pk>/members/", MemberAddView.as_view()),
     path("<int:pk>/members/<int:user_id>/", MemberRemoveView.as_view()),
     path("<int:pk>/items/", ItemListCreateView.as_view()),

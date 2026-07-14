@@ -22,6 +22,7 @@ import ProfilePage from './pages/ProfilePage.jsx'
 import OutfitHistoryPage from './pages/OutfitHistoryPage.jsx'
 import OnboardingPage from './pages/OnboardingPage.jsx'
 import StartPage from './pages/StartPage.jsx'
+import JoinPage from './pages/JoinPage.jsx'
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 import TermsOfService from './pages/TermsOfService.jsx'
 import ConsentBanner from './components/ConsentBanner.jsx'
@@ -68,6 +69,21 @@ function AppRoutes() {
       navigate('/trips', { replace: true })
     }
   }, [user, navigate])
+  // A crew invite opened while logged out → complete the join after sign-up.
+  useEffect(() => {
+    if (!user) return
+    const token = localStorage.getItem('ritha_pending_join')
+    if (!token) return
+    localStorage.removeItem('ritha_pending_join')
+    import('./api/index.js').then(({ sharedWardrobes }) =>
+      sharedWardrobes.join(token)
+        .then((res) => {
+          window.__toast?.(res?.already_member ? "You're already in this trip's crew." : 'Joined the trip! 🎒', 'success')
+          navigate('/trips', { replace: true })
+        })
+        .catch(() => {}),
+    )
+  }, [user, navigate])
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
@@ -89,6 +105,7 @@ function AppRoutes() {
         user ? <ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute> : <StartPage />
       } />
       <Route path="/start" element={<StartPage />} />
+      <Route path="/join/:token" element={<JoinPage />} />
       <Route path="/wardrobe" element={
         <ProtectedRoute><Layout><WardrobePage /></Layout></ProtectedRoute>
       } />

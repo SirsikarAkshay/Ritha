@@ -292,6 +292,60 @@ class MemberRemoveView(APIView):
         return Response({"status": "removed"})
 
 
+# ── Join by shareable link ────────────────────────────────────────────────────
+class WardrobeInviteLinkView(APIView):
+    """POST /api/shared-wardrobes/<pk>/invite-link/ — get (minting on first use) the
+    shareable join token. Any member can share the link with their crew."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            wardrobe = SharedWardrobe.objects.get(pk=pk)
+        except SharedWardrobe.DoesNotExist:
+            return Response({"error": {"code": "not_found", "message": "Not found."}}, status=status.HTTP_404_NOT_FOUND)
+        err = _require_member(wardrobe, request.user)
+        if err:
+            return err
+        token = wardrobe.ensure_invite_token()
+        return Response({"token": token, "join_path": f"/join/{token}", "wardrobe_id": wardrobe.id})
+
+
+class WardrobeJoinView(APIView):
+    """POST /api/shared-wardrobes/join/  body: { token } — join a wardrobe via its share link."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        token = (request.data.get("token") or "").strip()
+        if not token:
+            return Response(
+                {"error": {"code": "missing_fields", "message": "`token` is required."}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            wardrobe = SharedWardrobe.objects.get(invite_token=token)
+        except SharedWardrobe.DoesNotExist:
+            return Response(
+                {"error": {"code": "invalid_token", "message": "This invite link is invalid or has expired."}},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        member, created = SharedWardrobeMember.objects.get_or_create(
+            wardrobe=wardrobe, user=request.user, defaults={"role": MemberRole.EDITOR}
+        )
+        if created:
+            payload = SharedWardrobeMemberSerializer(member, context={"request": request}).data
+            _broadcast(wardrobe.id, "member_added", payload)
+        return Response(
+            {
+                "status": "joined",
+                "already_member": not created,
+                "wardrobe": SharedWardrobeSerializer(wardrobe, context={"request": request}).data,
+            }
+        )
+
+
 # ── Items ─────────────────────────────────────────────────────────────────────
 class ItemListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]

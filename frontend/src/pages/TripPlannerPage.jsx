@@ -187,6 +187,20 @@ export default function TripPlannerPage() {
     }
   }
 
+  // Collaborative packing: mint (or fetch) the trip's crew invite link and copy it.
+  const shareTrip = async (trip) => {
+    try {
+      const res = await itineraryApi.trips.share(trip.id)
+      const url = `${window.location.origin}/join/${res.token}`
+      let copied = false
+      try { await navigator.clipboard.writeText(url); copied = true } catch { /* clipboard unavailable */ }
+      setTrips(prev => prev.map(t => t.id === trip.id ? { ...t, shared_wardrobe: res.wardrobe_id } : t))
+      window.__toast?.(copied ? 'Invite link copied — share it with your crew! 👥' : `Invite link: ${url}`, 'success')
+    } catch (err) {
+      setError(err.message || 'Could not create an invite link.')
+    }
+  }
+
   const clearSavedRecommendation = async (tripId) => {
     try {
       await itineraryApi.trips.clearRecommendation(tripId)
@@ -440,6 +454,7 @@ export default function TripPlannerPage() {
                         : hasSaved ? '✧ Refresh' : '✧ Recommend outfits'
                       }
                     </button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => shareTrip(trip)} title="Invite friends to pack together">👥 Invite crew</button>
                     <button className="btn btn-ghost btn-icon btn-sm" onClick={() => startEditing(trip)} title="Edit trip">✎</button>
                     <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setConfirmDelete(trip.id)} title="Delete trip">✕</button>
                   </div>

@@ -30,6 +30,9 @@ class SharedWardrobe(models.Model):
         on_delete=models.CASCADE,
         related_name="shared_wardrobes_created",
     )
+    # Opaque token for a shareable "join by link" invite. Empty until first
+    # requested; generated on demand so most wardrobes never mint one.
+    invite_token = models.CharField(max_length=32, blank=True, default="", db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -45,6 +48,19 @@ class SharedWardrobe(models.Model):
     def member_role(self, user):
         member = self.members.filter(user=user).first()
         return member.role if member else None
+
+    def ensure_invite_token(self) -> str:
+        """Return the wardrobe's join token, minting a collision-free one on first use."""
+        if not self.invite_token:
+            import secrets
+
+            for _ in range(6):
+                token = secrets.token_urlsafe(9)
+                if not SharedWardrobe.objects.filter(invite_token=token).exists():
+                    self.invite_token = token
+                    self.save(update_fields=["invite_token"])
+                    break
+        return self.invite_token
 
 
 class SharedWardrobeMember(models.Model):

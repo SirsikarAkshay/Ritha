@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -80,6 +81,87 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  // Collaborative packing: mint (or fetch) the trip's crew invite link and copy it.
+  Future<void> _shareTrip(Map<String, dynamic> trip) async {
+    try {
+      final res = await itineraryApi.trips.share(trip['id'] as int) as Map;
+      final token = res['token']?.toString() ?? '';
+      final url = 'https://getritha.com/join/$token';
+      await Clipboard.setData(ClipboardData(text: url));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invite link copied — share it with your crew! 👥'),
+        ),
+      );
+      _load();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not create an invite link.')),
+      );
+    }
+  }
+
+  // Join a crew from a pasted invite link or token.
+  Future<void> _joinByLink() async {
+    final controller = TextEditingController();
+    final value = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface1,
+        title: const Text(
+          'Join a trip',
+          style: TextStyle(color: AppColors.cream),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: const TextStyle(color: AppColors.cream),
+          decoration: const InputDecoration(
+            hintText: 'Paste your invite link or code',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Join'),
+          ),
+        ],
+      ),
+    );
+    if (value == null || value.isEmpty) return;
+    // Accept either a full link (…/join/<token>) or a bare token.
+    final token = value.contains('/join/')
+        ? value.split('/join/').last.split(RegExp(r'[/?#]')).first
+        : value;
+    try {
+      final res = await sharedWardrobesApi.join(token) as Map;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            res['already_member'] == true
+                ? "You're already in this trip's crew."
+                : 'Joined the trip! 🎒',
+          ),
+        ),
+      );
+      _load();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('That invite link is invalid or expired.'),
+        ),
+      );
+    }
   }
 
   Future<void> _load() async {
@@ -413,6 +495,15 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                     'Plan your packing and daily looks.',
                     style: TextStyle(color: AppColors.creamDim, fontSize: 14),
                   ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: _joinByLink,
+                      icon: const Icon(Icons.group_add, size: 16),
+                      label: const Text('Join a trip with a link'),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   GestureDetector(
                     onTap: () => context.go('/packing'),
@@ -557,6 +648,17 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                     ),
                                   ],
                                 ],
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _shareTrip(
+                                    Map<String, dynamic>.from(trip),
+                                  ),
+                                  icon: const Icon(Icons.group_add, size: 16),
+                                  label: const Text('Invite crew'),
+                                ),
                               ),
                             ],
                           ),

@@ -189,6 +189,30 @@ class TripViewSet(viewsets.ModelViewSet):
             }
         )
 
+    @decorators.action(detail=True, methods=["post"], url_path="share")
+    def share(self, request, pk=None):
+        """
+        Ensure this trip has a shared wardrobe (the collaboration hub) and return a
+        join link. Powers the reel's "share one link, friends join the trip".
+        """
+        trip = self.get_object()
+        self._require_owner(trip)
+        from shared_wardrobe.models import MemberRole, SharedWardrobe, SharedWardrobeMember
+
+        sw = trip.shared_wardrobe
+        if sw is None:
+            sw = SharedWardrobe.objects.create(
+                name=trip.name or f"{trip.destination} trip",
+                created_by=request.user,
+            )
+            SharedWardrobeMember.objects.get_or_create(
+                wardrobe=sw, user=request.user, defaults={"role": MemberRole.OWNER}
+            )
+            trip.shared_wardrobe = sw
+            trip.save(update_fields=["shared_wardrobe"])
+        token = sw.ensure_invite_token()
+        return Response({"trip_id": trip.id, "wardrobe_id": sw.id, "token": token, "join_path": f"/join/{token}"})
+
     @staticmethod
     def _push_items_to_shared_wardrobe(wardrobe, user, recommendation):
         from shared_wardrobe.models import SharedWardrobeItem
