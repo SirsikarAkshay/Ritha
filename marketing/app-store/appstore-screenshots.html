@@ -1,0 +1,196 @@
+<meta charset="utf-8">
+<title>Ritha — App Store screenshots</title>
+<style>
+  :root{
+    --ink:#0d0f14;--surface:#161921;--surface2:#1c2029;--surface3:#252833;--line:rgba(245,240,232,.12);
+    --cream:#f5f0e8;--dim:#9a97a0;--faint:#6b6a73;--terra:#d4724a;--terra-lt:#e8956e;
+    --sage:#7ba67e;--sky:#6fa8c7;--gold:#c9a84c;--sakura:#e79ab0;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}html,body{margin:0}
+  body{background:#08090c;color:var(--cream);font-family:var(--sans);-webkit-font-smoothing:antialiased;padding:28px 18px 60px}
+  h1.pt{font-size:1.5rem;font-weight:680;letter-spacing:-.02em;margin:0 0 4px}
+  p.ph{color:var(--dim);font-size:.95rem;margin:0 0 22px;line-height:1.5;max-width:70ch}
+  p.ph code{font-family:var(--mono);color:var(--terra-lt);background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:.82rem}
+  .sheet{display:flex;gap:22px;overflow-x:auto;padding:6px 2px 24px;scroll-snap-type:x mandatory}
+  /* Each slide = one App Store screenshot (1290×2796 → scaled). Capture per slide. */
+  .slide{scroll-snap-align:center;flex:0 0 auto;width:300px;border-radius:26px;padding:26px 20px 22px;display:flex;flex-direction:column;align-items:center;
+    box-shadow:0 30px 70px -34px rgba(0,0,0,.85)}
+  .slide.s1{background:radial-gradient(120% 60% at 50% 0%,rgba(111,168,199,.28),transparent 62%),linear-gradient(180deg,#12222c,#0c141a)}
+  .slide.s2{background:radial-gradient(120% 60% at 50% 0%,rgba(231,154,176,.26),transparent 62%),linear-gradient(180deg,#221520,#0c0a10)}
+  .slide.s3{background:radial-gradient(120% 60% at 50% 0%,rgba(201,168,76,.24),transparent 62%),linear-gradient(180deg,#211d12,#0e0c08)}
+  .slide.s4{background:radial-gradient(120% 60% at 50% 0%,rgba(212,114,74,.28),transparent 62%),linear-gradient(180deg,#26160f,#0f0a08)}
+  .slide.s5{background:radial-gradient(120% 60% at 50% 0%,rgba(123,166,126,.26),transparent 62%),linear-gradient(180deg,#131f16,#0a0e0b)}
+  .eyebrow{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:9px}
+  .s1 .eyebrow{color:var(--sky)}.s2 .eyebrow{color:var(--sakura)}.s3 .eyebrow{color:var(--gold)}.s4 .eyebrow{color:var(--terra-lt)}.s5 .eyebrow{color:var(--sage)}
+  .cap{font-size:1.5rem;font-weight:700;letter-spacing:-.025em;line-height:1.1;text-align:center;text-wrap:balance;margin-bottom:18px;min-height:2.4em;display:flex;align-items:center}
+  .cap em{font-style:normal}
+  .s1 .cap em{color:var(--sky)}.s2 .cap em{color:var(--sakura)}.s3 .cap em{color:var(--gold)}.s4 .cap em{color:var(--terra-lt)}.s5 .cap em{color:var(--sage)}
+  /* Phone */
+  .device{position:relative;width:238px;aspect-ratio:9/19.5;border-radius:34px;background:#05060a;padding:9px;box-shadow:0 0 0 2px rgba(255,255,255,.07) inset,0 18px 44px -18px rgba(0,0,0,.9)}
+  .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:82px;height:19px;background:#05060a;border-radius:0 0 13px 13px;z-index:3}
+  .screen{position:relative;width:100%;height:100%;border-radius:26px;overflow:hidden;background:var(--ink);display:flex;flex-direction:column}
+  .stat{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 4px;font-family:var(--mono);font-size:.56rem;color:var(--faint)}
+  .body{flex:1;min-height:0;overflow:hidden;padding:6px 12px 12px}
+  .scr-h{font-size:.82rem;font-weight:650;letter-spacing:-.01em;margin:2px 0 2px}
+  .scr-sub{font-family:var(--mono);font-size:.56rem;letter-spacing:.04em;color:var(--faint);text-transform:uppercase;margin-bottom:9px}
+  .row{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:8px 9px;margin-bottom:7px}
+  .row .ic{font-size:1.05rem;flex:none}
+  .row .tx{flex:1;min-width:0;font-size:.68rem;color:var(--cream);line-height:1.3}
+  .row .tx small{display:block;color:var(--faint);font-family:var(--mono);font-size:.54rem;margin-top:2px}
+  .pill{font-family:var(--mono);font-size:.5rem;letter-spacing:.03em;text-transform:uppercase;padding:3px 7px;border-radius:10px;white-space:nowrap;flex:none}
+  .pill.sage{color:#9fce9f;background:rgba(123,166,126,.18)}
+  .pill.sky{color:var(--sky);background:rgba(111,168,199,.16)}
+  .pill.terra{color:var(--cream);background:var(--terra)}
+  .pill.gold{color:var(--gold);background:rgba(201,168,76,.16);border:1px solid rgba(201,168,76,.35)}
+  .bubble{max-width:86%;padding:7px 10px;border-radius:12px;font-size:.66rem;line-height:1.35;margin-bottom:7px}
+  .bubble.them{background:var(--surface2);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .bubble.you{background:var(--terra);color:#fff;border-bottom-right-radius:4px;margin-left:auto}
+  .tally{display:flex;align-items:center;gap:9px;background:rgba(123,166,126,.12);border:1px solid rgba(123,166,126,.3);border-radius:12px;padding:9px 11px;margin-top:4px}
+  .tally .n{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:#9fce9f;line-height:1}
+  .tally .l{font-size:.62rem;color:var(--dim);line-height:1.3}
+  .tally .l b{color:#9fce9f}
+  .gap{display:flex;align-items:stretch;gap:7px;margin:6px 0 10px}
+  .gc{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 6px;text-align:center}
+  .gc .cty{font-family:var(--mono);font-size:.5rem;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+  .gc .tp{font-size:1.45rem;font-weight:700;line-height:1}
+  .gc.warm .tp{color:var(--terra-lt)}.gc.cold .tp{color:var(--sky)}
+  .gc .cd{font-size:.54rem;color:var(--dim);margin-top:4px}
+  .delta{align-self:center;font-family:var(--mono);color:var(--terra);text-align:center}
+  .delta .d{font-size:1rem;font-weight:700}.delta .dl{display:block;font-size:.46rem;text-transform:uppercase;color:var(--faint)}
+  .cue{display:flex;align-items:center;gap:7px;font-size:.62rem;color:var(--cream);padding:6px 0;border-top:1px solid var(--line)}
+  .cue:first-of-type{border-top:none}
+  .cue .cx{margin-left:auto;font-family:var(--mono);font-size:.5rem;color:var(--terra-lt)}
+  .wgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .wtile{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:6px}
+  .thumb{width:26px;height:26px;border-radius:6px;background:linear-gradient(150deg,#f2ede3,#e1dacc);display:grid;place-items:center;flex:none}
+  .thumb svg{width:23px;height:23px}
+  .wtile .wn{font-size:.58rem;color:var(--cream);line-height:1.15}
+  .gauge{height:8px;border-radius:8px;background:var(--surface2);overflow:hidden;margin:8px 0 3px}
+  .gauge>i{display:block;height:100%;width:52%;border-radius:8px;background:linear-gradient(90deg,var(--terra),var(--terra-lt))}
+  .grow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.52rem;color:var(--dim)}
+  .ochip{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 8px;margin-bottom:6px}
+  .ochip .on{flex:1;font-size:.64rem;color:var(--cream)}
+  .ochip .orl{font-family:var(--mono);font-size:.5rem;color:var(--faint)}
+  .foot{color:var(--faint);font-size:.66rem;margin-top:22px;font-family:var(--mono);line-height:1.7}
+  .foot b{color:var(--cream)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="fsh" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="1.2" stdDeviation="1.2" flood-color="#3a2a1a" flood-opacity="0.28"/></filter>
+  <linearGradient id="gGrey" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ba1a9"/><stop offset="1" stop-color="#767c86"/></linearGradient>
+  <linearGradient id="gNavyK" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#37456a"/><stop offset="1" stop-color="#212b45"/></linearGradient>
+  <linearGradient id="gChino" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ccbb8f"/><stop offset="1" stop-color="#a8946a"/></linearGradient>
+  <linearGradient id="gWhiteS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcfdff"/><stop offset="1" stop-color="#dee3ea"/></linearGradient>
+  <g id="t-tee" filter="url(#fsh)"><path d="M37 28 L24 36 L30 49 L37 45 V83 H63 V45 L70 49 L76 36 L63 28 C57 34 43 34 37 28 Z" fill="url(#gGrey)" stroke="#6a707a" stroke-width="1.2" stroke-linejoin="round"/><path d="M42 29 C45 34 55 34 58 29" fill="none" stroke="#5c626c" stroke-width="2.2"/></g>
+  <g id="t-sw" filter="url(#fsh)"><path d="M37 27 L21 35 L28 49 L36 45 V83 H64 V45 L72 49 L79 35 L63 27 C57 33 43 33 37 27 Z" fill="url(#gNavyK)" stroke="#1a2338" stroke-width="1.2" stroke-linejoin="round"/><path d="M42 28 C45 34 55 34 58 28" fill="none" stroke="#46567c" stroke-width="2.6"/></g>
+  <g id="t-ch" filter="url(#fsh)"><path d="M34 22 H66 V33 L60 86 H51 L50 50 L49 86 H40 L34 33 Z" fill="url(#gChino)" stroke="#8a7a52" stroke-width="1.2" stroke-linejoin="round"/><rect x="34" y="22" width="32" height="6" fill="#d8c79a"/></g>
+  <g id="t-sn" filter="url(#fsh)"><path d="M18 58 C18 50 27 48 39 48 L52 41 C58 41 62 46 65 52 L74 56 C79 58 79 64 73 65 H21 C18 65 17 61 18 58 Z" fill="url(#gWhiteS)" stroke="#b4b9c1" stroke-width="1.2" stroke-linejoin="round"/><path d="M20 63 H74" stroke="#3a3f47" stroke-width="3" stroke-linecap="round"/></g>
+</defs></svg>
+
+<h1 class="pt">Ritha · App Store screenshots</h1>
+<p class="ph">Five store-ready slides, led by <b style="color:var(--sky)">Collaborative Packing</b>. Each slide is a phone screenshot with its marketing caption. To export: full-screen this page, then screen-record / screenshot <b>one slide at a time</b> (<code>⌘⇧4</code> → drag over a slide). Backgrounds are per-slide so each reads on its own in the store carousel.</p>
+
+<div class="sheet">
+
+  <!-- 1 · COLLABORATIVE PACKING (hero) -->
+  <div class="slide s1">
+    <div class="eyebrow">👥 Collaborative packing</div>
+    <div class="cap">Pack the group.<br>Not three <em>solo</em> trips.</div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="stat"><span>9:41</span><span>Tokyo 2027 · shared</span></div>
+      <div class="body">
+        <div class="scr-h">Shared closet · live</div>
+        <div class="scr-sub">You · Aditi · Karan</div>
+        <div class="bubble them">Aditi: I'll bring the adapter + first-aid 🙌</div>
+        <div class="row"><span class="ic">🔌</span><span class="tx">Adapter · First-aid<small>Aditi packs · off your bag &amp; Karan's</small></span><span class="pill sage">shared ×1</span></div>
+        <div class="bubble you">Borrow your merino? Saves me buying one 😄</div>
+        <div class="row"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#t-sw"/></svg></span><span class="tx">Merino sweater<small>Aditi → You · buy list 4→3</small></span><span class="pill sky">borrowed</span></div>
+        <div class="tally"><span class="n">2</span><span class="l"><b>bags of space saved</b> across the group — nothing packed three times.</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- 2 · DESTINATION-FIRST -->
+  <div class="slide s2">
+    <div class="eyebrow">✦ Instant insight</div>
+    <div class="cap">Just say <em>where</em>.<br>See the gap instantly.</div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="stat"><span>9:41</span><span>no sign-up</span></div>
+      <div class="body">
+        <div class="scr-h">Where are you headed?</div>
+        <div class="scr-sub">Bengaluru → Tokyo · Apr</div>
+        <div class="gap">
+          <div class="gc warm"><div class="cty">Bengaluru</div><div class="tp">26°</div><div class="cd">🌤 mild</div></div>
+          <div class="delta"><span class="d">−18°</span><span class="dl">colder</span></div>
+          <div class="gc cold"><div class="cty">Tokyo</div><div class="tp">8°</div><div class="cd">🌸 cold</div></div>
+        </div>
+        <div class="cue"><span>🧥</span><span>No cold-weather layers yet</span><span class="cx">gap</span></div>
+        <div class="cue"><span>👟</span><span>Shoes off indoors</span><span class="cx">dress code</span></div>
+        <div class="cue"><span>🌸</span><span>Layer up for hanami mornings</span><span class="cx">April</span></div>
+        <div class="row" style="margin-top:9px;background:var(--terra);border:none;justify-content:center"><span class="tx" style="flex:none;color:#fff;font-weight:600">See my instant plan →</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- 3 · WARDROBE -->
+  <div class="slide s3">
+    <div class="eyebrow">🎒 Your wardrobe</div>
+    <div class="cap">A closet that <em>packs itself</em>.</div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="stat"><span>9:41</span><span>carry-on · 40L</span></div>
+      <div class="body">
+        <div class="scr-h">Packed from your closet</div>
+        <div class="scr-sub">6 pieces travel fine</div>
+        <div class="gauge"><i></i></div>
+        <div class="grow"><span>12.8 L</span><span>52% of 40L</span></div>
+        <div class="wgrid" style="margin-top:9px">
+          <div class="wtile"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#t-tee"/></svg></span><span class="wn">Cotton tee ×3</span></div>
+          <div class="wtile"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#t-sw"/></svg></span><span class="wn">Merino <small style="color:var(--sage)">new</small></span></div>
+          <div class="wtile"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#t-ch"/></svg></span><span class="wn">Beige chinos</span></div>
+          <div class="wtile"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#t-sn"/></svg></span><span class="wn">White sneakers</span></div>
+        </div>
+        <div class="row" style="margin-top:9px"><span class="ic">🧥</span><span class="tx">Missing 4 warm layers for 8°C<small>Ritha lists exactly what to add</small></span><span class="pill gold">gap</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- 4 · TAP-A-PLACE OUTFIT -->
+  <div class="slide s4">
+    <div class="eyebrow">⛩ Tap-a-place</div>
+    <div class="cap">Dressed for <em>every place</em> you'll go.</div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="stat"><span>9:41</span><span>Meiji Shrine</span></div>
+      <div class="body">
+        <div class="scr-h">Dressed for the place</div>
+        <div class="scr-sub">⛩ Meiji Shrine · shoes off indoors</div>
+        <div class="ochip"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#t-tee"/></svg></span><span class="on">Formal shirt</span><span class="orl">base</span></div>
+        <div class="ochip"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#t-sw"/></svg></span><span class="on">Merino sweater</span><span class="orl" style="color:var(--sage)">warm layer</span></div>
+        <div class="ochip"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#t-ch"/></svg></span><span class="on">Beige chinos</span><span class="orl">bottom</span></div>
+        <div class="ochip"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#t-sn"/></svg></span><span class="on">White sneakers</span><span class="orl">slip-off</span></div>
+        <div class="row" style="background:rgba(212,114,74,.12);border-color:rgba(212,114,74,.3)"><span class="ic">🌸</span><span class="tx">Warm, neat &amp; easy to slip off — Ritha layered it for spring.</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- 5 · BUY ONLY WHAT'S MISSING -->
+  <div class="slide s5">
+    <div class="eyebrow">🛍 Smart shopping</div>
+    <div class="cap">Buy only what you're <em>missing</em>.</div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="stat"><span>9:41</span><span>saved list</span></div>
+      <div class="body">
+        <div class="scr-h">Items to buy</div>
+        <div class="scr-sub">🔖 saved to buy · 2</div>
+        <div class="row"><span class="thumb"><svg viewBox="0 0 100 100"><use href="#t-sw"/></svg></span><span class="tx">Merino sweater<small>the warm mid-layer you lack</small></span><span class="pill terra">Buy ↗</span></div>
+        <div class="row"><span class="ic">🧥</span><span class="tx">Wool overcoat · ₹6,000<small>saved — buy anytime, never lose it</small></span><span class="pill gold">🔖 later</span></div>
+        <div class="row" style="background:rgba(123,166,126,.1);border-color:rgba(123,166,126,.3)"><span class="ic">🌿</span><span class="tx">Pre-loved first — secondhand &amp; rentals, up to ~70% less CO₂.</span></div>
+        <div class="row" style="justify-content:center"><span class="tx" style="flex:none;color:var(--sky);font-family:var(--mono);font-size:.58rem">Opens in-app · you never leave your trip</span></div>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+
+<p class="foot"><b>Ritha</b> · getritha.com<br>5 slides · lead with Collaborative Packing · 9:19.5 phone · capture one slide at a time for the store.</p>
