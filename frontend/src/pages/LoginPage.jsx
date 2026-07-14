@@ -113,9 +113,18 @@ export default function LoginPage() {
             Your wardrobe, your calendar, the weather — unified into one smart outfit suggestion every morning. And when you travel, pack the whole group together.
           </p>
 
-          <div style={{ marginTop: '48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Collaborative Packing — lead value prop, not a bullet */}
+          <div style={{ marginTop: '32px', padding: '18px', borderRadius: '14px', border: '1px solid rgba(111,168,199,.35)', background: 'linear-gradient(180deg, rgba(111,168,199,.10), rgba(111,168,199,.02))' }}>
+            <div style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--sky, #6fa8c7)', marginBottom: '8px' }}>
+              👥 Collaborative packing
+            </div>
+            <div style={{ fontSize: '1rem', color: 'var(--cream)', lineHeight: 1.5 }}>
+              Pack a group trip together. Share one item and it drops off <span style={{ color: 'var(--cream)', fontWeight: 600 }}>everyone's</span> bag — live. Nothing carried three times.
+            </div>
+          </div>
+
+          <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[
-              { icon: '👥', text: "Collaborative packing — share one item, everyone's bag gets lighter" },
               { icon: '✈', text: 'Trip packing with 5-4-3-2-1 capsule logic' },
               { icon: '📅', text: 'Syncs with Google Calendar' },
               { icon: '🌤', text: 'Live weather-aware suggestions' },

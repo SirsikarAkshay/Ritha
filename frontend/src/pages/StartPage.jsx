@@ -100,6 +100,30 @@ export default function StartPage() {
           {error && <div style={{ color: 'var(--danger, #e0745c)', fontSize: '.9rem' }}>{error}</div>}
         </form>
 
+        {/* ── Collaborative Packing — prominent value prop on the landing ─── */}
+        {!insights && (
+          <div className="card" style={{ padding: 20, marginBottom: 8, border: '1px solid rgba(111,168,199,.35)', background: 'linear-gradient(180deg, rgba(111,168,199,.09), var(--surface, #161921))' }}>
+            <div style={{ fontFamily: 'var(--mono, monospace)', fontSize: '.72rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--sky, #6fa8c7)', marginBottom: 8 }}>
+              👥 Not travelling solo?
+            </div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 680, letterSpacing: '-.02em', lineHeight: 1.12, marginBottom: 8 }}>
+              Collaborative Packing
+            </div>
+            <div style={{ color: 'var(--dim, #9a97a0)', fontSize: '.96rem', lineHeight: 1.5, marginBottom: 16, maxWidth: '52ch' }}>
+              Share one closet with your crew. The moment someone packs a shared item, it drops off{' '}
+              <em style={{ fontStyle: 'normal', color: 'var(--cream)' }}>everyone else's</em> bag — live, in the group chat. Nothing gets carried three times.
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 13px', background: 'var(--surface-2, #1c2029)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                <span style={{ fontSize: '1.15rem' }}>🔌</span>
+                <span style={{ fontSize: '.86rem', color: 'var(--cream)' }}>Aditi packs the adapter</span>
+                <span style={{ fontFamily: 'var(--mono, monospace)', fontSize: '.62rem', color: '#9fce9f', background: 'rgba(123,166,126,.16)', padding: '3px 8px', borderRadius: 12, whiteSpace: 'nowrap' }}>shared ×1</span>
+              </div>
+              <span style={{ color: 'var(--sky, #6fa8c7)', fontFamily: 'var(--mono, monospace)', fontSize: '.82rem', fontWeight: 600 }}>→ 2 bags lighter</span>
+            </div>
+          </div>
+        )}
+
         {/* ── Instant insight dashboard ─────────────────────────────── */}
         {insights && (
           <div style={{ display: 'grid', gap: 16 }}>
