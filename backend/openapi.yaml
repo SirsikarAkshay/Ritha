@@ -1181,6 +1181,194 @@ paths:
               schema:
                 $ref: '#/components/schemas/CalendarEvent'
           description: ''
+  /api/itinerary/shopping-list/:
+    get:
+      operationId: itinerary_shopping_list_list
+      description: |-
+        A user's "Remind me to buy this later" list.
+
+        List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+        Save a suggestion:          POST /api/itinerary/shopping-list/
+        Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+        Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSavedShoppingItemList'
+          description: ''
+    post:
+      operationId: itinerary_shopping_list_create
+      description: |-
+        A user's "Remind me to buy this later" list.
+
+        List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+        Save a suggestion:          POST /api/itinerary/shopping-list/
+        Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+        Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedShoppingItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SavedShoppingItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SavedShoppingItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedShoppingItem'
+          description: ''
+  /api/itinerary/shopping-list/{id}/:
+    get:
+      operationId: itinerary_shopping_list_retrieve
+      description: |-
+        A user's "Remind me to buy this later" list.
+
+        List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+        Save a suggestion:          POST /api/itinerary/shopping-list/
+        Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+        Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedShoppingItem'
+          description: ''
+    put:
+      operationId: itinerary_shopping_list_update
+      description: |-
+        A user's "Remind me to buy this later" list.
+
+        List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+        Save a suggestion:          POST /api/itinerary/shopping-list/
+        Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+        Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedShoppingItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SavedShoppingItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SavedShoppingItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedShoppingItem'
+          description: ''
+    patch:
+      operationId: itinerary_shopping_list_partial_update
+      description: |-
+        A user's "Remind me to buy this later" list.
+
+        List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+        Save a suggestion:          POST /api/itinerary/shopping-list/
+        Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+        Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSavedShoppingItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSavedShoppingItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSavedShoppingItemRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavedShoppingItem'
+          description: ''
+    delete:
+      operationId: itinerary_shopping_list_destroy
+      description: |-
+        A user's "Remind me to buy this later" list.
+
+        List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+        Save a suggestion:          POST /api/itinerary/shopping-list/
+        Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+        Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/itinerary/trips/:
     get:
       operationId: itinerary_trips_list
@@ -3807,6 +3995,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PackingChecklistItem'
+    PaginatedSavedShoppingItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SavedShoppingItem'
     PaginatedSustainabilityLogList:
       type: object
       required:
@@ -3979,6 +4190,35 @@ components:
         notes:
           type: string
           maxLength: 300
+    PatchedSavedShoppingItemRequest:
+      type: object
+      properties:
+        trip:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+          maxLength: 300
+        brand:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        price_range:
+          type: string
+          maxLength: 60
+        role:
+          type: string
+          maxLength: 40
+        category:
+          type: string
+          maxLength: 60
+        why:
+          type: string
+        links: {}
+        purchased:
+          type: boolean
     PatchedSustainabilityLogRequest:
       type: object
       properties:
@@ -4316,6 +4556,76 @@ components:
         * `festival_wear` - Festival / Event Specific
         * `color_warning` - Colour Significance
         * `general` - General Etiquette
+    SavedShoppingItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        trip:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          maxLength: 300
+        brand:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        price_range:
+          type: string
+          maxLength: 60
+        role:
+          type: string
+          maxLength: 40
+        category:
+          type: string
+          maxLength: 60
+        why:
+          type: string
+        links: {}
+        purchased:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+    SavedShoppingItemRequest:
+      type: object
+      properties:
+        trip:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          minLength: 1
+          maxLength: 300
+        brand:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        price_range:
+          type: string
+          maxLength: 60
+        role:
+          type: string
+          maxLength: 40
+        category:
+          type: string
+          maxLength: 60
+        why:
+          type: string
+        links: {}
+        purchased:
+          type: boolean
+      required:
+      - name
     SeasonEnum:
       enum:
       - spring

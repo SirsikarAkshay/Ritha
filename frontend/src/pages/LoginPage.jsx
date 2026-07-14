@@ -110,14 +110,15 @@ export default function LoginPage() {
             <span style={{ color: 'var(--terra)' }}>Every day.</span>
           </div>
           <p style={{ color: 'var(--cream-dim)', lineHeight: 1.6, fontSize: '0.9375rem', maxWidth: '340px' }}>
-            Your wardrobe, your calendar, the weather — unified into one smart outfit suggestion every morning.
+            Your wardrobe, your calendar, the weather — unified into one smart outfit suggestion every morning. And when you travel, pack the whole group together.
           </p>
 
           <div style={{ marginTop: '48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[
+              { icon: '👥', text: "Collaborative packing — share one item, everyone's bag gets lighter" },
+              { icon: '✈', text: 'Trip packing with 5-4-3-2-1 capsule logic' },
               { icon: '📅', text: 'Syncs with Google Calendar' },
               { icon: '🌤', text: 'Live weather-aware suggestions' },
-              { icon: '✈', text: 'Trip packing with 5-4-3-2-1 capsule logic' },
               { icon: '🌱', text: 'Tracks CO₂ saved by packing light' },
             ].map(({ icon, text }) => (
               <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

@@ -1,6 +1,6 @@
 # Ritha
 
-AI-powered wardrobe and travel fashion companion. Recommends outfits based on your calendar, weather, wardrobe, and destination — whether that's the office tomorrow or a multi-city trip next month.
+AI-powered wardrobe and travel fashion companion. Recommends outfits based on your calendar, weather, wardrobe, and destination — whether that's the office tomorrow or a multi-city trip next month. And when you travel as a group, pack collaboratively: build a shared closet where one packed item drops off everyone else's list live, so nothing gets carried three times.
 
 ---
 

@@ -3,8 +3,13 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import decorators, permissions, viewsets
 from rest_framework.response import Response
 
-from .models import CalendarEvent, PackingChecklistItem, Trip
-from .serializers import CalendarEventSerializer, PackingChecklistItemSerializer, TripSerializer
+from .models import CalendarEvent, PackingChecklistItem, SavedShoppingItem, Trip
+from .serializers import (
+    CalendarEventSerializer,
+    PackingChecklistItemSerializer,
+    SavedShoppingItemSerializer,
+    TripSerializer,
+)
 
 
 @extend_schema_view(
@@ -312,3 +317,49 @@ class PackingChecklistViewSet(viewsets.ModelViewSet):
                 "total_items": PackingChecklistItem.objects.filter(trip=trip).count(),
             }
         )
+
+
+@extend_schema_view(
+    retrieve=extend_schema(parameters=[]),
+    update=extend_schema(parameters=[]),
+    partial_update=extend_schema(parameters=[]),
+    destroy=extend_schema(parameters=[]),
+)
+class SavedShoppingItemViewSet(viewsets.ModelViewSet):
+    """
+    A user's "Remind me to buy this later" list.
+
+    List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+    Save a suggestion:          POST /api/itinerary/shopping-list/
+    Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+    Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+    """
+
+    lookup_field = "pk"
+    lookup_value_regex = r"[0-9]+"
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = SavedShoppingItemSerializer
+
+    def get_queryset(self):
+        qs = SavedShoppingItem.objects.filter(user=self.request.user)
+        trip_id = self.request.query_params.get("trip_id")
+        if trip_id:
+            qs = qs.filter(trip_id=trip_id)
+        return qs.select_related("trip")
+
+    def _validate_trip(self, serializer):
+        # `trip` is a client-supplied writable FK — a user must not attach a saved
+        # item to another user's trip.
+        trip = serializer.validated_data.get("trip")
+        if trip is not None and trip.user_id != self.request.user.id:
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied("You can only save items to your own trips.")
+
+    def perform_create(self, serializer):
+        self._validate_trip(serializer)
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        self._validate_trip(serializer)
+        serializer.save()

@@ -61,9 +61,9 @@ export default function SharedWardrobesPage() {
   return (
     <div>
       <div className="page-header fade-up">
-        <div className="date-line">Social</div>
+        <div className="date-line">Collaborative packing</div>
         <h1>Shared Wardrobes</h1>
-        <p>Collaborate on wardrobes with the people you're connected with. Everyone sees updates live.</p>
+        <p>Pack a group trip together. Build a shared closet with the people you're connected with — and when one person packs a shared item, it drops off everyone else's list live. No duplicates, lighter bags.</p>
       </div>
 
       <div className="fade-up fade-up-delay-1" style={{ marginBottom: 20 }}>

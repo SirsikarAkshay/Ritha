@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import CalendarEvent, PackingChecklistItem, Trip
+from .models import CalendarEvent, PackingChecklistItem, SavedShoppingItem, Trip
 
 
 class CalendarEventSerializer(serializers.ModelSerializer):
@@ -44,3 +44,23 @@ class PackingChecklistItemSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["created_at", "display_name"]
+
+
+class SavedShoppingItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SavedShoppingItem
+        fields = [
+            "id",
+            "trip",
+            "name",
+            "brand",
+            "description",
+            "price_range",
+            "role",
+            "category",
+            "why",
+            "links",
+            "purchased",
+            "created_at",
+        ]
+        read_only_fields = ["created_at"]

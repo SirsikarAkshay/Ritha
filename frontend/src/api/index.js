@@ -71,6 +71,14 @@ export const itinerary = {
     clearRecommendation: (id) =>
       api.delete(`/itinerary/trips/${id}/save-recommendation/`),
   },
+  // "Remind me to buy this later" — persists shopping suggestions so users
+  // never lose an item by leaving the app to shop.
+  shoppingList: {
+    list:   (tripId) => api.get(`/itinerary/shopping-list/${tripId ? '?trip_id=' + tripId : ''}`),
+    save:   (data)     => api.post('/itinerary/shopping-list/', data),
+    update: (id, data) => api.patch(`/itinerary/shopping-list/${id}/`, data),
+    remove: (id)       => api.delete(`/itinerary/shopping-list/${id}/`),
+  },
 }
 
 // ── Outfits ───────────────────────────────────────────────────────────────

@@ -164,7 +164,7 @@ export default function StartPage() {
             {/* Persistence triggers → sign-up */}
             <div className="card" style={{ padding: 18, textAlign: 'center', background: 'var(--surface-2, #1c2029)' }}>
               <div style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: 6 }}>Make it yours</div>
-              <div style={{ color: 'var(--dim)', fontSize: '.9rem', marginBottom: 14 }}>Save this trip, or personalise the capsule with your own wardrobe.</div>
+              <div style={{ color: 'var(--dim)', fontSize: '.9rem', marginBottom: 14 }}>Save this trip, personalise the capsule with your own wardrobe, or invite friends to pack it together.</div>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button onClick={() => persist('save_trip')} className="btn btn-primary" style={{ padding: '12px 18px', borderRadius: 12, border: 'none', background: 'var(--terra)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>💾 Save this trip</button>
                 <button onClick={() => persist('personalize')} className="btn" style={{ padding: '12px 18px', borderRadius: 12, border: '1px solid var(--terra)', background: 'transparent', color: 'var(--terra-light)', fontWeight: 600, cursor: 'pointer' }}>👗 Personalise with my wardrobe</button>
