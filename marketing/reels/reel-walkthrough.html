@@ -24,6 +24,12 @@
   .step-flag b{color:var(--terra-lt);font-weight:600}
   .h-title{font-size:1.58rem;font-weight:620;letter-spacing:-.01em;margin:0 0 4px}
   .h-sub{color:var(--dim);font-size:.96rem;margin:0 0 18px}
+  .softprompt{margin:-2px 0 14px;font-size:.82rem;line-height:1.4;color:var(--cream);background:rgba(111,168,199,.1);border:1px solid rgba(111,168,199,.32);border-radius:11px;padding:9px 12px}
+  .softprompt b{color:var(--sky);font-weight:600}
+  .assume{margin:-4px 0 12px;font-size:.8rem;line-height:1.4;color:var(--dim)}
+  .assume b{color:var(--gold);font-weight:600}
+  /* Scene 6 slides in from the side — a smooth "into your closet" handoff after Save, no layout jump. */
+  .frame [data-scene="6"]:not(.is-active){transform:translateX(20px)}
   .field{margin-bottom:14px}
   .field label{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:8px}
   .input{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px;font-size:1.06rem;color:var(--cream)}
@@ -271,7 +277,8 @@
     <p class="h-sub">Cherry-blossom season. Just tell us when.</p>
     <div class="field"><label>Destination</label><div class="input">Tokyo, Japan 🇯🇵</div></div>
     <div class="field"><label>Dates</label><div class="input">Apr 6–12, 2027</div></div>
-    <div class="field"><label>Travelling with</label><div class="input ghost">Just me · add friends later</div></div>
+    <div class="field"><label>Travelling with</label><div class="input ghost">Just me · <span style="color:var(--sky)">+ add friends</span></div></div>
+    <p class="softprompt">✨ We'll spin up a <b>share link for your crew</b> once your trip's created — hit <b>See my trip</b> first.</p>
     <div class="cta guest">See my trip →</div></div>
 
   <!-- 3 · INSTANT INSIGHT — the weather gap -->
@@ -291,6 +298,7 @@
   <div class="scene" data-scene="4">
     <p class="kicker">What you'd pack</p>
     <span class="region-tag">Based on a standard South-India capsule · personalize in 1 tap</span>
+    <p class="assume">We assumed <b>Bengaluru</b> to start — change your home city next. This is just a placeholder, not a guess about you.</p>
     <div class="gauge-row"><span>6 pieces travel fine · 12.8 L</span><span class="pct">52% of 40L</span></div>
     <div class="track"><div class="gfill"></div></div>
     <p class="sec-sub" style="margin-bottom:12px">Your everyday shirts, tees, jeans &amp; sneakers all work as base layers — you're already half-packed.</p>
