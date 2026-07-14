@@ -773,7 +773,7 @@ function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear
       )}
 
       {activeTab === 'shopping' && (
-        <ShoppingTab shopping={shopping} days={days} />
+        <ShoppingTab shopping={shopping} days={days} tripId={tripId} />
       )}
 
       {activeTab === 'places' && (
@@ -954,10 +954,76 @@ function OutfitPlanTab({ days, output }) {
 
 /* ── Tab: Items to Buy ──────────────��────────────────────���───────────── */
 
-function ShoppingTab({ shopping, days }) {
-  const hasWardrobeItems = days.some(d => (d.wardrobe_matches || []).length > 0)
+const RETAILER_LABELS = { google_shopping: '🛍 Google Shopping', amazon: '🛍 Amazon', asos: '🛍 ASOS' }
 
-  if (shopping.length === 0) {
+// Retailer search links. target="_blank" opens a new tab so the user keeps
+// their active trip session in the app (never navigated away). The saved list
+// below ("Remind me later") is the persistent alternative.
+function BuyLinks({ links }) {
+  const entries = Object.entries(links || {}).filter(([, url]) => url)
+  if (entries.length === 0) return null
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {entries.map(([key, url]) => (
+        <a key={key} href={url} target="_blank" rel="noreferrer"
+          className="btn btn-ghost btn-sm"
+          style={{ fontSize: '0.75rem', border: '1px solid var(--border)', borderRadius: 100, textDecoration: 'none' }}>
+          {RETAILER_LABELS[key] || '🛍 Shop'} ↗
+        </a>
+      ))}
+    </div>
+  )
+}
+
+function ShoppingTab({ shopping, days, tripId }) {
+  const hasWardrobeItems = days.some(d => (d.wardrobe_matches || []).length > 0)
+  const [saved, setSaved] = useState([])
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    itineraryApi.shoppingList.list(tripId)
+      .then(res => { if (alive) setSaved(res?.results || res || []) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [tripId])
+
+  const savedNames = new Set(saved.map(x => (x.name || '').trim().toLowerCase()))
+  const keyOf = (s) => (s.name || s.description || '').trim().toLowerCase()
+
+  const remindLater = async (s) => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const created = await itineraryApi.shoppingList.save({
+        trip: tripId || null,
+        name: s.name || s.description || 'Item',
+        brand: s.brand || '',
+        description: s.description || '',
+        price_range: s.price_range || '',
+        role: s.role || '',
+        category: s.category || '',
+        why: s.why || '',
+        links: s.links || {},
+      })
+      setSaved(prev => [created, ...prev])
+    } catch { /* keep the UI responsive; user can retry */ }
+    finally { setBusy(false) }
+  }
+
+  const removeSaved = async (id) => {
+    setSaved(prev => prev.filter(x => x.id !== id))
+    try { await itineraryApi.shoppingList.remove(id) } catch { /* already gone locally */ }
+  }
+
+  const togglePurchased = async (item) => {
+    const next = !item.purchased
+    setSaved(prev => prev.map(x => x.id === item.id ? { ...x, purchased: next } : x))
+    try { await itineraryApi.shoppingList.update(item.id, { purchased: next }) } catch { /* revert-free */ }
+  }
+
+  const nothingToShow = shopping.length === 0 && saved.length === 0
+  if (nothingToShow) {
     return (
       <div role="tabpanel" className="empty-state" style={{ padding: '32px', textAlign: 'center' }}>
         <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>✓</div>
@@ -969,13 +1035,47 @@ function ShoppingTab({ shopping, days }) {
 
   return (
     <div role="tabpanel">
-      <div style={{ color: 'var(--cream-dim)', fontSize: '0.85rem', marginBottom: 16 }}>
-        {hasWardrobeItems
-          ? 'These items are missing from your wardrobe. Tap a link to shop.'
-          : 'Recommended products for your trip. Tap a link to shop.'}
-      </div>
+      {/* Saved "buy later" list — persists across sessions and devices */}
+      {saved.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cream-dim)', marginBottom: 8 }}>
+            🔖 Saved to buy · {saved.length}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {saved.map(item => (
+              <div key={item.id} className="card" style={{ padding: 12, display: 'flex', gap: 12, alignItems: 'center', opacity: item.purchased ? 0.55 : 1 }}>
+                <button
+                  onClick={() => togglePurchased(item)}
+                  title={item.purchased ? 'Mark as not bought' : 'Mark as bought'}
+                  style={{ flex: 'none', width: 22, height: 22, borderRadius: 6, cursor: 'pointer',
+                    border: '1px solid var(--border)', background: item.purchased ? 'var(--sage, #7ba67e)' : 'transparent',
+                    color: '#fff', fontSize: '0.8rem', lineHeight: 1 }}>
+                  {item.purchased ? '✓' : ''}
+                </button>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--cream)', textDecoration: item.purchased ? 'line-through' : 'none' }}>
+                    {item.name}{item.price_range ? ` · ${item.price_range}` : ''}
+                  </div>
+                  {!item.purchased && <BuyLinks links={item.links} />}
+                </div>
+                <button className="btn btn-ghost btn-icon btn-sm" onClick={() => removeSaved(item.id)} title="Remove from list">✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {shopping.length > 0 && (
+        <div style={{ color: 'var(--cream-dim)', fontSize: '0.85rem', marginBottom: 16 }}>
+          {hasWardrobeItems
+            ? "These items are missing from your wardrobe. Buy now (opens without leaving your trip) or save for later."
+            : 'Recommended products for your trip. Buy now, or save to your list for later.'}
+        </div>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {shopping.map((s, i) => (
+        {shopping.map((s, i) => {
+          const isSaved = savedNames.has(keyOf(s))
+          return (
           <div key={i} className="card" style={{ padding: 16, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
             <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>{ROLE_ICON[s.role] || '🛍'}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -1002,34 +1102,21 @@ function ShoppingTab({ shopping, days }) {
                   {s.why}
                 </div>
               )}
-              {(s.links?.google_shopping || s.links?.amazon || s.links?.asos) && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
-                  {s.links.google_shopping && (
-                    <a href={s.links.google_shopping} target="_blank" rel="noreferrer"
-                      className="btn btn-ghost btn-sm"
-                      style={{ fontSize: '0.75rem', border: '1px solid var(--border)', borderRadius: 100, textDecoration: 'none' }}>
-                      🔗 Google Shopping
-                    </a>
-                  )}
-                  {s.links.amazon && (
-                    <a href={s.links.amazon} target="_blank" rel="noreferrer"
-                      className="btn btn-ghost btn-sm"
-                      style={{ fontSize: '0.75rem', border: '1px solid var(--border)', borderRadius: 100, textDecoration: 'none' }}>
-                      🔗 Amazon
-                    </a>
-                  )}
-                  {s.links.asos && (
-                    <a href={s.links.asos} target="_blank" rel="noreferrer"
-                      className="btn btn-ghost btn-sm"
-                      style={{ fontSize: '0.75rem', border: '1px solid var(--border)', borderRadius: 100, textDecoration: 'none' }}>
-                      🔗 ASOS
-                    </a>
-                  )}
-                </div>
-              )}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                <BuyLinks links={s.links} />
+                <button
+                  onClick={() => remindLater(s)}
+                  disabled={isSaved || busy}
+                  className="btn btn-ghost btn-sm"
+                  style={{ fontSize: '0.75rem', border: '1px solid var(--border)', borderRadius: 100,
+                    color: isSaved ? 'var(--sage, #7ba67e)' : 'var(--cream-dim)', cursor: isSaved ? 'default' : 'pointer' }}>
+                  {isSaved ? '🔖 Saved' : '🔖 Remind me later'}
+                </button>
+              </div>
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

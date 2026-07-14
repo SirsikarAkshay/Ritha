@@ -127,3 +127,43 @@ class PackingChecklistItem(models.Model):
     def __str__(self):
         status = "✓" if self.is_packed else "○"
         return f"{status} {self.display_name} (Trip #{self.trip_id})"
+
+
+class SavedShoppingItem(models.Model):
+    """
+    A shopping suggestion a user saved via "Remind me to buy this later".
+
+    Shopping suggestions are AI-generated (name/brand/why/price_range + retailer
+    search links) and are otherwise ephemeral — this persists the ones a user
+    wants to come back to, optionally scoped to the trip they came from, so they
+    never lose the item by leaving the app to shop.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="saved_shopping_items"
+    )
+    trip = models.ForeignKey(
+        Trip,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="saved_shopping_items",
+    )
+    name = models.CharField(max_length=300)
+    brand = models.CharField(max_length=200, blank=True)
+    description = models.TextField(blank=True)
+    price_range = models.CharField(max_length=60, blank=True)
+    role = models.CharField(max_length=40, blank=True)
+    category = models.CharField(max_length=60, blank=True)
+    why = models.TextField(blank=True)
+    links = models.JSONField(default=dict, blank=True)
+    purchased = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["purchased", "-created_at"]
+        indexes = [models.Index(fields=["user", "purchased"])]
+
+    def __str__(self):
+        mark = "✓ bought" if self.purchased else "• to buy"
+        return f"{mark} — {self.name} ({self.user.email})"

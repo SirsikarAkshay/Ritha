@@ -905,6 +905,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/itinerary/shopping-list/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description A user's "Remind me to buy this later" list.
+         *
+         *     List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+         *     Save a suggestion:          POST /api/itinerary/shopping-list/
+         *     Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+         *     Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+         */
+        get: operations["itinerary_shopping_list_list"];
+        put?: never;
+        /**
+         * @description A user's "Remind me to buy this later" list.
+         *
+         *     List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+         *     Save a suggestion:          POST /api/itinerary/shopping-list/
+         *     Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+         *     Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+         */
+        post: operations["itinerary_shopping_list_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/itinerary/shopping-list/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description A user's "Remind me to buy this later" list.
+         *
+         *     List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+         *     Save a suggestion:          POST /api/itinerary/shopping-list/
+         *     Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+         *     Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+         */
+        get: operations["itinerary_shopping_list_retrieve"];
+        /**
+         * @description A user's "Remind me to buy this later" list.
+         *
+         *     List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+         *     Save a suggestion:          POST /api/itinerary/shopping-list/
+         *     Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+         *     Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+         */
+        put: operations["itinerary_shopping_list_update"];
+        post?: never;
+        /**
+         * @description A user's "Remind me to buy this later" list.
+         *
+         *     List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+         *     Save a suggestion:          POST /api/itinerary/shopping-list/
+         *     Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+         *     Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+         */
+        delete: operations["itinerary_shopping_list_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * @description A user's "Remind me to buy this later" list.
+         *
+         *     List (optionally per trip): GET /api/itinerary/shopping-list/?trip_id=<id>
+         *     Save a suggestion:          POST /api/itinerary/shopping-list/
+         *     Mark bought:                PATCH /api/itinerary/shopping-list/<id>/ {"purchased": true}
+         *     Remove:                     DELETE /api/itinerary/shopping-list/<id>/
+         */
+        patch: operations["itinerary_shopping_list_partial_update"];
+        trace?: never;
+    };
     "/api/itinerary/trips/": {
         parameters: {
             query?: never;
@@ -2352,6 +2432,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["PackingChecklistItem"][];
         };
+        PaginatedSavedShoppingItemList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["SavedShoppingItem"][];
+        };
         PaginatedSustainabilityLogList: {
             /** @example 123 */
             count: number;
@@ -2440,6 +2535,18 @@ export interface components {
             /** Format: int64 */
             quantity?: number;
             notes?: string;
+        };
+        PatchedSavedShoppingItemRequest: {
+            trip?: number | null;
+            name?: string;
+            brand?: string;
+            description?: string;
+            price_range?: string;
+            role?: string;
+            category?: string;
+            why?: string;
+            links?: unknown;
+            purchased?: boolean;
         };
         PatchedSustainabilityLogRequest: {
             action?: components["schemas"]["ActionEnum"];
@@ -2617,6 +2724,33 @@ export interface components {
          * @enum {string}
          */
         RuleTypeEnum: "cover_head" | "cover_shoulders" | "cover_knees" | "no_bare_feet" | "modest_dress" | "remove_shoes" | "festival_wear" | "color_warning" | "general";
+        SavedShoppingItem: {
+            readonly id: number;
+            trip?: number | null;
+            name: string;
+            brand?: string;
+            description?: string;
+            price_range?: string;
+            role?: string;
+            category?: string;
+            why?: string;
+            links?: unknown;
+            purchased?: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        SavedShoppingItemRequest: {
+            trip?: number | null;
+            name: string;
+            brand?: string;
+            description?: string;
+            price_range?: string;
+            role?: string;
+            category?: string;
+            why?: string;
+            links?: unknown;
+            purchased?: boolean;
+        };
         /**
          * @description * `spring` - Spring
          *     * `summer` - Summer
@@ -4153,6 +4287,148 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CalendarEvent"];
+                };
+            };
+        };
+    };
+    itinerary_shopping_list_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedSavedShoppingItemList"];
+                };
+            };
+        };
+    };
+    itinerary_shopping_list_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedShoppingItemRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SavedShoppingItemRequest"];
+                "multipart/form-data": components["schemas"]["SavedShoppingItemRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedShoppingItem"];
+                };
+            };
+        };
+    };
+    itinerary_shopping_list_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedShoppingItem"];
+                };
+            };
+        };
+    };
+    itinerary_shopping_list_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedShoppingItemRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["SavedShoppingItemRequest"];
+                "multipart/form-data": components["schemas"]["SavedShoppingItemRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedShoppingItem"];
+                };
+            };
+        };
+    };
+    itinerary_shopping_list_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    itinerary_shopping_list_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSavedShoppingItemRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSavedShoppingItemRequest"];
+                "multipart/form-data": components["schemas"]["PatchedSavedShoppingItemRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedShoppingItem"];
                 };
             };
         };

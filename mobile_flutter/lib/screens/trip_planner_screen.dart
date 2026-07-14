@@ -304,7 +304,11 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      ..._savedRecommendationPreview(context, savedMap),
+                      ..._savedRecommendationPreview(
+                        context,
+                        savedMap,
+                        tripId: trip['id'] as int?,
+                      ),
                     ] else
                       const EmptyState(
                         icon: '✨',
@@ -918,7 +922,16 @@ String _weatherIcon(Map? w) {
 
 Future<void> _openLink(String url) async {
   final uri = Uri.tryParse(url);
-  if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (uri == null) return;
+  // In-app browser (SFSafariViewController / Chrome Custom Tab) so the user
+  // shops without leaving their active trip session. Fall back to the system
+  // browser only if the platform can't host an in-app view.
+  try {
+    final ok = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    if (!ok) await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 }
 
 class _Section {
@@ -928,7 +941,7 @@ class _Section {
   const _Section(this.id, this.label, this.icon, this.count, this.build);
 }
 
-List<_Section> _sectionsFor(Map<String, dynamic> o) {
+List<_Section> _sectionsFor(Map<String, dynamic> o, {int? tripId}) {
   final cultural = (o['cultural'] is Map)
       ? Map<String, dynamic>.from(o['cultural'] as Map)
       : <String, dynamic>{};
@@ -955,7 +968,7 @@ List<_Section> _sectionsFor(Map<String, dynamic> o) {
       'Items to Buy',
       '🛍',
       shopping.length,
-      _shoppingChildren,
+      (oo) => _shoppingChildren(oo, tripId: tripId),
     ),
     _Section(
       'places',
@@ -970,8 +983,9 @@ List<_Section> _sectionsFor(Map<String, dynamic> o) {
 
 List<Widget> _savedRecommendationPreview(
   BuildContext context,
-  Map<String, dynamic> saved,
-) {
+  Map<String, dynamic> saved, {
+  int? tripId,
+}) {
   if (saved['multi_city'] == true && saved['cities'] is List) {
     final entries = (saved['cities'] as List).whereType<Map>().toList();
     final widgets = <Widget>[];
@@ -994,18 +1008,19 @@ List<Widget> _savedRecommendationPreview(
             ),
           ),
         )
-        ..addAll(buildRecommendationChildren(context, rec));
+        ..addAll(buildRecommendationChildren(context, rec, tripId: tripId));
     }
     return widgets;
   }
-  return buildRecommendationChildren(context, saved);
+  return buildRecommendationChildren(context, saved, tripId: tripId);
 }
 
 List<Widget> buildRecommendationChildren(
   BuildContext context,
-  Map<String, dynamic> o,
-) {
-  final sections = _sectionsFor(o);
+  Map<String, dynamic> o, {
+  int? tripId,
+}) {
+  final sections = _sectionsFor(o, tripId: tripId);
   return [
     for (final s in sections)
       Padding(
@@ -1224,20 +1239,23 @@ List<Widget> _outfitChildren(Map<String, dynamic> o) {
   ];
 }
 
-List<Widget> _shoppingChildren(Map<String, dynamic> o) {
+List<Widget> _shoppingChildren(Map<String, dynamic> o, {int? tripId}) {
   final shopping = (o['shopping_suggestions'] as List?) ?? const [];
-  if (shopping.isEmpty) {
-    return const [
-      EmptyState(
+  return [
+    // Persisted "Remind me later" list (renders nothing when empty).
+    _SavedShoppingList(tripId: tripId),
+    if (shopping.isEmpty)
+      const EmptyState(
         icon: '✓',
         title: "You're all set!",
         body: 'Your wardrobe has everything you need for this trip.',
-      ),
-    ];
-  }
-  return [
-    for (final s in shopping)
-      _ShoppingCard(item: Map<String, dynamic>.from(s as Map)),
+      )
+    else
+      for (final s in shopping)
+        _ShoppingCard(
+          item: Map<String, dynamic>.from(s as Map),
+          tripId: tripId,
+        ),
   ];
 }
 
@@ -1470,11 +1488,51 @@ class _WardrobeMatchTile extends StatelessWidget {
   }
 }
 
-class _ShoppingCard extends StatelessWidget {
+class _ShoppingCard extends StatefulWidget {
   final Map<String, dynamic> item;
-  const _ShoppingCard({required this.item});
+  final int? tripId;
+  const _ShoppingCard({required this.item, this.tripId});
+  @override
+  State<_ShoppingCard> createState() => _ShoppingCardState();
+}
+
+class _ShoppingCardState extends State<_ShoppingCard> {
+  bool _saved = false;
+  bool _busy = false;
+
+  Future<void> _remindLater() async {
+    if (_busy || _saved) return;
+    setState(() => _busy = true);
+    final item = widget.item;
+    try {
+      await itineraryApi.shoppingList.save({
+        'trip': widget.tripId,
+        'name':
+            item['name']?.toString() ??
+            item['description']?.toString() ??
+            'Item',
+        'brand': item['brand']?.toString() ?? '',
+        'description': item['description']?.toString() ?? '',
+        'price_range': item['price_range']?.toString() ?? '',
+        'role': item['role']?.toString() ?? '',
+        'category': item['category']?.toString() ?? '',
+        'why': item['why']?.toString() ?? '',
+        'links': item['links'] is Map ? item['links'] : <String, dynamic>{},
+      });
+      if (mounted) {
+        setState(() {
+          _saved = true;
+          _busy = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final item = widget.item;
     final links = (item['links'] is Map)
         ? Map<String, dynamic>.from(item['links'] as Map)
         : <String, dynamic>{};
@@ -1545,31 +1603,201 @@ class _ShoppingCard extends StatelessWidget {
                 ),
               ),
             ],
-            if (links.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              const Divider(color: AppColors.border, height: 1),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  if (links['google_shopping'] != null)
-                    _LinkChip(
-                      label: '🔗 Google Shopping',
-                      url: links['google_shopping'].toString(),
-                    ),
-                  if (links['amazon'] != null)
-                    _LinkChip(
-                      label: '🔗 Amazon',
-                      url: links['amazon'].toString(),
-                    ),
-                  if (links['asos'] != null)
-                    _LinkChip(label: '🔗 ASOS', url: links['asos'].toString()),
-                ],
-              ),
-            ],
+            const SizedBox(height: 10),
+            const Divider(color: AppColors.border, height: 1),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                // Buy now — opens in an in-app browser so the trip session stays open.
+                if (links['google_shopping'] != null)
+                  _LinkChip(
+                    label: '🛍 Google Shopping ↗',
+                    url: links['google_shopping'].toString(),
+                  ),
+                if (links['amazon'] != null)
+                  _LinkChip(
+                    label: '🛍 Amazon ↗',
+                    url: links['amazon'].toString(),
+                  ),
+                if (links['asos'] != null)
+                  _LinkChip(label: '🛍 ASOS ↗', url: links['asos'].toString()),
+                // Save it instead of leaving the app now.
+                _PillButton(
+                  label: _saved ? '🔖 Saved' : '🔖 Remind me later',
+                  color: _saved ? AppColors.sage : AppColors.creamDim,
+                  onTap: (_saved || _busy) ? null : _remindLater,
+                ),
+              ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A user's persisted "Remind me to buy this later" list, shown above the
+/// current trip's shopping suggestions. Renders nothing when empty.
+class _SavedShoppingList extends StatefulWidget {
+  final int? tripId;
+  const _SavedShoppingList({this.tripId});
+  @override
+  State<_SavedShoppingList> createState() => _SavedShoppingListState();
+}
+
+class _SavedShoppingListState extends State<_SavedShoppingList> {
+  List<Map<String, dynamic>> _items = [];
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final res = await itineraryApi.shoppingList.list(tripId: widget.tripId);
+      final list = (res is Map && res['results'] is List)
+          ? res['results'] as List
+          : (res is List ? res : const []);
+      if (mounted) {
+        setState(() {
+          _items = list
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+          _loaded = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loaded = true);
+    }
+  }
+
+  Future<void> _remove(int id) async {
+    setState(() => _items.removeWhere((e) => e['id'] == id));
+    try {
+      await itineraryApi.shoppingList.remove(id);
+    } catch (_) {}
+  }
+
+  Future<void> _togglePurchased(Map<String, dynamic> item) async {
+    final id = item['id'] as int;
+    final next = !(item['purchased'] == true);
+    setState(() => item['purchased'] = next);
+    try {
+      await itineraryApi.shoppingList.update(id, {'purchased': next});
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded || _items.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            '🔖 SAVED TO BUY · ${_items.length}',
+            style: const TextStyle(
+              color: AppColors.creamDim,
+              fontSize: 11,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        for (final item in _items) _row(item),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _row(Map<String, dynamic> item) {
+    final purchased = item['purchased'] == true;
+    final links = (item['links'] is Map)
+        ? Map<String, dynamic>.from(item['links'] as Map)
+        : <String, dynamic>{};
+    final firstLink = links.values.cast<dynamic>().firstWhere(
+      (v) => v != null && '$v'.isNotEmpty,
+      orElse: () => null,
+    );
+    final priceSuffix = (item['price_range'] ?? '').toString().isNotEmpty
+        ? ' · ${item['price_range']}'
+        : '';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: ACard(
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => _togglePurchased(item),
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(6),
+                  color: purchased ? AppColors.sage : Colors.transparent,
+                ),
+                child: purchased
+                    ? const Icon(Icons.check, size: 15, color: Colors.white)
+                    : null,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: GestureDetector(
+                onTap: firstLink != null
+                    ? () => _openLink(firstLink.toString())
+                    : null,
+                child: Text(
+                  '${item['name'] ?? '—'}$priceSuffix',
+                  style: TextStyle(
+                    color: AppColors.cream,
+                    fontSize: 13,
+                    decoration: purchased ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.close,
+                size: 16,
+                color: AppColors.creamDim,
+              ),
+              onPressed: () => _remove(item['id'] as int),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PillButton extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
+  const _PillButton({required this.label, required this.color, this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(100),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(100),
+        ),
+        child: Text(label, style: TextStyle(color: color, fontSize: 11)),
       ),
     );
   }
@@ -2157,7 +2385,13 @@ class _RecommendationSheetState extends State<_RecommendationSheet> {
             Expanded(
               child: _cityIdx == -1 && isMulti
                   ? ListView(children: _buildPackingList(raw))
-                  : ListView(children: buildRecommendationChildren(context, o)),
+                  : ListView(
+                      children: buildRecommendationChildren(
+                        context,
+                        o,
+                        tripId: widget.trip['id'] as int?,
+                      ),
+                    ),
             ),
             const SizedBox(height: 10),
             Row(

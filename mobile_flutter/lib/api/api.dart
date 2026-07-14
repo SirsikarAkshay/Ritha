@@ -106,9 +106,21 @@ class ItineraryTripsApi {
       _api.delete('/itinerary/trips/$id/save-recommendation/');
 }
 
+// "Remind me to buy this later" — persisted shopping suggestions.
+class ItineraryShoppingListApi {
+  Future list({int? tripId}) =>
+      _api.get('/itinerary/shopping-list/${_qs({'trip_id': tripId})}');
+  Future save(Map<String, dynamic> data) =>
+      _api.post('/itinerary/shopping-list/', data);
+  Future update(int id, Map<String, dynamic> data) =>
+      _api.patch('/itinerary/shopping-list/$id/', data);
+  Future remove(int id) => _api.delete('/itinerary/shopping-list/$id/');
+}
+
 class ItineraryApi {
   final events = ItineraryEventsApi();
   final trips = ItineraryTripsApi();
+  final shoppingList = ItineraryShoppingListApi();
 }
 
 // ── Outfits ─────────────────────────────────────────────────────────────────
