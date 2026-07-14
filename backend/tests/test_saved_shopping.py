@@ -31,9 +31,7 @@ def results(resp):
 
 def make_trip(user):
     today = datetime.date.today()
-    return Trip.objects.create(
-        user=user, name="Trip", destination="Tokyo, Japan", start_date=today, end_date=today
-    )
+    return Trip.objects.create(user=user, name="Trip", destination="Tokyo, Japan", start_date=today, end_date=today)
 
 
 SUGGESTION = {
@@ -96,9 +94,7 @@ class TestMutations:
         created = client.post(LIST_URL, SUGGESTION, content_type="application/json", **m).json()
         item_id = created["id"]
 
-        patched = client.patch(
-            f"{LIST_URL}{item_id}/", {"purchased": True}, content_type="application/json", **m
-        )
+        patched = client.patch(f"{LIST_URL}{item_id}/", {"purchased": True}, content_type="application/json", **m)
         assert patched.status_code == 200
         assert patched.json()["purchased"] is True
 

@@ -139,9 +139,7 @@ class SavedShoppingItem(models.Model):
     never lose the item by leaving the app to shop.
     """
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="saved_shopping_items"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="saved_shopping_items")
     trip = models.ForeignKey(
         Trip,
         null=True,
