@@ -27,6 +27,7 @@ export default function StartPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [signupFor, setSignupFor] = useState(null) // persistence-trigger label, or null
+  const [crewHint, setCrewHint] = useState(false)  // soft-prompt when a guest tries to add friends
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
@@ -93,6 +94,23 @@ export default function StartPage() {
               <option value="women">Women's</option><option value="men">Men's</option><option value="kids">Kids'</option>
             </select>
           </div>
+          {/* Travelling with — collab affordance. Adding friends before an account
+              soft-prompts them forward instead of dead-ending into a sign-up wall. */}
+          <div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: 'var(--mono, monospace)', fontSize: '.7rem', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint, #6b6a73)', marginRight: 2 }}>Travelling with</span>
+              <span style={{ padding: '6px 12px', borderRadius: 20, fontSize: '.82rem', background: 'var(--terra, #d4724a)', color: '#fff' }}>Just me</span>
+              <button type="button" onClick={() => setCrewHint(true)} aria-expanded={crewHint}
+                style={{ padding: '6px 12px', borderRadius: 20, fontSize: '.82rem', background: 'transparent', border: '1px solid var(--border)', color: 'var(--dim)', cursor: 'pointer' }}>
+                + Add friends
+              </button>
+            </div>
+            {crewHint && (
+              <div role="status" style={{ marginTop: 10, padding: '10px 12px', borderRadius: 12, border: '1px solid rgba(111,168,199,.35)', background: 'rgba(111,168,199,.08)', fontSize: '.85rem', color: 'var(--cream)', lineHeight: 1.45 }}>
+                ✨ We'll generate a share link for your crew once your trip dashboard is ready — hit <b style={{ color: 'var(--sky, #6fa8c7)' }}>See my instant plan</b> first.
+              </div>
+            )}
+          </div>
           <button type="submit" disabled={loading || !form.destination.trim()} className="btn btn-primary"
             style={{ padding: 15, fontSize: '1.05rem', fontWeight: 600, borderRadius: 13, border: 'none', cursor: 'pointer', background: 'var(--terra, #d4724a)', color: '#fff', opacity: loading ? 0.7 : 1 }}>
             {loading ? 'Reading the forecast…' : '✦ See my instant plan'}
@@ -149,7 +167,11 @@ export default function StartPage() {
             {/* Capsule — clearly labelled as generic */}
             <div className="card" style={{ padding: 16 }}>
               <div style={{ fontFamily: 'var(--mono)', fontSize: '.72rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--terra-light)', marginBottom: 4 }}>🎒 Starter packing capsule</div>
-              <div style={{ color: 'var(--gold, #c9a84c)', fontSize: '.8rem', marginBottom: 12, fontStyle: 'italic' }}>{insights.capsule_note}</div>
+              <div style={{ color: 'var(--gold, #c9a84c)', fontSize: '.8rem', marginBottom: 4, fontStyle: 'italic' }}>{insights.capsule_note}</div>
+              {/* Reassure that the generic capsule is a temporary placeholder, not a mistake. */}
+              <div style={{ color: 'var(--dim, #9a97a0)', fontSize: '.76rem', marginBottom: 12, lineHeight: 1.4 }}>
+                A placeholder to show the idea — you'll swap in your own wardrobe (and home city) in the next step.
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 8 }}>
                 {insights.capsule.map((it, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: 8, background: 'var(--surface-3, #252833)', borderRadius: 10 }}>
