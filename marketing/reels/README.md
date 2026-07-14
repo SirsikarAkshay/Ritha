@@ -24,6 +24,14 @@ Start from **`reel-gallery.html`** — a one-page index that links to every reel
 `reel-gallery.html` is the index. Each reel is also published as a live Artifact
 (links below) for quick sharing.
 
+### Flagship — the complete walkthrough
+| File | Format | What it shows | Live |
+|---|---|---|---|
+| `reel-walkthrough.html` | 9:16 | The full product tour in one reel: **sign up → region starter closet → plan Bengaluru→Tokyo → what works / what to buy → tap-a-place outfit → invite friends → borrow over live chat → shared essentials packed once** | — |
+
+This is the long-form (~66s) end-to-end demo — the one to lead with. The shorter
+reels below each zoom in on a single feature from it.
+
 ### Travel demos — origin → destination
 | File | Format | What it shows | Live |
 |---|---|---|---|
@@ -42,7 +50,7 @@ Start from **`reel-gallery.html`** — a one-page index that links to every reel
 | `reel-chat.html` | 9:16 | Real-time chat in the shared closet: borrow, coordinate | [▶](https://claude.ai/code/artifact/15c319c4-1479-4072-8bf5-ab8599f9c973) |
 | `reel-chat-16x9.html` | 16:9 | The chat story as a landing-page hero | [▶](https://claude.ai/code/artifact/5d2b21da-9fb3-431e-929c-8b7d9d5ad9f9) |
 
-**10 pieces** — 8 vertical reels + 2 landing cuts — plus the gallery index.
+**11 pieces** — the flagship walkthrough + 8 feature reels + 2 landing cuts — plus the gallery index.
 
 ## Notes
 
