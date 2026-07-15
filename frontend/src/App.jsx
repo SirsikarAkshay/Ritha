@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx'
 import { ThemeProvider } from './hooks/useTheme.jsx'
 import Layout from './components/Layout.jsx'
@@ -60,15 +60,17 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   // After a guest signs up, drop them straight onto the trip planner for the
   // destination they previewed (stashed by StartPage) — no re-entry, no empty
-  // dashboard.
+  // dashboard. Skip when already on /trips: a redundant same-path replace()
+  // remounts TripPlannerPage and races its stash-consume, dropping the pre-fill.
   useEffect(() => {
-    if (user && localStorage.getItem('ritha_pending_trip')) {
+    if (user && localStorage.getItem('ritha_pending_trip') && location.pathname !== '/trips') {
       // TripPlannerPage consumes + clears the stash and pre-fills the form.
       navigate('/trips', { replace: true })
     }
-  }, [user, navigate])
+  }, [user, navigate, location.pathname])
   // A crew invite opened while logged out → complete the join after sign-up.
   useEffect(() => {
     if (!user) return
