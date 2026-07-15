@@ -179,7 +179,7 @@ test.describe('Auth redirects', () => {
     await mockAuthMeUnauthorized(page)
     await page.goto('/')
     await expect(page).toHaveURL('/')
-    await expect(page.getByRole('heading', { name: /where are you headed/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /where are you going/i })).toBeVisible()
   })
 
   test('unauthenticated user visiting /wardrobe is redirected', async ({ page }) => {

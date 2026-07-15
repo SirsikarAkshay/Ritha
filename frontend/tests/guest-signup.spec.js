@@ -187,8 +187,9 @@ test.describe('Previewed trip attaches after signup (Scene 5 → /trips prefill)
     // TripPlannerPage consumes the stash and opens the new-trip form pre-filled.
     // Wait for the form itself first for a clearer failure if it never renders.
     await expect(page.getByText('Plan a new trip')).toBeVisible()
-    await expect(page.getByDisplayValue('Trip to Tokyo, Japan')).toBeVisible()
-    await expect(page.getByDisplayValue('2027-04-06')).toBeVisible()   // start_date
-    await expect(page.getByDisplayValue('2027-04-12')).toBeVisible()   // end_date (endDate carried through)
+    await expect(page.getByPlaceholder('e.g. Tokyo Adventure')).toHaveValue('Trip to Tokyo, Japan')
+    const dateInputs = page.locator('input[type="date"]')
+    await expect(dateInputs.nth(0)).toHaveValue('2027-04-06')   // start_date
+    await expect(dateInputs.nth(1)).toHaveValue('2027-04-12')   // end_date (endDate carried through)
   })
 })
