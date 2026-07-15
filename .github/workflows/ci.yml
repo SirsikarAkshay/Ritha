@@ -290,6 +290,9 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Force our repo config (allowlists public Firebase client keys);
+          # the action does not reliably auto-detect .gitleaks.toml.
+          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
 
   # ─── SAST: CodeQL for backend (Python) and web (TS/JS) ────────────────────
   codeql:
