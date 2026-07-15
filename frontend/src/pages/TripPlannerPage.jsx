@@ -16,7 +16,14 @@ import PlaceAutocomplete from '../components/PlaceAutocomplete.jsx'
 export default function TripPlannerPage() {
   const [trips,    setTrips]    = useState([])
   const [loading,  setLoading]  = useState(true)
-  const [showNew,  setShowNew]  = useState(false)
+  // Open the new-trip form synchronously on first render when a guest stashed a
+  // previewed trip (set by StartPage before sign-up). Doing this in useState —
+  // not the consuming effect below — makes the form reliably appear regardless
+  // of effect/StrictMode/dev-server timing, so the post-signup pre-fill never
+  // gets dropped.
+  const [showNew,  setShowNew]  = useState(() => {
+    try { return !!JSON.parse(localStorage.getItem('ritha_pending_trip') || 'null') } catch { return false }
+  })
   const [editing,  setEditing]  = useState(null) // trip id being edited
   const [recommending, setRecommending] = useState(null)
   const [recs,     setRecs]     = useState(null)  // { trip_id, output }
