@@ -252,8 +252,8 @@ export default function SharedWardrobeDetailPage() {
                   <div style={{ fontSize: '0.8125rem', color: 'var(--cream)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {m.user?.display_name || '@' + m.user?.handle}
                   </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--cream-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {m.role}
+                  <div style={{ fontSize: '0.7rem', color: m.role === 'owner' ? 'var(--terra-light)' : 'var(--sage, #7ba67e)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {m.role === 'owner' ? 'Host · owner' : 'Joined ✓'}
                   </div>
                 </div>
                 {isOwner && m.role !== 'owner' && (

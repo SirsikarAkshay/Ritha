@@ -1,13 +1,15 @@
 // src/pages/LoginPage.jsx
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.jsx'
 import { useTheme } from '../hooks/useTheme.jsx'
 import { auth as authApi } from '../api/index.js'
 import Logo from '../components/Logo.jsx'
 
 export default function LoginPage() {
-  const [mode,     setMode]     = useState('login')   // 'login' | 'register'
+  const [searchParams] = useSearchParams()
+  // Deep-link into register mode from the guest save-trip prompt (/login?mode=register).
+  const [mode,     setMode]     = useState(searchParams.get('mode') === 'register' ? 'register' : 'login')   // 'login' | 'register'
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [firstName,setFirstName]= useState('')

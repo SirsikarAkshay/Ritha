@@ -25,6 +25,7 @@ export default function TripPlannerPage() {
   const [confirmDelete, setConfirmDelete] = useState(null) // trip id pending delete
   const [deleting, setDeleting] = useState(false)
   const [sharedWardrobes, setSharedWardrobes] = useState([])
+  const [inviteLinks, setInviteLinks] = useState({}) // trip.id -> crew invite URL (shown inline with Copy)
 
   const [form, setForm] = useState({
     name: '', country: '', countryCode: '', cities: [], start_date: '', end_date: '', activities: '',
@@ -61,7 +62,7 @@ export default function TripPlannerPage() {
       countryCode: p.countryCode || '',
       cities: p.city ? [p.city] : [],
       start_date: pending.date || '',
-      end_date: pending.date || '',
+      end_date: pending.endDate || pending.date || '',
     }))
     setShowNew(true)
     if (typeof window !== 'undefined' && window.__toast) {
@@ -195,7 +196,9 @@ export default function TripPlannerPage() {
       let copied = false
       try { await navigator.clipboard.writeText(url); copied = true } catch { /* clipboard unavailable */ }
       setTrips(prev => prev.map(t => t.id === trip.id ? { ...t, shared_wardrobe: res.wardrobe_id } : t))
-      window.__toast?.(copied ? 'Invite link copied — share it with your crew! 👥' : `Invite link: ${url}`, 'success')
+      // Surface the link inline (with a Copy button) so it stays visible, not just a transient toast.
+      setInviteLinks(prev => ({ ...prev, [trip.id]: url }))
+      window.__toast?.(copied ? 'Invite link copied — share it with your crew! 👥' : `Invite link ready — copy it below.`, 'success')
     } catch (err) {
       setError(err.message || 'Could not create an invite link.')
     }
@@ -249,7 +252,7 @@ export default function TripPlannerPage() {
       <div className="page-header fade-up">
         <div className="date-line">Trip Planner</div>
         <h1>Your Travels</h1>
-        <p>Plan outfits for every day of your trip. Link a shared wardrobe to plan together.</p>
+        <p>Plan outfits for every day — and share one link so friends join the trip and bring their own closets. Pack as a group, not three solo trips.</p>
       </div>
 
       {error && <div className="alert alert-error fade-up" style={{ marginBottom: '20px' }}>⚠ {error}</div>}
@@ -461,6 +464,25 @@ export default function TripPlannerPage() {
                 </div>
                 )}
 
+                {/* Crew invite link — visible, copyable (collaborative packing) */}
+                {inviteLinks[trip.id] && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0 0', padding: '10px 12px', border: '1px dashed rgba(111,168,199,.4)', borderRadius: 12, background: 'var(--surface-2, #1c2029)' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--cream-dim)', whiteSpace: 'nowrap' }}>👥 Share one link:</span>
+                    <span style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-mono, monospace)', fontSize: '0.8rem', color: 'var(--sky, #6fa8c7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {inviteLinks[trip.id]}
+                    </span>
+                    <button
+                      className="btn btn-sm"
+                      onClick={async () => {
+                        try { await navigator.clipboard.writeText(inviteLinks[trip.id]); window.__toast?.('Invite link copied! 👥', 'success') }
+                        catch { window.__toast?.('Copy failed — select the link manually.', 'error') }
+                      }}
+                      style={{ flex: 'none', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.04em', background: 'var(--sky, #6fa8c7)', color: '#fff', border: 'none', borderRadius: 9, padding: '6px 12px', cursor: 'pointer' }}>
+                      Copy
+                    </button>
+                  </div>
+                )}
+
                 {/* Recommendations panel */}
                 {isViewingThis && recs.output && (
                   <TripRecommendations
@@ -613,7 +635,7 @@ function TripRecommendations({ output, tripId, isSaved, onClose, onSave, onClear
 
   const TABS = [
     { id: 'outfits',  label: 'Outfit Plan',   icon: '👔', count: outfitCount },
-    { id: 'shopping', label: 'Items to Buy',  icon: '🛍', count: shoppingCount },
+    { id: 'shopping', label: 'What to Buy',   icon: '🛍', count: shoppingCount },
     { id: 'places',   label: 'Places to Visit', icon: '📍', count: placesCount },
     { id: 'culture',  label: 'Cultural Guide', icon: '📜', count: rulesCount },
   ]
@@ -981,9 +1003,11 @@ function BuyLinks({ links }) {
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
       {entries.map(([key, url]) => (
         <a key={key} href={url} target="_blank" rel="noreferrer"
-          className="btn btn-ghost btn-sm"
-          style={{ fontSize: '0.75rem', border: '1px solid var(--border)', borderRadius: 100, textDecoration: 'none' }}>
-          {RETAILER_LABELS[key] || '🛍 Shop'} ↗
+          title={`Buy at ${(RETAILER_LABELS[key] || 'shop').replace('🛍 ', '')}`}
+          aria-label={`Buy at ${(RETAILER_LABELS[key] || 'shop').replace('🛍 ', '')}`}
+          className="btn btn-primary btn-sm"
+          style={{ fontSize: '0.75rem', borderRadius: 100, textDecoration: 'none' }}>
+          Buy ↗
         </a>
       ))}
     </div>
@@ -1081,11 +1105,18 @@ function ShoppingTab({ shopping, days, tripId }) {
       )}
 
       {shopping.length > 0 && (
-        <div style={{ color: 'var(--cream-dim)', fontSize: '0.85rem', marginBottom: 16 }}>
-          {hasWardrobeItems
-            ? "These items are missing from your wardrobe. Buy now (opens without leaving your trip) or save for later."
-            : 'Recommended products for your trip. Buy now, or save to your list for later.'}
-        </div>
+        <>
+          <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--cream)', marginBottom: 6 }}>
+            Add the pieces your closet's missing
+          </div>
+          <div style={{ color: 'var(--cream-dim)', fontSize: '0.85rem', marginBottom: 12, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <span>🛍️</span>
+            <span><b style={{ color: 'var(--terra-light)' }}>Buy</b> opens in a new tab — your trip stays right here. Not now? <b style={{ color: 'var(--terra-light)' }}>Remind me later</b> saves it to your list.</span>
+          </div>
+          <div style={{ color: 'var(--sage, #7ba67e)', fontSize: '0.82rem', marginBottom: 16, padding: '9px 12px', background: 'rgba(123,166,126,.12)', border: '1px solid rgba(123,166,126,.28)', borderRadius: 12, lineHeight: 1.4 }}>
+            🌿 <b style={{ color: '#9fce9f' }}>Pre-loved first:</b> consider secondhand or rental before buying new — up to ~70% less CO₂ per item.
+          </div>
+        </>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {shopping.map((s, i) => {
@@ -1181,8 +1212,11 @@ function PlacesTab({ highlights, destination }) {
 
   return (
     <div role="tabpanel">
+      <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--cream)', marginBottom: 4 }}>
+        Tap a place, get the outfit
+      </div>
       <div style={{ color: 'var(--cream-dim)', fontSize: '0.85rem', marginBottom: 16 }}>
-        Must-visit spots — tap <strong style={{ color: 'var(--terra-light)' }}>Dress me for this</strong> to build an outfit from your wardrobe for each.
+        Ritha layers in the local dress code automatically — tap <strong style={{ color: 'var(--terra-light)' }}>✦ Dress me</strong> on any spot.
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
         {highlights.map((h, i) => {
@@ -1212,7 +1246,7 @@ function PlacesTab({ highlights, destination }) {
                 style={{ marginTop: 4, fontSize: '0.8rem', padding: '8px 12px', alignSelf: 'flex-start' }}
                 onClick={() => toggle(i, h)}
               >
-                {open[i] ? '▲ Hide outfit' : '✦ Dress me for this'}
+                {open[i] ? '▲ Hide outfit' : '✦ Dress me'}
               </button>
               {open[i] && (
                 <div style={{ marginTop: 2 }}>
