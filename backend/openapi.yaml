@@ -2088,6 +2088,34 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/shared-wardrobes/{id}/items/{item_id}/claim/:
+    post:
+      operationId: shared_wardrobes_items_claim_create
+      description: |-
+        POST /api/shared-wardrobes/<pk>/items/<item_id>/claim/
+
+        Collaborative packing: a member claims a shared item ("I'll bring this for
+        the group") so the others don't pack it — everyone's bag gets lighter. Any
+        member can claim an unclaimed item or release their own claim (toggle).
+        Broadcasts the updated item + the group's bag-savings tally live.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shared-wardrobes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/shared-wardrobes/{id}/members/:
     post:
       operationId: shared_wardrobes_members_create
@@ -4474,6 +4502,15 @@ components:
           type: object
           additionalProperties: {}
           description: Optional weather override (skips the live fetch)
+        home_city:
+          type: string
+          minLength: 1
+          description: Assumed home city for the weather-gap comparison (optional)
+          maxLength: 120
+        home_temp_c:
+          type: number
+          format: double
+          description: Assumed home baseline temperature °C for the weather gap (optional)
       required:
       - destination
     PublicTripInsightsResponse:

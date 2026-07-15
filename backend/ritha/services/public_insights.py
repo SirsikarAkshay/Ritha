@@ -15,9 +15,31 @@ No Mistral / no torch / no DB writes — this path must always render fast.
 """
 
 import datetime
+import re
 
+from ml.categories import estimate_packed_volume_liters
 from ritha.services.places import fallback_highlights
 from ritha.services.weather import get_weather_for_location
+
+# Guests have no home city yet, so we assume a warm home climate consistent with
+# the "standard South-India capsule" the preview is framed around. The visitor
+# changes their real home city right after signing up (see the frontend
+# assumption note). Overridable per-request via `home_city` / `home_temp_c`.
+_ASSUMED_HOME = {"city": "Bengaluru", "temp_c": 26.0}
+
+# A carry-on is the reference bag for the packing gauge (matches BAG_TYPE_LITERS).
+_BAG_CAPACITY_L = 40
+
+# Only surface the "your closet's built for X°C" headline once the gap is real.
+_GAP_HEADLINE_THRESHOLD_C = 6
+
+# Per-bucket "gap" cue — the one-line reason your everyday closet falls short.
+_GAP_CUE_BY_BUCKET = {
+    "cold": ("🧥", "You have no real cold-weather layers"),
+    "cool": ("🧥", "Your closet's light on warm layers"),
+    "mild": ("🧳", "One packable layer covers the day-night swing"),
+    "warm": ("👕", "You'll want breathable, sweat-friendly fabrics"),
+}
 
 # Weather-bucket → a compact, universally-useful packing capsule. Each item is a
 # (category, name) the destination climate calls for — not culturally specific.
@@ -128,7 +150,93 @@ def _dress_code_alerts(places: list[dict]) -> list[str]:
     return alerts[:4]
 
 
-def trip_insights(destination: str, date=None, gender: str = "women", weather: dict | None = None) -> dict:
+def _qty(name: str) -> int:
+    """Pull the quantity out of a capsule line like 'Wool sweater ×2' → 2."""
+    m = re.search(r"[×xX]\s*(\d+)", name or "")
+    return int(m.group(1)) if m else 1
+
+
+def _short_place(destination: str) -> str:
+    """'Tokyo, Japan' → 'Tokyo' — the label for the gap headline."""
+    return (destination or "there").split(",")[0].strip() or "there"
+
+
+def _weather_gap(dest_temp_c, home: dict, dest_label: str) -> dict | None:
+    """Home-vs-destination temperature comparison for the 'built for X°C' hook."""
+    try:
+        dest_t = round(float(dest_temp_c))
+        home_t = round(float(home["temp_c"]))
+    except (TypeError, ValueError, KeyError):
+        return None
+    delta = dest_t - home_t  # negative → destination is colder
+    gap = {
+        "home_city": home.get("city"),
+        "home_temp_c": home_t,
+        "dest_temp_c": dest_t,
+        "delta_c": delta,
+        "colder": delta < 0,
+        "assumed_home": bool(home.get("assumed")),
+        "headline": None,
+    }
+    if abs(delta) >= _GAP_HEADLINE_THRESHOLD_C:
+        gap["headline"] = f"Your closet's built for {home_t}°C. {dest_label} isn't."
+    return gap
+
+
+def _seasonal_cue(dt: datetime.date | None, bucket: str) -> dict | None:
+    """A month-tagged packing tip, e.g. 'Layer up for chilly April mornings'."""
+    if not dt:
+        return None
+    month = dt.strftime("%B")
+    if bucket in ("cold", "cool"):
+        return {"icon": "🌅", "text": f"Layer up for chilly {month} mornings", "tag": f"{month} tip"}
+    if bucket == "warm":
+        return {"icon": "🧴", "text": f"Pack sun protection for the {month} heat", "tag": f"{month} tip"}
+    return {"icon": "🌤", "text": f"Mild {month} days, cooler evenings — pack a layer", "tag": f"{month} tip"}
+
+
+def _cues(bucket: str, dress_code: list[str], dt: datetime.date | None) -> list[dict]:
+    """Three tagged cue cards: the closet gap, the local dress code, a seasonal tip."""
+    cues: list[dict] = []
+    icon, text = _GAP_CUE_BY_BUCKET.get(bucket, _GAP_CUE_BY_BUCKET["mild"])
+    cues.append({"icon": icon, "text": text, "tag": "gap"})
+    if dress_code:
+        cues.append({"icon": "👟", "text": dress_code[0], "tag": "dress code"})
+    seasonal = _seasonal_cue(dt, bucket)
+    if seasonal:
+        cues.append(seasonal)
+    return cues[:3]
+
+
+def _packing(capsule: list[dict]) -> dict:
+    """Piece count + packed volume + % of a 40 L carry-on, for the guest gauge."""
+    pieces, volume = 0, 0.0
+    for it in capsule:
+        q = _qty(it.get("name", ""))
+        # Pass the item name as the "material" so bulk hints (wool, denim, down…)
+        # in the label bump the estimate — same estimator the packing engine uses.
+        volume += estimate_packed_volume_liters(it.get("category", "other"), it.get("name", "")) * q
+        pieces += q
+    volume = round(volume, 1)
+    percent = round(100 * volume / _BAG_CAPACITY_L) if _BAG_CAPACITY_L else 0
+    return {
+        "piece_count": pieces,
+        "line_count": len(capsule),
+        "volume_l": volume,
+        "bag_capacity_l": _BAG_CAPACITY_L,
+        "percent_of_bag": percent,
+        "note": f"{pieces} pieces travel fine · {volume} L",
+    }
+
+
+def trip_insights(
+    destination: str,
+    date=None,
+    gender: str = "women",
+    weather: dict | None = None,
+    home_city: str | None = None,
+    home_temp_c=None,
+) -> dict:
     """Return the unauthenticated instant-insight payload for a destination."""
     destination = (destination or "").strip()
 
@@ -155,10 +263,30 @@ def trip_insights(destination: str, date=None, gender: str = "women", weather: d
     if weather.get("is_raining") or weather.get("is_wet"):
         gaps.append({"name": "Waterproof shell", "why": "Rain in the forecast — stay dry without bulk."})
 
+    # 5. Weather gap — home-vs-destination temperature delta + tagged cue cards.
+    home = dict(_ASSUMED_HOME)
+    home["assumed"] = True
+    if home_city:
+        home["city"], home["assumed"] = home_city.strip() or home["city"], False
+    if home_temp_c is not None:
+        try:
+            home["temp_c"], home["assumed"] = float(home_temp_c), False
+        except (TypeError, ValueError):
+            pass
+    parsed_date = _parse_date(date)
+    weather_gap = _weather_gap(weather.get("temp_c"), home, _short_place(destination))
+    cues = _cues(bucket, dress_code, parsed_date)
+
+    # 6. Packing gauge — piece count + packed volume + % of a 40 L carry-on.
+    packing = _packing(capsule)
+
     return {
         "destination": destination,
         "date": date if isinstance(date, str) else (date.isoformat() if isinstance(date, datetime.date) else None),
         "weather": weather,
+        "home": home,
+        "weather_gap": weather_gap,
+        "cues": cues,
         "dress_code": dress_code,
         "places": places,
         "capsule": capsule,
@@ -166,6 +294,7 @@ def trip_insights(destination: str, date=None, gender: str = "women", weather: d
             f"Based on a standard capsule for {destination or 'this destination'}'s "
             f"{_bucket_word(bucket)} weather — personalise it with your own wardrobe in one tap."
         ),
+        "packing": packing,
         "gaps": gaps,
         "is_preview": True,
     }

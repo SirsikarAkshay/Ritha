@@ -231,6 +231,7 @@ export const sharedWardrobes = {
     add:    (id, data)           => api.post(`/shared-wardrobes/${id}/items/`, data),
     update: (id, item_id, data)  => api.patch(`/shared-wardrobes/${id}/items/${item_id}/`, data),
     delete: (id, item_id)        => api.delete(`/shared-wardrobes/${id}/items/${item_id}/`),
+    claim:  (id, item_id)        => api.post(`/shared-wardrobes/${id}/items/${item_id}/claim/`, {}),
   },
 }
 

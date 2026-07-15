@@ -1356,6 +1356,30 @@ export interface paths {
         patch: operations["shared_wardrobes_items_partial_update"];
         trace?: never;
     };
+    "/api/shared-wardrobes/{id}/items/{item_id}/claim/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/shared-wardrobes/<pk>/items/<item_id>/claim/
+         *
+         *     Collaborative packing: a member claims a shared item ("I'll bring this for
+         *     the group") so the others don't pack it — everyone's bag gets lighter. Any
+         *     member can claim an unclaimed item or release their own claim (toggle).
+         *     Broadcasts the updated item + the group's bag-savings tally live.
+         */
+        post: operations["shared_wardrobes_items_claim_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/shared-wardrobes/{id}/members/": {
         parameters: {
             query?: never;
@@ -2718,6 +2742,13 @@ export interface components {
             weather?: {
                 [key: string]: unknown;
             };
+            /** @description Assumed home city for the weather-gap comparison (optional) */
+            home_city?: string;
+            /**
+             * Format: double
+             * @description Assumed home baseline temperature °C for the weather gap (optional)
+             */
+            home_temp_c?: number;
         };
         PublicTripInsightsResponse: {
             output: {
@@ -5212,6 +5243,27 @@ export interface operations {
         };
     };
     shared_wardrobes_items_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    shared_wardrobes_items_claim_create: {
         parameters: {
             query?: never;
             header?: never;

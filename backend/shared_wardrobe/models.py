@@ -62,6 +62,25 @@ class SharedWardrobe(models.Model):
                     break
         return self.invite_token
 
+    # Reference bag for the "N bags of space saved" tally (a carry-on).
+    BAG_CAPACITY_L = 40
+
+    def bag_savings(self) -> dict:
+        """Group bag-space saved by claimed items: one person packs it so the
+        other members don't have to. Powers the reel's 'N bags of space saved'."""
+        from ml.categories import estimate_packed_volume_liters
+
+        member_count = self.members.count()
+        if member_count < 2:
+            return {"saved_volume_l": 0.0, "bags_saved": 0}
+        # Each claimed item spares every *other* member from packing it.
+        per_item_l = sum(
+            estimate_packed_volume_liters(cat)
+            for cat in self.items.filter(claimed_by__isnull=False).values_list("category", flat=True)
+        )
+        saved = per_item_l * (member_count - 1)
+        return {"saved_volume_l": round(saved, 1), "bags_saved": int(saved // self.BAG_CAPACITY_L)}
+
 
 class SharedWardrobeMember(models.Model):
     wardrobe = models.ForeignKey(
@@ -116,6 +135,16 @@ class SharedWardrobeItem(models.Model):
     brand = models.CharField(max_length=100, blank=True)
     image_url = models.URLField(blank=True)
     notes = models.CharField(max_length=500, blank=True)
+    # Collaborative packing: the member who's bringing this shared item for the
+    # whole group. Once claimed, the others don't pack it → everyone's bag lightens.
+    claimed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="claimed_shared_items",
+    )
+    claimed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

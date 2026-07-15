@@ -4,7 +4,7 @@ import datetime
 
 import pytest
 from itinerary.models import Trip
-from shared_wardrobe.models import MemberRole, SharedWardrobe, SharedWardrobeMember
+from shared_wardrobe.models import MemberRole, SharedWardrobe, SharedWardrobeItem, SharedWardrobeMember
 
 from .factories import UserFactory
 
@@ -136,3 +136,74 @@ class TestMemberWardrobeCount:
         detail = client.get(f"/api/shared-wardrobes/{sw.id}/", **hdr(login(client, owner))).json()
         me = next(m for m in detail["members"] if m["user"]["id"] == owner.id)
         assert me["wardrobe_item_count"] == 2
+
+
+def add_member(sw, user, role=MemberRole.EDITOR):
+    return SharedWardrobeMember.objects.create(wardrobe=sw, user=user, role=role)
+
+
+def add_item(sw, adder, name="Travel adapter", category="accessory"):
+    return SharedWardrobeItem.objects.create(wardrobe=sw, added_by=adder, name=name, category=category)
+
+
+class TestClaimAndBagSavings:
+    def test_claim_toggles_and_reports_savings(self, client):
+        owner, friend = UserFactory(), UserFactory()
+        sw = wardrobe_with_owner(owner)
+        add_member(sw, friend)
+        item = add_item(sw, owner)
+        url = f"/api/shared-wardrobes/{sw.id}/items/{item.id}/claim/"
+        m = hdr(login(client, friend))
+
+        r = client.post(url, content_type="application/json", **m)
+        assert r.status_code == 200
+        body = r.json()
+        assert body["item"]["claimed_by"]["id"] == friend.id
+        assert body["bag_savings"]["saved_volume_l"] > 0  # 2 members → 1 other saves it
+        item.refresh_from_db()
+        assert item.claimed_by_id == friend.id and item.claimed_at is not None
+
+        # Toggle again → released, savings back to zero.
+        r2 = client.post(url, content_type="application/json", **m)
+        assert r2.json()["item"]["claimed_by"] is None
+        assert r2.json()["bag_savings"]["saved_volume_l"] == 0
+
+    def test_bags_saved_counts_whole_carryons(self, client):
+        owner, a, b = UserFactory(), UserFactory(), UserFactory()
+        sw = wardrobe_with_owner(owner)
+        add_member(sw, a)
+        add_member(sw, b)
+        # 3 members → each claimed item spares 2 other bags. Outerwear ≈ 3.5L,
+        # so 6 coats ≈ 6*3.5*2 = 42L > one 40L carry-on.
+        for i in range(6):
+            it = add_item(sw, owner, name=f"Coat {i}", category="outerwear")
+            client.post(
+                f"/api/shared-wardrobes/{sw.id}/items/{it.id}/claim/",
+                content_type="application/json",
+                **hdr(login(client, owner)),
+            )
+        sw.refresh_from_db()
+        assert sw.bag_savings()["bags_saved"] >= 1
+
+    def test_solo_wardrobe_saves_nothing(self, client):
+        owner = UserFactory()
+        sw = wardrobe_with_owner(owner)
+        it = add_item(sw, owner)
+        client.post(
+            f"/api/shared-wardrobes/{sw.id}/items/{it.id}/claim/",
+            content_type="application/json",
+            **hdr(login(client, owner)),
+        )
+        # Only one member → nobody else benefits.
+        assert sw.bag_savings() == {"saved_volume_l": 0.0, "bags_saved": 0}
+
+    def test_non_member_cannot_claim(self, client):
+        owner, stranger = UserFactory(), UserFactory()
+        sw = wardrobe_with_owner(owner)
+        item = add_item(sw, owner)
+        r = client.post(
+            f"/api/shared-wardrobes/{sw.id}/items/{item.id}/claim/",
+            content_type="application/json",
+            **hdr(login(client, stranger)),
+        )
+        assert r.status_code in (403, 404)

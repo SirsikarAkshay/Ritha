@@ -259,5 +259,7 @@ class PublicTripInsightsView(views.APIView):
             date=d["date"].isoformat() if d.get("date") else None,
             gender=d.get("gender", "women"),
             weather=d.get("weather"),
+            home_city=d.get("home_city"),
+            home_temp_c=d.get("home_temp_c"),
         )
         return Response({"output": output})

@@ -12,6 +12,14 @@ import { injectAuth, mockAuthMe } from './fixtures/auth.js'
 // Mistral; mocked here so the flow is deterministic and offline).
 const INSIGHTS = {
   weather: { temp_c: 8, feels_like_c: 6, condition: 'Cold & clear', is_cold: true, is_raining: false, is_hot: false },
+  home: { city: 'Bengaluru', temp_c: 26, assumed: true },
+  weather_gap: { home_city: 'Bengaluru', home_temp_c: 26, dest_temp_c: 8, delta_c: -18, colder: true, assumed_home: true, headline: "Your closet's built for 26°C. Tokyo isn't." },
+  cues: [
+    { icon: '🧥', text: 'You have no real cold-weather layers', tag: 'gap' },
+    { icon: '👟', text: 'Shoes off indoors — temples & ryokan', tag: 'dress code' },
+    { icon: '🌅', text: 'Layer up for chilly April mornings', tag: 'April tip' },
+  ],
+  packing: { piece_count: 6, line_count: 6, volume_l: 12.8, bag_capacity_l: 40, percent_of_bag: 52, note: '6 pieces travel fine · 12.8 L' },
   dress_code: ['Shoes off indoors — temples & ryokan', 'Cover shoulders at shrines'],
   capsule_note: "Based on a standard capsule for Tokyo's cold weather — personalise it in one tap.",
   capsule: [
@@ -74,6 +82,29 @@ test.describe('Guest destination-first preview (Scenes 1–4)', () => {
     await expect(page.getByText(/pieces? your closet's missing/)).toBeVisible()
     await expect(page.getByText('not a guess about you')).toBeVisible()
     await expect(page.getByText('Like what you see? Save this trip to make it yours.')).toBeVisible()
+  })
+
+  test('weather gap: headline, home-vs-dest delta, tagged cue cards (S3)', async ({ page }) => {
+    await page.goto('/')
+    await page.getByPlaceholder('e.g. Tokyo').fill('Tokyo, Japan')
+    await page.getByLabel('Trip start date').fill('2027-04-06')
+    await page.getByRole('button', { name: 'See my trip →' }).click()
+
+    await expect(page.getByText("Tokyo isn't.")).toBeVisible()       // gap headline
+    await expect(page.getByText('-18°')).toBeVisible()               // delta
+    await expect(page.getByText('colder')).toBeVisible()
+    await expect(page.getByText('You have no real cold-weather layers')).toBeVisible()
+    await expect(page.getByText('gap', { exact: true })).toBeVisible()
+    await expect(page.getByText('April tip')).toBeVisible()
+  })
+
+  test('packing gauge: pieces · liters · % of 40L + fill bar (S4)', async ({ page }) => {
+    await page.goto('/')
+    await page.getByPlaceholder('e.g. Tokyo').fill('Tokyo, Japan')
+    await page.getByRole('button', { name: 'See my trip →' }).click()
+
+    await expect(page.getByText('6 pieces travel fine · 12.8 L')).toBeVisible()
+    await expect(page.getByText('52% of 40L')).toBeVisible()
   })
 })
 

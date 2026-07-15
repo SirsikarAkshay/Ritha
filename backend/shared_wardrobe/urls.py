@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     InvitationListView,
     InvitationRespondView,
+    ItemClaimView,
     ItemDetailView,
     ItemListCreateView,
     MemberAddView,
@@ -24,4 +25,5 @@ urlpatterns = [
     path("<int:pk>/members/<int:user_id>/", MemberRemoveView.as_view()),
     path("<int:pk>/items/", ItemListCreateView.as_view()),
     path("<int:pk>/items/<int:item_id>/", ItemDetailView.as_view()),
+    path("<int:pk>/items/<int:item_id>/claim/", ItemClaimView.as_view()),
 ]

@@ -55,6 +55,8 @@ export default function StartPage() {
 
   const w = insights?.weather || {}
   const tempC = w.temp_c != null ? Math.round(w.temp_c) : null
+  const gap = insights?.weather_gap
+  const destShort = (form.destination || '').split(',')[0].trim()
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg, #0d0f14)', color: 'var(--cream, #f5f0e8)' }}>
@@ -156,14 +158,53 @@ export default function StartPage() {
         {/* ── Instant insight dashboard ─────────────────────────────── */}
         {insights && (
           <div style={{ display: 'grid', gap: 16 }}>
-            {/* Weather */}
-            <div className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontSize: '2.2rem' }}>{w.is_raining ? '🌧️' : w.is_cold ? '🧥' : w.is_hot ? '☀️' : '⛅'}</span>
-              <div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 600 }}>{form.destination}{tempC != null ? ` · ${tempC}°C` : ''}</div>
-                <div style={{ color: 'var(--dim)', fontSize: '.9rem' }}>{w.condition || 'Forecast'}{w.feels_like_c != null ? ` · feels ${Math.round(w.feels_like_c)}°` : ''}</div>
-              </div>
+            {/* Weather gap — "your closet's built for X°C" home-vs-destination */}
+            <div className="card" style={{ padding: 16 }}>
+              {gap?.headline && (
+                <div style={{ fontSize: '1.2rem', fontWeight: 620, letterSpacing: '-.01em', marginBottom: 12, textWrap: 'balance' }}>
+                  {gap.headline.split('. ')[0]}.{' '}
+                  <span style={{ color: 'var(--sky, #6fa8c7)' }}>{gap.headline.split('. ').slice(1).join('. ')}</span>
+                </div>
+              )}
+              {gap ? (
+                <div style={{ display: 'flex', alignItems: 'stretch', gap: 10 }}>
+                  <div style={{ flex: 1, textAlign: 'center', background: 'var(--surface-2,#1c2029)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 8px' }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '.64rem', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 6 }}>{insights.home?.city || 'Home'}{insights.home?.assumed ? ' · assumed' : ''}</div>
+                    <div style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--terra-light)' }}>{gap.home_temp_c}°</div>
+                  </div>
+                  <div style={{ alignSelf: 'center', textAlign: 'center', fontFamily: 'var(--mono)', color: 'var(--terra)' }}>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{gap.delta_c > 0 ? '+' : ''}{gap.delta_c}°</div>
+                    <div style={{ fontSize: '.56rem', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--faint)' }}>{gap.colder ? 'colder' : 'warmer'}</div>
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'center', background: 'var(--surface-2,#1c2029)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 8px' }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '.64rem', letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--faint)', marginBottom: 6 }}>{destShort || 'Destination'}</div>
+                    <div style={{ fontSize: '1.7rem', fontWeight: 700, color: 'var(--sky, #6fa8c7)' }}>{gap.dest_temp_c}°</div>
+                    {w.condition && <div style={{ fontSize: '.72rem', color: 'var(--dim)', marginTop: 4 }}>{w.condition}</div>}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <span style={{ fontSize: '2.2rem' }}>{w.is_raining ? '🌧️' : w.is_cold ? '🧥' : w.is_hot ? '☀️' : '⛅'}</span>
+                  <div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 600 }}>{form.destination}{tempC != null ? ` · ${tempC}°C` : ''}</div>
+                    <div style={{ color: 'var(--dim)', fontSize: '.9rem' }}>{w.condition || 'Forecast'}{w.feels_like_c != null ? ` · feels ${Math.round(w.feels_like_c)}°` : ''}</div>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Tagged cue cards — gap · dress code · seasonal tip */}
+            {insights.cues?.length > 0 && (
+              <div className="card" style={{ padding: 16, display: 'grid', gap: 9 }}>
+                {insights.cues.map((c, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 13px', background: 'var(--surface-2,#1c2029)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                    <span style={{ fontSize: '1.3rem', width: 26, textAlign: 'center' }}>{c.icon}</span>
+                    <span style={{ flex: 1, fontSize: '.92rem', color: 'var(--cream)', lineHeight: 1.35 }}>{c.text}</span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: '.66rem', color: 'var(--terra-light)', whiteSpace: 'nowrap' }}>{c.tag}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Dress code alerts */}
             {insights.dress_code?.length > 0 && (
@@ -181,8 +222,20 @@ export default function StartPage() {
               <div style={{ color: 'var(--gold, #c9a84c)', fontSize: '.8rem', marginBottom: 4, fontStyle: 'italic' }}>{insights.capsule_note}</div>
               {/* Reassure that the generic capsule is a temporary placeholder, not a mistake. */}
               <div style={{ color: 'var(--dim, #9a97a0)', fontSize: '.76rem', marginBottom: 12, lineHeight: 1.4 }}>
-                We assumed a standard capsule to start — change your home city and swap in your own wardrobe next. This is just a placeholder, not a guess about you.
+                We assumed {insights.home?.city || 'a standard capsule'} to start — change your home city and swap in your own wardrobe next. This is just a placeholder, not a guess about you.
               </div>
+              {/* Packing-volume gauge — pieces · liters · % of a 40 L carry-on */}
+              {insights.packing && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontFamily: 'var(--mono)', fontSize: '.8rem', color: 'var(--dim)', marginBottom: 6 }}>
+                    <span>{insights.packing.note}</span>
+                    <span style={{ color: 'var(--terra)', fontWeight: 600 }}>{insights.packing.percent_of_bag}% of {insights.packing.bag_capacity_l}L</span>
+                  </div>
+                  <div style={{ height: 11, borderRadius: 11, background: 'var(--surface-2,#1c2029)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${Math.min(100, insights.packing.percent_of_bag)}%`, borderRadius: 11, background: 'linear-gradient(90deg,var(--terra),var(--terra-light))', transition: 'width .9s cubic-bezier(.3,.7,.3,1)' }} />
+                  </div>
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 8 }}>
                 {insights.capsule.map((it, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: 8, background: 'var(--surface-3, #252833)', borderRadius: 10 }}>
