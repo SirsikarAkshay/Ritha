@@ -286,13 +286,16 @@ jobs:
         working-directory: frontend
         run: npm audit --audit-level=high
 
+      # Run the gitleaks binary directly rather than gitleaks-action@v2, which
+      # doesn't reliably honour our repo config and so kept flagging the public
+      # Firebase client keys allowlisted in .gitleaks.toml. The binary respects
+      # --config; exits 0 when clean, 1 on a real leak.
       - name: Secret scan (gitleaks)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Force our repo config (allowlists public Firebase client keys);
-          # the action does not reliably auto-detect .gitleaks.toml.
-          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
+        run: |
+          VER=8.21.2
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${VER}/gitleaks_${VER}_linux_x64.tar.gz" -o /tmp/gitleaks.tgz
+          tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+          /tmp/gitleaks detect --source . --config .gitleaks.toml --redact --no-banner
 
   # ─── SAST: CodeQL for backend (Python) and web (TS/JS) ────────────────────
   codeql:
