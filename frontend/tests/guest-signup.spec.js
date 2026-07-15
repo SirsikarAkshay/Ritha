@@ -157,11 +157,13 @@ test.describe('Register-mode deep link (LoginPage ?mode= param)', () => {
 
 test.describe('Previewed trip attaches after signup (Scene 5 → /trips prefill)', () => {
   test('/trips pre-fills the previewed destination + start/end dates', async ({ page }) => {
-    // Catch-all FIRST so any endpoint we don't explicitly mock returns an empty
-    // paginated payload instead of hanging on the (absent) dev backend. Routes
-    // registered later take precedence in Playwright, so the specific mocks and
-    // mockAuthMe below win over this fallback.
-    await page.route('**/api/**', (route) =>
+    // Catch-all FIRST so any backend endpoint we don't explicitly mock returns
+    // an empty paginated payload instead of hanging on the (absent) dev backend.
+    // Match on the /api/ PATH — NOT a '**/api/**' glob, which also matches the
+    // dev server's own source modules (/src/api/index.js, /src/api/client.js)
+    // and would serve them as JSON, breaking the app boot. Routes registered
+    // later take precedence, so the specific mocks + mockAuthMe below still win.
+    await page.route((url) => new URL(url).pathname.startsWith('/api/'), (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ results: [], count: 0 }) }),
     )
 
