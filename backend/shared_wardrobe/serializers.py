@@ -11,8 +11,17 @@ class SharedWardrobeItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = SharedWardrobeItem
         fields = [
-            "id", "wardrobe", "added_by", "name", "category", "brand", "image_url", "notes",
-            "claimed_by", "claimed_at", "created_at",
+            "id",
+            "wardrobe",
+            "added_by",
+            "name",
+            "category",
+            "brand",
+            "image_url",
+            "notes",
+            "claimed_by",
+            "claimed_at",
+            "created_at",
         ]
         read_only_fields = ["id", "wardrobe", "added_by", "claimed_by", "claimed_at", "created_at"]
 

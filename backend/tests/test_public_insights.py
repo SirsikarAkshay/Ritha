@@ -1,5 +1,4 @@
 """Tests for the unauthenticated destination-insight preview (weather gap + gauge)."""
-import pytest
 
 from ritha.services.public_insights import trip_insights
 
@@ -10,7 +9,7 @@ WARM = {"temp_c": 31, "condition": "Hot & humid", "is_hot": True}
 def test_weather_gap_headline_and_delta_for_cold_destination():
     r = trip_insights("Tokyo, Japan", date="2027-04-06", weather=COLD)
     gap = r["weather_gap"]
-    assert gap["home_temp_c"] == 26          # assumed Bengaluru baseline
+    assert gap["home_temp_c"] == 26  # assumed Bengaluru baseline
     assert gap["dest_temp_c"] == 8
     assert gap["delta_c"] == -18
     assert gap["colder"] is True
@@ -24,7 +23,7 @@ def test_home_city_and_temp_override():
     assert r["home"]["city"] == "Zurich"
     assert r["home"]["assumed"] is False
     assert gap["home_temp_c"] == 4
-    assert gap["delta_c"] == 4               # 8 - 4, destination warmer
+    assert gap["delta_c"] == 4  # 8 - 4, destination warmer
     assert gap["colder"] is False
     # 4°C gap is under the threshold → no dramatic headline
     assert gap["headline"] is None
@@ -36,7 +35,7 @@ def test_cues_are_tagged_gap_dresscode_seasonal():
     assert 1 <= len(cues) <= 3
     tags = [c["tag"] for c in cues]
     assert tags[0] == "gap"
-    assert any(t == "April tip" for t in tags)       # seasonal tip uses the month
+    assert any(t == "April tip" for t in tags)  # seasonal tip uses the month
     for c in cues:
         assert c["icon"] and c["text"] and c["tag"]
 
@@ -59,5 +58,5 @@ def test_packing_gauge_shape():
 def test_warm_destination_flips_gap_direction():
     r = trip_insights("Dubai, UAE", weather=WARM)
     gap = r["weather_gap"]
-    assert gap["delta_c"] == 5               # 31 - 26
+    assert gap["delta_c"] == 5  # 31 - 26
     assert gap["colder"] is False

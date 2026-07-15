@@ -18,6 +18,7 @@ import datetime
 import re
 
 from ml.categories import estimate_packed_volume_liters
+
 from ritha.services.places import fallback_highlights
 from ritha.services.weather import get_weather_for_location
 
