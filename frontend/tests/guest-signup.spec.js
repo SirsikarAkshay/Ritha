@@ -157,9 +157,23 @@ test.describe('Register-mode deep link (LoginPage ?mode= param)', () => {
 
 test.describe('Previewed trip attaches after signup (Scene 5 → /trips prefill)', () => {
   test('/trips pre-fills the previewed destination + start/end dates', async ({ page }) => {
+    // Catch-all FIRST so any endpoint we don't explicitly mock returns an empty
+    // paginated payload instead of hanging on the (absent) dev backend. Routes
+    // registered later take precedence in Playwright, so the specific mocks and
+    // mockAuthMe below win over this fallback.
+    await page.route('**/api/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ results: [], count: 0 }) }),
+    )
+
     // Simulate the post-signup state: authed + the guest stash still present.
     await injectAuth(page)
     await mockAuthMe(page)
+    await page.route('**/api/itinerary/trips/', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ results: [] }) }),
+    )
+    await page.route('**/api/shared-wardrobes/', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) }),
+    )
     await page.addInitScript(() => {
       localStorage.setItem('ritha_pending_trip', JSON.stringify({
         destination: 'Tokyo, Japan',
@@ -167,16 +181,12 @@ test.describe('Previewed trip attaches after signup (Scene 5 → /trips prefill)
         date: '2027-04-06', endDate: '2027-04-12', gender: 'women',
       }))
     })
-    await page.route('**/api/itinerary/trips/', (route) => {
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ results: [] }) })
-    })
-    await page.route('**/api/shared-wardrobes/', (route) => {
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
-    })
 
     await page.goto('/trips')
 
-    // TripPlannerPage consumes the stash, opens the new-trip form pre-filled.
+    // TripPlannerPage consumes the stash and opens the new-trip form pre-filled.
+    // Wait for the form itself first for a clearer failure if it never renders.
+    await expect(page.getByText('Plan a new trip')).toBeVisible()
     await expect(page.getByDisplayValue('Trip to Tokyo, Japan')).toBeVisible()
     await expect(page.getByDisplayValue('2027-04-06')).toBeVisible()   // start_date
     await expect(page.getByDisplayValue('2027-04-12')).toBeVisible()   // end_date (endDate carried through)
