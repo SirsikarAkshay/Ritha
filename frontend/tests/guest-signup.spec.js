@@ -182,7 +182,12 @@ test.describe('Previewed trip attaches after signup (Scene 5 → /trips prefill)
       }))
     })
 
-    await page.goto('/trips')
+    // Enter the way the real post-signup flow does: land on '/', and let App
+    // redirect the authed user (who has a pending trip) to /trips. Navigating
+    // straight to /trips instead triggers a redundant same-path replace() that
+    // races the stash-consume on WebKit and can drop the pre-fill.
+    await page.goto('/')
+    await expect(page).toHaveURL(/\/trips/)
 
     // TripPlannerPage consumes the stash and opens the new-trip form pre-filled.
     // Wait for the form itself first for a clearer failure if it never renders.
