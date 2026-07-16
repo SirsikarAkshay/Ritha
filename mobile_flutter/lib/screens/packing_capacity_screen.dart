@@ -37,6 +37,7 @@ class _PackingCapacityScreenState extends State<PackingCapacityScreen> {
   final _location = TextEditingController();
   final _activities = TextEditingController();
   bool _loading = false;
+  bool _saving = false;
   String? _error;
   Map<String, dynamic>? _result;
 
@@ -98,6 +99,115 @@ class _PackingCapacityScreenState extends State<PackingCapacityScreen> {
           _loading = false;
         });
       }
+    }
+  }
+
+  // Wardrobe ClothingItem ids from the current packing result.
+  List<int> _packedItemIds() {
+    final ids = <int>[];
+    final raw = _result?['item_ids'];
+    if (raw is List) {
+      for (final x in raw) {
+        final n = (x is num) ? x.toInt() : int.tryParse('$x');
+        if (n != null) ids.add(n);
+      }
+    }
+    if (ids.isEmpty) {
+      final list = _result?['packing_list'];
+      if (list is List) {
+        for (final it in list) {
+          if (it is Map && it['id'] != null) {
+            final n = (it['id'] is num)
+                ? (it['id'] as num).toInt()
+                : int.tryParse('${it['id']}');
+            if (n != null) ids.add(n);
+          }
+        }
+      }
+    }
+    return ids;
+  }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _saveToTrip() async {
+    final itemIds = _packedItemIds();
+    if (itemIds.isEmpty) {
+      _snack('Nothing to save — this list has no wardrobe items.');
+      return;
+    }
+    List trips;
+    try {
+      final res = await itineraryApi.trips.list();
+      trips = res is Map
+          ? (res['results'] as List? ?? const [])
+          : (res as List? ?? const []);
+    } catch (_) {
+      _snack('Could not load your trips.');
+      return;
+    }
+    if (!mounted) return;
+    if (trips.isEmpty) {
+      _snack('Create a trip first (Trips tab), then save your packing list to it.');
+      return;
+    }
+    final trip = await showModalBottomSheet<Map>(
+      context: context,
+      backgroundColor: AppColors.surface2,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Save packing list to…',
+                style: TextStyle(
+                  color: AppColors.cream,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            for (final t in trips)
+              if (t is Map)
+                ListTile(
+                  title: Text(
+                    '${t['name'] ?? t['destination'] ?? 'Trip'}',
+                    style: const TextStyle(color: AppColors.cream),
+                  ),
+                  subtitle: Text(
+                    '${t['start_date'] ?? ''} → ${t['end_date'] ?? ''}',
+                    style: const TextStyle(
+                      color: AppColors.creamDim,
+                      fontSize: 12,
+                    ),
+                  ),
+                  onTap: () => Navigator.pop(ctx, Map<String, dynamic>.from(t)),
+                ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (trip == null || !mounted) return;
+    final tripId = (trip['id'] is num)
+        ? (trip['id'] as num).toInt()
+        : int.tryParse('${trip['id']}');
+    if (tripId == null) return;
+    setState(() => _saving = true);
+    try {
+      await itineraryApi.trips.fromPackingList(tripId, itemIds);
+      _snack('Packing list saved to ${trip['name'] ?? 'your trip'} 🎒');
+    } catch (e) {
+      _snack('Could not save: $e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -184,9 +294,15 @@ class _PackingCapacityScreenState extends State<PackingCapacityScreen> {
           ),
           const SizedBox(height: 20),
           if (_error != null) AlertBanner(message: _error!),
-          if (r != null)
-            _PackingResult(result: r)
-          else if (!_loading)
+          if (r != null) ...[
+            _PackingResult(result: r),
+            const SizedBox(height: 16),
+            APrimaryButton(
+              label: '💾 Save to a trip',
+              loading: _saving,
+              onPressed: _saveToTrip,
+            ),
+          ] else if (!_loading)
             const EmptyState(
               icon: '🎒',
               title: 'Pack smart',
