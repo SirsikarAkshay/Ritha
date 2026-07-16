@@ -25,12 +25,11 @@ class RithaWebSocket {
   Future<void> _open() async {
     if (_closedByUser) return;
     final token = await ApiClient.instance.getAccessToken() ?? '';
-    final scheme =
-        kWsHost.startsWith('localhost') ||
-            kWsHost.startsWith('10.0.2.2') ||
-            kWsHost.startsWith('127.0.0.1')
-        ? 'ws'
-        : 'wss';
+    // Match the WS scheme to the API scheme: plain ws:// for an http backend
+    // (local dev / LAN IP during device testing / http tunnel), wss:// for
+    // https (production or an https tunnel). More robust than guessing from the
+    // host — a LAN IP like 192.168.x.x is http, so it must use ws://.
+    final scheme = kBaseUrl.startsWith('https') ? 'wss' : 'ws';
     final url =
         '$scheme://$kWsHost$path?token=${Uri.encodeQueryComponent(token)}';
     try {
