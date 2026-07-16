@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 import '../api/api.dart';
 import '../api/api_client.dart';
 
@@ -11,20 +10,10 @@ class AuthProvider extends ChangeNotifier {
   bool get loading => _loading;
   bool get isAuthenticated => _user != null;
 
-  // Attach/clear the Sentry user from the current _user. No-op when Sentry
-  // isn't initialised (no DSN), so it's safe to call unconditionally.
-  void _syncSentryUser() {
-    Sentry.configureScope((scope) {
-      scope.setUser(
-        _user == null
-            ? null
-            : SentryUser(
-                id: _user!['id']?.toString(),
-                email: _user!['email'] as String?,
-              ),
-      );
-    });
-  }
+  // Sentry was removed to unblock the Android build (Kotlin 2.2 incompat).
+  // Kept as a no-op so existing call sites are unaffected; restore the
+  // Sentry.configureScope body when re-adding error monitoring.
+  void _syncSentryUser() {}
 
   AuthProvider() {
     ApiClient.instance.setOnAuthFailure(() async {

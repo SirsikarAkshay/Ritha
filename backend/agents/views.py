@@ -60,7 +60,10 @@ class BaseAgentView(views.APIView):
         try:
             output = self.run(request.user, validated)
             job.status = "completed"
-            job.output_data = output
+            # Sanitize output like the input above — it may contain date/datetime
+            # objects the default JSON encoder can't store in the JSONField. The
+            # response still returns the original `output` (DRF renders dates fine).
+            job.output_data = json.loads(json.dumps(output, default=str))
             job.completed_at = datetime.datetime.now(tz=datetime.UTC)
             job.save()
             return Response({"job_id": job.id, "status": "completed", "output": output})
