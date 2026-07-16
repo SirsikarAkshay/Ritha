@@ -1,0 +1,30 @@
+# gitleaks configuration for Ritha.
+#
+# Extends the default gitleaks ruleset and allowlists the generated Firebase
+# *client* config files. Their contents (the `AIza…` API keys and the web-push
+# VAPID *public* key) are public by design: identifiers shipped inside every
+# copy of the mobile/web app. They are NOT credentials — access is controlled
+# by Firebase Security Rules and GCP API-key restrictions, not by secrecy.
+# (Real secrets — a service-account JSON, a private VAPID key — are not in these
+# files and remain fully scanned everywhere else.)
+#
+# Allowlisting is by PATH only (no key values are written here, so this file
+# itself trips no scanner). Scope is limited to the Firebase config/service
+# files; a genuinely new secret anywhere else still fails CI.
+#
+# Ref: https://firebase.google.com/docs/projects/api-keys
+
+title = "Ritha gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public Firebase client config (identifiers, not secrets)"
+paths = [
+  '''mobile_flutter/web/firebase-messaging-sw\.js''',
+  '''mobile_flutter/lib/firebase_options\.dart''',
+  '''mobile_flutter/lib/services/push_notification_service\.dart''',
+  '''mobile_flutter/android/app/google-services\.json''',
+  '''mobile_flutter/ios/Runner/GoogleService-Info\.plist''',
+]

@@ -196,3 +196,9 @@ class PublicTripInsightsInputSerializer(serializers.Serializer):
         default="women",
     )
     weather = serializers.DictField(required=False, help_text="Optional weather override (skips the live fetch)")
+    home_city = serializers.CharField(
+        max_length=120, required=False, help_text="Assumed home city for the weather-gap comparison (optional)"
+    )
+    home_temp_c = serializers.FloatField(
+        required=False, help_text="Assumed home baseline temperature °C for the weather gap (optional)"
+    )

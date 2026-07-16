@@ -172,7 +172,7 @@ export default function OnboardingPage() {
       <div style={pageWrap}>
         {stepHeader}
         <h1 style={h1}>Let's set up your wardrobe</h1>
-        <p style={subtitle}>We'll start with a few items most people in your demographic own — based on real survey data, not guesses. You'll review and remove anything that doesn't fit.</p>
+        <p style={subtitle}>A starter closet appears instantly — no empty screen, no data-entry chore. We seed a few items most people in your region own (from real survey data), then you review and remove anything that doesn't fit.</p>
 
         <h2 style={h2}>I'm shopping for…</h2>
         <div style={grid}>
@@ -187,6 +187,11 @@ export default function OnboardingPage() {
         </div>
 
         <h2 style={{ ...h2, marginTop: 32 }}>I mostly live in…</h2>
+        {region && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--sage, #7ba67e)', background: 'rgba(123,166,126,.12)', border: '1px solid rgba(123,166,126,.3)', borderRadius: 20, padding: '5px 12px', marginBottom: 12 }}>
+            📍 seeded for {regions.find(r => r.code === region)?.display_name || 'your region'} · edit or snap-to-add anytime
+          </div>
+        )}
         <div style={grid}>
           {regions.length === 0 && (
             <div style={{ gridColumn: '1 / -1', color: 'var(--cream-700)', fontSize: 13 }}>

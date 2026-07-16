@@ -104,6 +104,8 @@ class ItineraryTripsApi {
   );
   Future clearRecommendation(int id) =>
       _api.delete('/itinerary/trips/$id/save-recommendation/');
+  // Collaborative packing: ensure a shared wardrobe + get the crew join link.
+  Future share(int id) => _api.post('/itinerary/trips/$id/share/', {});
 }
 
 // "Remind me to buy this later" — persisted shopping suggestions.
@@ -295,6 +297,10 @@ class SharedWardrobesApi {
       _api.post('/shared-wardrobes/', data);
   Future get(int id) => _api.get('/shared-wardrobes/$id/');
   Future delete(int id) => _api.delete('/shared-wardrobes/$id/');
+  Future inviteLink(int id) =>
+      _api.post('/shared-wardrobes/$id/invite-link/', {});
+  Future join(String token) =>
+      _api.post('/shared-wardrobes/join/', {'token': token});
   final members = SharedWardrobeMembersApi();
   final invitations = SharedWardrobeInvitationsApi();
   final items = SharedWardrobeItemsApi();

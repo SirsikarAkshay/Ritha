@@ -292,6 +292,60 @@ class MemberRemoveView(APIView):
         return Response({"status": "removed"})
 
 
+# ── Join by shareable link ────────────────────────────────────────────────────
+class WardrobeInviteLinkView(APIView):
+    """POST /api/shared-wardrobes/<pk>/invite-link/ — get (minting on first use) the
+    shareable join token. Any member can share the link with their crew."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            wardrobe = SharedWardrobe.objects.get(pk=pk)
+        except SharedWardrobe.DoesNotExist:
+            return Response({"error": {"code": "not_found", "message": "Not found."}}, status=status.HTTP_404_NOT_FOUND)
+        err = _require_member(wardrobe, request.user)
+        if err:
+            return err
+        token = wardrobe.ensure_invite_token()
+        return Response({"token": token, "join_path": f"/join/{token}", "wardrobe_id": wardrobe.id})
+
+
+class WardrobeJoinView(APIView):
+    """POST /api/shared-wardrobes/join/  body: { token } — join a wardrobe via its share link."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        token = (request.data.get("token") or "").strip()
+        if not token:
+            return Response(
+                {"error": {"code": "missing_fields", "message": "`token` is required."}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            wardrobe = SharedWardrobe.objects.get(invite_token=token)
+        except SharedWardrobe.DoesNotExist:
+            return Response(
+                {"error": {"code": "invalid_token", "message": "This invite link is invalid or has expired."}},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        member, created = SharedWardrobeMember.objects.get_or_create(
+            wardrobe=wardrobe, user=request.user, defaults={"role": MemberRole.EDITOR}
+        )
+        if created:
+            payload = SharedWardrobeMemberSerializer(member, context={"request": request}).data
+            _broadcast(wardrobe.id, "member_added", payload)
+        return Response(
+            {
+                "status": "joined",
+                "already_member": not created,
+                "wardrobe": SharedWardrobeSerializer(wardrobe, context={"request": request}).data,
+            }
+        )
+
+
 # ── Items ─────────────────────────────────────────────────────────────────────
 class ItemListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -415,3 +469,44 @@ class ItemDetailView(APIView):
         item.delete()
         _broadcast(wardrobe.id, "item_removed", {"item_id": int(item_id)})
         return Response({"status": "removed"})
+
+
+class ItemClaimView(APIView):
+    """POST /api/shared-wardrobes/<pk>/items/<item_id>/claim/
+
+    Collaborative packing: a member claims a shared item ("I'll bring this for
+    the group") so the others don't pack it — everyone's bag gets lighter. Any
+    member can claim an unclaimed item or release their own claim (toggle).
+    Broadcasts the updated item + the group's bag-savings tally live.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk, item_id):
+        try:
+            wardrobe = SharedWardrobe.objects.get(pk=pk)
+        except SharedWardrobe.DoesNotExist:
+            return Response({"error": {"code": "not_found", "message": "Not found."}}, status=status.HTTP_404_NOT_FOUND)
+        err = _require_member(wardrobe, request.user)
+        if err:
+            return err
+        item = wardrobe.items.filter(pk=item_id).first()
+        if not item:
+            return Response(
+                {"error": {"code": "not_found", "message": "Item not found."}}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Toggle: claim if free (or someone else's), release if it's already mine.
+        if item.claimed_by_id == request.user.pk:
+            item.claimed_by = None
+            item.claimed_at = None
+        else:
+            item.claimed_by = request.user
+            item.claimed_at = timezone.now()
+        item.save(update_fields=["claimed_by", "claimed_at"])
+
+        payload = SharedWardrobeItemSerializer(item, context={"request": request}).data
+        _broadcast(wardrobe.id, "item_updated", payload)
+        savings = wardrobe.bag_savings()
+        _broadcast(wardrobe.id, "tally_updated", savings)
+        return Response({"item": payload, "bag_savings": savings})

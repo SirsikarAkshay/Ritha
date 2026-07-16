@@ -1,0 +1,209 @@
+"""Phase 1 — trip/shared-wardrobe invite links + join by link."""
+
+import datetime
+
+import pytest
+from itinerary.models import Trip
+from shared_wardrobe.models import MemberRole, SharedWardrobe, SharedWardrobeItem, SharedWardrobeMember
+
+from .factories import UserFactory
+
+pytestmark = pytest.mark.django_db
+
+
+def login(client, user):
+    r = client.post(
+        "/api/auth/login/", {"email": user.email, "password": "testpass99"}, content_type="application/json"
+    )
+    return r.json()
+
+
+def hdr(tokens):
+    return {"HTTP_AUTHORIZATION": f"Bearer {tokens['access']}"}
+
+
+def wardrobe_with_owner(owner):
+    sw = SharedWardrobe.objects.create(name="Tokyo crew", created_by=owner)
+    SharedWardrobeMember.objects.create(wardrobe=sw, user=owner, role=MemberRole.OWNER)
+    return sw
+
+
+def make_trip(user, sw=None):
+    today = datetime.date.today()
+    return Trip.objects.create(
+        user=user,
+        name="Tokyo 2027",
+        destination="Tokyo, Japan",
+        start_date=today,
+        end_date=today + datetime.timedelta(days=3),
+        shared_wardrobe=sw,
+    )
+
+
+class TestInviteLink:
+    def test_member_gets_token_and_stranger_joins(self, client):
+        owner, friend = UserFactory(), UserFactory()
+        sw = wardrobe_with_owner(owner)
+
+        r = client.post(f"/api/shared-wardrobes/{sw.id}/invite-link/", **hdr(login(client, owner)))
+        assert r.status_code == 200
+        token = r.json()["token"]
+        assert token and r.json()["join_path"] == f"/join/{token}"
+
+        # A user not connected to the owner can still join via the link.
+        j = client.post(
+            "/api/shared-wardrobes/join/",
+            {"token": token},
+            content_type="application/json",
+            **hdr(login(client, friend)),
+        )
+        assert j.status_code == 200
+        assert j.json()["status"] == "joined"
+        assert sw.members.filter(user=friend, role=MemberRole.EDITOR).exists()
+
+    def test_token_is_stable_across_calls(self, client):
+        owner = UserFactory()
+        sw = wardrobe_with_owner(owner)
+        m = hdr(login(client, owner))
+        t1 = client.post(f"/api/shared-wardrobes/{sw.id}/invite-link/", **m).json()["token"]
+        t2 = client.post(f"/api/shared-wardrobes/{sw.id}/invite-link/", **m).json()["token"]
+        assert t1 == t2
+
+    def test_non_member_cannot_get_link(self, client):
+        owner, stranger = UserFactory(), UserFactory()
+        sw = wardrobe_with_owner(owner)
+        r = client.post(f"/api/shared-wardrobes/{sw.id}/invite-link/", **hdr(login(client, stranger)))
+        assert r.status_code == 403
+
+    def test_invalid_token_join_is_404(self, client):
+        r = client.post(
+            "/api/shared-wardrobes/join/",
+            {"token": "nope"},
+            content_type="application/json",
+            **hdr(login(client, UserFactory())),
+        )
+        assert r.status_code == 404
+        assert r.json()["error"]["code"] == "invalid_token"
+
+    def test_rejoin_is_idempotent(self, client):
+        owner, friend = UserFactory(), UserFactory()
+        sw = wardrobe_with_owner(owner)
+        token = client.post(f"/api/shared-wardrobes/{sw.id}/invite-link/", **hdr(login(client, owner))).json()["token"]
+        f = hdr(login(client, friend))
+        client.post("/api/shared-wardrobes/join/", {"token": token}, content_type="application/json", **f)
+        again = client.post("/api/shared-wardrobes/join/", {"token": token}, content_type="application/json", **f)
+        assert again.status_code == 200
+        assert again.json()["already_member"] is True
+        assert sw.members.filter(user=friend).count() == 1
+
+
+class TestTripShare:
+    def test_share_creates_wardrobe_and_friend_joins_and_sees_trip(self, client):
+        owner, friend = UserFactory(), UserFactory()
+        trip = make_trip(owner)  # no shared wardrobe yet
+        o = hdr(login(client, owner))
+
+        s = client.post(f"/api/itinerary/trips/{trip.id}/share/", **o)
+        assert s.status_code == 200
+        token = s.json()["token"]
+        assert s.json()["wardrobe_id"]
+
+        trip.refresh_from_db()
+        assert trip.shared_wardrobe_id == s.json()["wardrobe_id"]
+
+        # Friend joins via the trip's link, then the shared trip shows up for them.
+        f = hdr(login(client, friend))
+        client.post("/api/shared-wardrobes/join/", {"token": token}, content_type="application/json", **f)
+        listing = client.get("/api/itinerary/trips/", **f).json()
+        trips = listing["results"] if isinstance(listing, dict) and "results" in listing else listing
+        assert any(t["id"] == trip.id for t in trips)
+
+    def test_only_owner_can_share(self, client):
+        owner, other = UserFactory(), UserFactory()
+        trip = make_trip(owner)
+        r = client.post(f"/api/itinerary/trips/{trip.id}/share/", **hdr(login(client, other)))
+        assert r.status_code in (403, 404)  # not owner → forbidden or not visible
+
+
+class TestMemberWardrobeCount:
+    def test_member_list_exposes_personal_item_count(self, client):
+        from tests.factories import ClothingItemFactory
+
+        owner = UserFactory()
+        sw = wardrobe_with_owner(owner)
+        ClothingItemFactory(user=owner)
+        ClothingItemFactory(user=owner)
+        detail = client.get(f"/api/shared-wardrobes/{sw.id}/", **hdr(login(client, owner))).json()
+        me = next(m for m in detail["members"] if m["user"]["id"] == owner.id)
+        assert me["wardrobe_item_count"] == 2
+
+
+def add_member(sw, user, role=MemberRole.EDITOR):
+    return SharedWardrobeMember.objects.create(wardrobe=sw, user=user, role=role)
+
+
+def add_item(sw, adder, name="Travel adapter", category="accessory"):
+    return SharedWardrobeItem.objects.create(wardrobe=sw, added_by=adder, name=name, category=category)
+
+
+class TestClaimAndBagSavings:
+    def test_claim_toggles_and_reports_savings(self, client):
+        owner, friend = UserFactory(), UserFactory()
+        sw = wardrobe_with_owner(owner)
+        add_member(sw, friend)
+        item = add_item(sw, owner)
+        url = f"/api/shared-wardrobes/{sw.id}/items/{item.id}/claim/"
+        m = hdr(login(client, friend))
+
+        r = client.post(url, content_type="application/json", **m)
+        assert r.status_code == 200
+        body = r.json()
+        assert body["item"]["claimed_by"]["id"] == friend.id
+        assert body["bag_savings"]["saved_volume_l"] > 0  # 2 members → 1 other saves it
+        item.refresh_from_db()
+        assert item.claimed_by_id == friend.id and item.claimed_at is not None
+
+        # Toggle again → released, savings back to zero.
+        r2 = client.post(url, content_type="application/json", **m)
+        assert r2.json()["item"]["claimed_by"] is None
+        assert r2.json()["bag_savings"]["saved_volume_l"] == 0
+
+    def test_bags_saved_counts_whole_carryons(self, client):
+        owner, a, b = UserFactory(), UserFactory(), UserFactory()
+        sw = wardrobe_with_owner(owner)
+        add_member(sw, a)
+        add_member(sw, b)
+        # 3 members → each claimed item spares 2 other bags. Outerwear ≈ 3.5L,
+        # so 6 coats ≈ 6*3.5*2 = 42L > one 40L carry-on.
+        for i in range(6):
+            it = add_item(sw, owner, name=f"Coat {i}", category="outerwear")
+            client.post(
+                f"/api/shared-wardrobes/{sw.id}/items/{it.id}/claim/",
+                content_type="application/json",
+                **hdr(login(client, owner)),
+            )
+        sw.refresh_from_db()
+        assert sw.bag_savings()["bags_saved"] >= 1
+
+    def test_solo_wardrobe_saves_nothing(self, client):
+        owner = UserFactory()
+        sw = wardrobe_with_owner(owner)
+        it = add_item(sw, owner)
+        client.post(
+            f"/api/shared-wardrobes/{sw.id}/items/{it.id}/claim/",
+            content_type="application/json",
+            **hdr(login(client, owner)),
+        )
+        # Only one member → nobody else benefits.
+        assert sw.bag_savings() == {"saved_volume_l": 0.0, "bags_saved": 0}
+
+    def test_non_member_cannot_claim(self, client):
+        owner, stranger = UserFactory(), UserFactory()
+        sw = wardrobe_with_owner(owner)
+        item = add_item(sw, owner)
+        r = client.post(
+            f"/api/shared-wardrobes/{sw.id}/items/{item.id}/claim/",
+            content_type="application/json",
+            **hdr(login(client, stranger)),
+        )
+        assert r.status_code in (403, 404)

@@ -1035,6 +1035,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/itinerary/trips/{id}/share/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Ensure this trip has a shared wardrobe (the collaboration hub) and return a
+         *     join link. Powers the reel's "share one link, friends join the trip".
+         */
+        post: operations["itinerary_trips_share_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/messages/conversations/": {
         parameters: {
             query?: never;
@@ -1284,6 +1304,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/shared-wardrobes/{id}/invite-link/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/shared-wardrobes/<pk>/invite-link/ — get (minting on first use) the
+         *     shareable join token. Any member can share the link with their crew.
+         */
+        post: operations["shared_wardrobes_invite_link_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/shared-wardrobes/{id}/items/": {
         parameters: {
             query?: never;
@@ -1314,6 +1354,30 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["shared_wardrobes_items_partial_update"];
+        trace?: never;
+    };
+    "/api/shared-wardrobes/{id}/items/{item_id}/claim/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/shared-wardrobes/<pk>/items/<item_id>/claim/
+         *
+         *     Collaborative packing: a member claims a shared item ("I'll bring this for
+         *     the group") so the others don't pack it — everyone's bag gets lighter. Any
+         *     member can claim an unclaimed item or release their own claim (toggle).
+         *     Broadcasts the updated item + the group's bag-savings tally live.
+         */
+        post: operations["shared_wardrobes_items_claim_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/shared-wardrobes/{id}/members/": {
@@ -1381,6 +1445,23 @@ export interface paths {
         put?: never;
         /** @description POST /api/shared-wardrobes/invitations/<pk>/respond/  body: { action: "accept"|"decline" } */
         post: operations["shared_wardrobes_invitations_respond_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shared-wardrobes/join/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description POST /api/shared-wardrobes/join/  body: { token } — join a wardrobe via its share link. */
+        post: operations["shared_wardrobes_join_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2661,6 +2742,13 @@ export interface components {
             weather?: {
                 [key: string]: unknown;
             };
+            /** @description Assumed home city for the weather-gap comparison (optional) */
+            home_city?: string;
+            /**
+             * Format: double
+             * @description Assumed home baseline temperature °C for the weather gap (optional)
+             */
+            home_temp_c?: number;
         };
         PublicTripInsightsResponse: {
             output: {
@@ -4622,6 +4710,33 @@ export interface operations {
             };
         };
     };
+    itinerary_trips_share_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TripRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TripRequest"];
+                "multipart/form-data": components["schemas"]["TripRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Trip"];
+                };
+            };
+        };
+    };
     messages_conversations_list: {
         parameters: {
             query?: {
@@ -5046,6 +5161,26 @@ export interface operations {
             };
         };
     };
+    shared_wardrobes_invite_link_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     shared_wardrobes_items_retrieve: {
         parameters: {
             query?: never;
@@ -5108,6 +5243,27 @@ export interface operations {
         };
     };
     shared_wardrobes_items_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    shared_wardrobes_items_claim_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -5194,6 +5350,24 @@ export interface operations {
             path: {
                 id: number;
             };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    shared_wardrobes_join_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;

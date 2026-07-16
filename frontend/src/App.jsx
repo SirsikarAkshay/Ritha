@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx'
 import { ThemeProvider } from './hooks/useTheme.jsx'
 import Layout from './components/Layout.jsx'
@@ -22,6 +22,7 @@ import ProfilePage from './pages/ProfilePage.jsx'
 import OutfitHistoryPage from './pages/OutfitHistoryPage.jsx'
 import OnboardingPage from './pages/OnboardingPage.jsx'
 import StartPage from './pages/StartPage.jsx'
+import JoinPage from './pages/JoinPage.jsx'
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 import TermsOfService from './pages/TermsOfService.jsx'
 import ConsentBanner from './components/ConsentBanner.jsx'
@@ -59,14 +60,31 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   // After a guest signs up, drop them straight onto the trip planner for the
   // destination they previewed (stashed by StartPage) — no re-entry, no empty
-  // dashboard.
+  // dashboard. Skip when already on /trips: a redundant same-path replace()
+  // remounts TripPlannerPage and races its stash-consume, dropping the pre-fill.
   useEffect(() => {
-    if (user && localStorage.getItem('ritha_pending_trip')) {
+    if (user && localStorage.getItem('ritha_pending_trip') && location.pathname !== '/trips') {
       // TripPlannerPage consumes + clears the stash and pre-fills the form.
       navigate('/trips', { replace: true })
     }
+  }, [user, navigate, location.pathname])
+  // A crew invite opened while logged out → complete the join after sign-up.
+  useEffect(() => {
+    if (!user) return
+    const token = localStorage.getItem('ritha_pending_join')
+    if (!token) return
+    localStorage.removeItem('ritha_pending_join')
+    import('./api/index.js').then(({ sharedWardrobes }) =>
+      sharedWardrobes.join(token)
+        .then((res) => {
+          window.__toast?.(res?.already_member ? "You're already in this trip's crew." : 'Joined the trip! 🎒', 'success')
+          navigate('/trips', { replace: true })
+        })
+        .catch(() => {}),
+    )
   }, [user, navigate])
   return (
     <Routes>
@@ -89,6 +107,7 @@ function AppRoutes() {
         user ? <ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute> : <StartPage />
       } />
       <Route path="/start" element={<StartPage />} />
+      <Route path="/join/:token" element={<JoinPage />} />
       <Route path="/wardrobe" element={
         <ProtectedRoute><Layout><WardrobePage /></Layout></ProtectedRoute>
       } />

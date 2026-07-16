@@ -18,6 +18,7 @@ export default function SharedWardrobeDetailPage() {
   const [showInvite, setShowInvite]   = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState(null)
+  const [tally, setTally] = useState({ saved_volume_l: 0, bags_saved: 0 })
   const wsRef = useRef(null)
 
   const loadAll = async () => {
@@ -27,6 +28,7 @@ export default function SharedWardrobeDetailPage() {
       const [w, its] = await Promise.all([api.get(id), api.items.list(id)])
       setWardrobe(w)
       setItems(Array.isArray(its) ? its : [])
+      if (w?.bag_savings) setTally(w.bag_savings)
     } catch (err) {
       setError(err.response?.data?.error?.message || 'Could not load wardrobe.')
     } finally {
@@ -50,6 +52,8 @@ export default function SharedWardrobeDetailPage() {
         setItems(prev => prev.map(i => i.id === payload.id ? { ...i, ...payload } : i))
       } else if (event_type === 'item_removed') {
         setItems(prev => prev.filter(i => i.id !== payload.item_id))
+      } else if (event_type === 'tally_updated') {
+        setTally(payload)
       } else if (event_type === 'member_added') {
         setWardrobe(prev => prev ? { ...prev, members: [...(prev.members || []), payload] } : prev)
       } else if (event_type === 'member_removed') {
@@ -75,6 +79,18 @@ export default function SharedWardrobeDetailPage() {
         window.__toast?.(err.response?.data?.error?.message || 'Could not remove item.', 'error')
       }
     })
+  }
+
+  // Claim (or release) a shared item: "I'll bring this for the group" → drops
+  // off everyone else's bag. Optimistic; the WS broadcast reconciles all clients.
+  const toggleClaim = async (item) => {
+    try {
+      const res = await api.items.claim(id, item.id)
+      setItems(prev => prev.map(i => i.id === item.id ? (res.item || i) : i))
+      if (res.bag_savings) setTally(res.bag_savings)
+    } catch (err) {
+      window.__toast?.(err.response?.data?.error?.message || 'Could not update claim.', 'error')
+    }
   }
 
   const deleteWardrobe = () => {
@@ -143,6 +159,20 @@ export default function SharedWardrobeDetailPage() {
             <button className="btn btn-primary btn-sm" onClick={() => setShowAddItem(true)}>+ Add item</button>
           </div>
 
+          {/* Collaborative packing tally — bag space saved by claimed items */}
+          {tally.saved_volume_l > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 13, background: 'rgba(123,166,126,.1)', border: '1px solid rgba(123,166,126,.3)', borderRadius: 14, padding: '11px 14px', marginBottom: 12 }}>
+              <span style={{ fontSize: '1.8rem', fontWeight: 700, color: '#9fce9f', fontFamily: 'var(--font-mono, monospace)', lineHeight: 1 }}>
+                {tally.bags_saved >= 1 ? tally.bags_saved : `${tally.saved_volume_l}L`}
+              </span>
+              <div style={{ fontSize: '0.84rem', color: 'var(--cream-dim)', lineHeight: 1.3 }}>
+                {tally.bags_saved >= 1
+                  ? <><b style={{ color: '#9fce9f' }}>bag{tally.bags_saved === 1 ? '' : 's'} of space saved</b> across the group — nothing packed twice.</>
+                  : <><b style={{ color: '#9fce9f' }}>saved across the group</b> — claim a few more to free a whole bag.</>}
+              </div>
+            </div>
+          )}
+
           {showAddItem && (
             <AddItemForm
               wardrobeId={id}
@@ -186,6 +216,22 @@ export default function SharedWardrobeDetailPage() {
                     </div>
                     {item.notes && (
                       <div style={{ fontSize: '0.75rem', color: 'var(--cream-dim)', fontStyle: 'italic' }}>{item.notes}</div>
+                    )}
+                    {/* Claim: one member brings it for the group → everyone else's bag lightens */}
+                    {item.claimed_by ? (
+                      <button
+                        onClick={() => item.claimed_by?.id === user?.id && toggleClaim(item)}
+                        title={item.claimed_by?.id === user?.id ? "Release — you won't bring it" : `${item.claimed_by?.display_name || '@' + item.claimed_by?.handle} is bringing this`}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', color: '#9fce9f', background: 'rgba(123,166,126,.12)', border: '1px solid rgba(123,166,126,.3)', borderRadius: 9, padding: '6px 9px', textAlign: 'left', cursor: item.claimed_by?.id === user?.id ? 'pointer' : 'default' }}>
+                        🎒 {item.claimed_by?.id === user?.id ? "You're bringing this" : `${item.claimed_by?.display_name || '@' + item.claimed_by?.handle} packs this`}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => toggleClaim(item)}
+                        className="btn btn-ghost btn-sm"
+                        style={{ fontSize: '0.72rem', border: '1px solid var(--border)', borderRadius: 9 }}>
+                        🎒 I'll pack this for us
+                      </button>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
                       <span style={{ fontSize: '0.7rem', color: 'var(--cream-dim)' }}>
@@ -252,8 +298,11 @@ export default function SharedWardrobeDetailPage() {
                   <div style={{ fontSize: '0.8125rem', color: 'var(--cream)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {m.user?.display_name || '@' + m.user?.handle}
                   </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--cream-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {m.role}
+                  <div style={{ fontSize: '0.7rem', color: m.role === 'owner' ? 'var(--terra-light)' : 'var(--sage, #7ba67e)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {m.role === 'owner' ? 'Host · owner' : 'Joined ✓'}
+                    {typeof m.wardrobe_item_count === 'number' && (
+                      <span style={{ color: 'var(--cream-dim)' }}> · {m.wardrobe_item_count} item{m.wardrobe_item_count === 1 ? '' : 's'}</span>
+                    )}
                   </div>
                 </div>
                 {isOwner && m.role !== 'owner' && (

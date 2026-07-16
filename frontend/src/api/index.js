@@ -70,6 +70,8 @@ export const itinerary = {
       api.post(`/itinerary/trips/${id}/save-recommendation/`, { recommendation }),
     clearRecommendation: (id) =>
       api.delete(`/itinerary/trips/${id}/save-recommendation/`),
+    // Collaborative packing: ensure the trip has a shared wardrobe + get a join link.
+    share: (id) => api.post(`/itinerary/trips/${id}/share/`),
   },
   // "Remind me to buy this later" — persists shopping suggestions so users
   // never lose an item by leaving the app to shop.
@@ -214,6 +216,8 @@ export const sharedWardrobes = {
   create: (data)        => api.post('/shared-wardrobes/', data),
   get:    (id)          => api.get(`/shared-wardrobes/${id}/`),
   delete: (id)          => api.delete(`/shared-wardrobes/${id}/`),
+  inviteLink: (id)      => api.post(`/shared-wardrobes/${id}/invite-link/`),
+  join:       (token)   => api.post('/shared-wardrobes/join/', { token }),
   members: {
     add:    (id, user_id)        => api.post(`/shared-wardrobes/${id}/members/`, { user_id }),
     remove: (id, user_id)        => api.delete(`/shared-wardrobes/${id}/members/${user_id}/`),
@@ -227,6 +231,7 @@ export const sharedWardrobes = {
     add:    (id, data)           => api.post(`/shared-wardrobes/${id}/items/`, data),
     update: (id, item_id, data)  => api.patch(`/shared-wardrobes/${id}/items/${item_id}/`, data),
     delete: (id, item_id)        => api.delete(`/shared-wardrobes/${id}/items/${item_id}/`),
+    claim:  (id, item_id)        => api.post(`/shared-wardrobes/${id}/items/${item_id}/claim/`, {}),
   },
 }
 

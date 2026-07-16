@@ -1566,6 +1566,42 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/itinerary/trips/{id}/share/:
+    post:
+      operationId: itinerary_trips_share_create
+      description: |-
+        Ensure this trip has a shared wardrobe (the collaboration hub) and return a
+        join link. Powers the reel's "share one link, friends join the trip".
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^[0-9]+$
+        required: true
+      tags:
+      - itinerary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TripRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TripRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+          description: ''
   /api/messages/conversations/:
     get:
       operationId: messages_conversations_list
@@ -1961,6 +1997,25 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/shared-wardrobes/{id}/invite-link/:
+    post:
+      operationId: shared_wardrobes_invite_link_create
+      description: |-
+        POST /api/shared-wardrobes/<pk>/invite-link/ — get (minting on first use) the
+        shareable join token. Any member can share the link with their crew.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shared-wardrobes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/shared-wardrobes/{id}/items/:
     get:
       operationId: shared_wardrobes_items_retrieve
@@ -2033,6 +2088,34 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/shared-wardrobes/{id}/items/{item_id}/claim/:
+    post:
+      operationId: shared_wardrobes_items_claim_create
+      description: |-
+        POST /api/shared-wardrobes/<pk>/items/<item_id>/claim/
+
+        Collaborative packing: a member claims a shared item ("I'll bring this for
+        the group") so the others don't pack it — everyone's bag gets lighter. Any
+        member can claim an unclaimed item or release their own claim (toggle).
+        Broadcasts the updated item + the group's bag-savings tally live.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shared-wardrobes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/shared-wardrobes/{id}/members/:
     post:
       operationId: shared_wardrobes_members_create
@@ -2098,6 +2181,18 @@ paths:
         schema:
           type: integer
         required: true
+      tags:
+      - shared-wardrobes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/shared-wardrobes/join/:
+    post:
+      operationId: shared_wardrobes_join_create
+      description: 'POST /api/shared-wardrobes/join/  body: { token } — join a wardrobe
+        via its share link.'
       tags:
       - shared-wardrobes
       security:
@@ -4407,6 +4502,15 @@ components:
           type: object
           additionalProperties: {}
           description: Optional weather override (skips the live fetch)
+        home_city:
+          type: string
+          minLength: 1
+          description: Assumed home city for the weather-gap comparison (optional)
+          maxLength: 120
+        home_temp_c:
+          type: number
+          format: double
+          description: Assumed home baseline temperature °C for the weather gap (optional)
       required:
       - destination
     PublicTripInsightsResponse:
