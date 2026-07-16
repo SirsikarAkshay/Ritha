@@ -20,7 +20,7 @@ dependencies:
   url_launcher: ^6.3.1
   device_calendar: ^4.3.3
   permission_handler: ^11.3.1
-  firebase_core: ^4.11.0
+  firebase_core: ^4.12.1
   firebase_messaging: ^16.4.1
   shared_preferences: ^2.3.0
 
