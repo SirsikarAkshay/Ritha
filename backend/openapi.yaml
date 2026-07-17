@@ -1947,6 +1947,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/OutfitRecommendation'
           description: ''
+  /api/referrals/stats/:
+    get:
+      operationId: referrals_stats_retrieve
+      description: 'Owner-only: signups generated per influencer code.'
+      summary: Referral signup counts per code (admin only)
+      tags:
+      - referrals
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/referrals/validate/:
+    get:
+      operationId: referrals_validate_retrieve
+      description: |-
+        Public: does ``?ref=CODE`` point at a live influencer? Lets the signup
+        page show "Referred by <name>" before the account exists.
+      summary: Validate a referral code (public)
+      tags:
+      - referrals
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/shared-wardrobes/:
     get:
       operationId: shared_wardrobes_retrieve
@@ -4607,6 +4633,10 @@ components:
         timezone:
           type: string
           maxLength: 64
+        referral_code:
+          type: string
+          writeOnly: true
+          maxLength: 32
       required:
       - email
       - password
@@ -5184,6 +5214,9 @@ components:
         is_email_verified:
           type: boolean
           readOnly: true
+        is_staff:
+          type: boolean
+          readOnly: true
         has_completed_onboarding:
           type: boolean
           readOnly: true
@@ -5199,6 +5232,7 @@ components:
       - has_completed_onboarding
       - id
       - is_email_verified
+      - is_staff
       - outlook_calendar_connected
     UserGenderEnum:
       enum:

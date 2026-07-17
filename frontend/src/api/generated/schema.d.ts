@@ -1272,6 +1272,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/referrals/stats/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Referral signup counts per code (admin only)
+         * @description Owner-only: signups generated per influencer code.
+         */
+        get: operations["referrals_stats_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/referrals/validate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Validate a referral code (public)
+         * @description Public: does ``?ref=CODE`` point at a live influencer? Lets the signup
+         *     page show "Referred by <name>" before the account exists.
+         */
+        get: operations["referrals_validate_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/shared-wardrobes/": {
         parameters: {
             query?: never;
@@ -2785,6 +2826,7 @@ export interface components {
             first_name?: string;
             last_name?: string;
             timezone?: string;
+            referral_code?: string;
         };
         RithaTokenObtainPairRequest: {
             email: string;
@@ -3059,6 +3101,7 @@ export interface components {
             readonly outlook_calendar_connected: boolean;
             style_profile?: unknown;
             readonly is_email_verified: boolean;
+            readonly is_staff: boolean;
             readonly has_completed_onboarding: boolean;
             /** Format: date-time */
             readonly created_at: string;
@@ -5082,6 +5125,42 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["OutfitRecommendation"];
                 };
+            };
+        };
+    };
+    referrals_stats_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    referrals_validate_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

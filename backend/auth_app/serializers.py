@@ -15,9 +15,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     )
     # Optional influencer/referral code from a ?ref=CODE share link. Not a User
     # field — resolved to a ReferralSignup after the account is created.
-    referral_code = serializers.CharField(
-        write_only=True, required=False, allow_blank=True, max_length=32
-    )
+    referral_code = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=32)
 
     class Meta:
         model = User

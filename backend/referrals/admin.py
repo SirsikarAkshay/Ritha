@@ -19,9 +19,7 @@ class ReferralCodeAdmin(admin.ModelAdmin):
             .get_queryset(request)
             .annotate(
                 _signups=Count("signups", distinct=True),
-                _verified=Count(
-                    "signups", filter=Q(signups__user__is_email_verified=True), distinct=True
-                ),
+                _verified=Count("signups", filter=Q(signups__user__is_email_verified=True), distinct=True),
             )
         )
 

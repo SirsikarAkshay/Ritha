@@ -73,9 +73,7 @@ class ReferralSignup(models.Model):
     one code (first code wins), so ``code.signups.count()`` is the tracker."""
 
     code = models.ForeignKey(ReferralCode, on_delete=models.CASCADE, related_name="signups")
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="referral"
-    )
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="referral")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
