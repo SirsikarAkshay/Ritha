@@ -1,9 +1,9 @@
 // src/pages/LoginPage.jsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.jsx'
 import { useTheme } from '../hooks/useTheme.jsx'
-import { auth as authApi } from '../api/index.js'
+import { auth as authApi, referrals as referralsApi } from '../api/index.js'
 import Logo from '../components/Logo.jsx'
 
 export default function LoginPage() {
@@ -16,6 +16,21 @@ export default function LoginPage() {
   const [agreed,   setAgreed]   = useState(false)
   const [error,    setError]    = useState('')
   const [loading,  setLoading]  = useState(false)
+  // Influencer referral code from ?ref=CODE (or stashed by App on landing).
+  const [referralCode] = useState(
+    () => searchParams.get('ref') || localStorage.getItem('ritha_pending_ref') || ''
+  )
+  const [referrerName, setReferrerName] = useState('')
+
+  // Confirm the code is live so we can greet the visitor by their influencer.
+  useEffect(() => {
+    if (!referralCode) return
+    let cancelled = false
+    referralsApi.validate(referralCode)
+      .then((res) => { if (!cancelled && res?.valid) setReferrerName(res.name || '') })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [referralCode])
 
   const { login } = useAuth()
   const { theme, toggleTheme } = useTheme()
@@ -31,7 +46,13 @@ export default function LoginPage() {
     setLoading(true)
     try {
       if (mode === 'register') {
-        const result = await authApi.register({ email, password, first_name: firstName })
+        await authApi.register({
+          email,
+          password,
+          first_name: firstName,
+          ...(referralCode ? { referral_code: referralCode } : {}),
+        })
+        localStorage.removeItem('ritha_pending_ref')
         // Redirect to verification page with email
         navigate(`/verify-email?email=${encodeURIComponent(email)}`)
       } else {
@@ -165,6 +186,21 @@ export default function LoginPage() {
           {error && (
             <div className="alert alert-error" style={{ marginBottom: '20px' }}>
               ⚠ {error}
+            </div>
+          )}
+
+          {mode === 'register' && referrerName && (
+            <div style={{
+              marginBottom: '20px',
+              padding: '12px 14px',
+              borderRadius: '12px',
+              border: '1px solid rgba(111,168,199,.35)',
+              background: 'linear-gradient(180deg, rgba(111,168,199,.10), rgba(111,168,199,.02))',
+              color: 'var(--cream)',
+              fontSize: '0.875rem',
+              lineHeight: 1.5,
+            }}>
+              🎁 Referred by <span style={{ fontWeight: 600 }}>{referrerName}</span> — your account will be credited to them.
             </div>
           )}
 

@@ -22,6 +22,7 @@ urlpatterns = [
     path("api/social/", include("social.urls")),
     path("api/messages/", include("messaging.urls")),
     path("api/shared-wardrobes/", include("shared_wardrobe.urls")),
+    path("api/referrals/", include("referrals.urls")),
     path("api/config", ConfigView.as_view(), name="config"),
     path("api/health/", HealthCheckView.as_view(), name="health"),
     # API Documentation

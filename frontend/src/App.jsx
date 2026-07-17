@@ -61,6 +61,12 @@ function AppRoutes() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  // Capture an influencer referral code from ?ref=CODE the moment a visitor
+  // lands (on any route) and hold it until they register. LoginPage reads it.
+  useEffect(() => {
+    const ref = new URLSearchParams(location.search).get('ref')
+    if (ref) localStorage.setItem('ritha_pending_ref', ref.trim().slice(0, 32))
+  }, [location.search])
   // After a guest signs up, drop them straight onto the trip planner for the
   // destination they previewed (stashed by StartPage) — no re-entry, no empty
   // dashboard. Skip when already on /trips: a redundant same-path replace()

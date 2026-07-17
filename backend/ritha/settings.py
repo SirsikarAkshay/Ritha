@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "social",
     "messaging",
     "shared_wardrobe",
+    "referrals",
 ]
 
 # ── Channels / WebSockets ──────────────────────────────────────────────────────
