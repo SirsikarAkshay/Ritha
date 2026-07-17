@@ -1,7 +1,10 @@
+import logging
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -42,13 +45,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.is_email_verified = False
         user.save()
         if referral_code:
-            # Best-effort attribution — never block signup on a bad code.
+            # Best-effort attribution — never block signup on a bad code, but
+            # log failures instead of swallowing them silently.
             from referrals.services import attribute_signup
 
             try:
                 attribute_signup(user, referral_code)
             except Exception:
-                pass
+                logger.exception("Referral attribution failed for user %s", user.pk)
         return user
 
 
