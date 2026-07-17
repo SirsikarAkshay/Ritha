@@ -73,6 +73,7 @@ class UserSerializer(serializers.ModelSerializer):
             "outlook_calendar_connected",
             "style_profile",
             "is_email_verified",
+            "is_staff",
             "has_completed_onboarding",
             "created_at",
         ]
@@ -80,6 +81,7 @@ class UserSerializer(serializers.ModelSerializer):
             "id",
             "email",
             "is_email_verified",
+            "is_staff",
             "created_at",
             "has_completed_onboarding",
             "google_calendar_connected",

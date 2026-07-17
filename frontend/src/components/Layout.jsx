@@ -53,6 +53,15 @@ export default function Layout({ children }) {
               {label}
             </NavLink>
           ))}
+          {user?.is_staff && (
+            <NavLink
+              to="/admin/referrals"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              <span className="icon">◭</span>
+              Referrals
+            </NavLink>
+          )}
         </nav>
 
         {/* Theme toggle — prominent row */}

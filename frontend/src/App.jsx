@@ -23,6 +23,7 @@ import OutfitHistoryPage from './pages/OutfitHistoryPage.jsx'
 import OnboardingPage from './pages/OnboardingPage.jsx'
 import StartPage from './pages/StartPage.jsx'
 import JoinPage from './pages/JoinPage.jsx'
+import ReferralStatsPage from './pages/ReferralStatsPage.jsx'
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 import TermsOfService from './pages/TermsOfService.jsx'
 import ConsentBanner from './components/ConsentBanner.jsx'
@@ -146,6 +147,11 @@ function AppRoutes() {
       } />
       <Route path="/outfit-history" element={
         <ProtectedRoute><Layout><OutfitHistoryPage /></Layout></ProtectedRoute>
+      } />
+      <Route path="/admin/referrals" element={
+        <ProtectedRoute>
+          <Layout>{user?.is_staff ? <ReferralStatsPage /> : <Navigate to="/" replace />}</Layout>
+        </ProtectedRoute>
       } />
 
       <Route path="*" element={<Navigate to="/" replace />} />
