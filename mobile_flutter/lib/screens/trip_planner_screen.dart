@@ -398,6 +398,19 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                         body:
                             'Tap the button below to generate outfit ideas for this trip.',
                       ),
+                    if (trip['id'] is int) ...[
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Packing',
+                        style: TextStyle(
+                          color: AppColors.cream,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _TripPackingSection(tripId: trip['id'] as int),
+                    ],
                   ],
                 ),
               ),
@@ -1217,6 +1230,238 @@ class _SectionDetailPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [...section.build(output), const SizedBox(height: 40)],
       ),
+    );
+  }
+}
+
+List<Map<String, dynamic>> _checklistFrom(dynamic res) {
+  final list = res is Map
+      ? (res['results'] as List? ?? const [])
+      : (res as List? ?? const []);
+  return list
+      .whereType<Map>()
+      .map((e) => Map<String, dynamic>.from(e))
+      .toList();
+}
+
+/// Collapsed tile in a trip's detail that opens the trip's packing checklist.
+/// The checklist is created from the Packing tab via "Save to a trip".
+class _TripPackingSection extends StatefulWidget {
+  final int tripId;
+  const _TripPackingSection({required this.tripId});
+
+  @override
+  State<_TripPackingSection> createState() => _TripPackingSectionState();
+}
+
+class _TripPackingSectionState extends State<_TripPackingSection> {
+  List<Map<String, dynamic>> _items = const [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final res = await itineraryApi.checklist.list(tripId: widget.tripId);
+      if (!mounted) return;
+      setState(() {
+        _items = _checklistFrom(res);
+        _loading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () async {
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => _TripPackingDetailPage(
+              tripId: widget.tripId,
+              initialItems: _items,
+            ),
+          ),
+        );
+        _load();
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface1,
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+        child: Row(
+          children: [
+            const Text('🧳', style: TextStyle(fontSize: 22)),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Packing List',
+                style: TextStyle(
+                  color: AppColors.cream,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (_loading)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              ABadge(text: '${_items.length}', variant: BadgeVariant.sky),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.chevron_right,
+              color: AppColors.creamDim,
+              size: 22,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TripPackingDetailPage extends StatefulWidget {
+  final int tripId;
+  final List<Map<String, dynamic>> initialItems;
+  const _TripPackingDetailPage({
+    required this.tripId,
+    required this.initialItems,
+  });
+
+  @override
+  State<_TripPackingDetailPage> createState() => _TripPackingDetailPageState();
+}
+
+class _TripPackingDetailPageState extends State<_TripPackingDetailPage> {
+  late List<Map<String, dynamic>> _items;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = List<Map<String, dynamic>>.from(widget.initialItems);
+    if (_items.isEmpty) _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final res = await itineraryApi.checklist.list(tripId: widget.tripId);
+      if (!mounted) return;
+      setState(() {
+        _items = _checklistFrom(res);
+        _loading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _toggle(int index) async {
+    final item = _items[index];
+    final id = (item['id'] is num)
+        ? (item['id'] as num).toInt()
+        : int.tryParse('${item['id']}');
+    if (id == null) return;
+    final next = !(item['is_packed'] == true);
+    setState(() => _items[index]['is_packed'] = next);
+    try {
+      await itineraryApi.checklist.update(id, {'is_packed': next});
+    } catch (_) {
+      if (mounted) setState(() => _items[index]['is_packed'] = !next);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final packed = _items.where((i) => i['is_packed'] == true).length;
+    return Scaffold(
+      backgroundColor: AppColors.midnight,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface1,
+        foregroundColor: AppColors.cream,
+        title: const Text(
+          '🧳 Packing List',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _items.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.all(20),
+              child: EmptyState(
+                icon: '🧳',
+                title: 'No packing list yet',
+                body:
+                    'Open the Packing tab, build a list that fits your bag, then '
+                    'tap "Save to a trip" to attach it here.',
+              ),
+            )
+          : ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                Text(
+                  '$packed of ${_items.length} packed',
+                  style: const TextStyle(
+                    color: AppColors.creamDim,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                for (var i = 0; i < _items.length; i++)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface1,
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: CheckboxListTile(
+                      value: _items[i]['is_packed'] == true,
+                      onChanged: (_) => _toggle(i),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: AppColors.terra,
+                      title: Text(
+                        '${_items[i]['display_name'] ?? _items[i]['custom_name'] ?? 'Item'}',
+                        style: TextStyle(
+                          color: AppColors.cream,
+                          fontSize: 14,
+                          decoration: _items[i]['is_packed'] == true
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                      ),
+                      subtitle: (_items[i]['quantity'] is num &&
+                              (_items[i]['quantity'] as num) > 1)
+                          ? Text(
+                              '×${_items[i]['quantity']}',
+                              style: const TextStyle(
+                                color: AppColors.creamDim,
+                                fontSize: 12,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                const SizedBox(height: 40),
+              ],
+            ),
     );
   }
 }
