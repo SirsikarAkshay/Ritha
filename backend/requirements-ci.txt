@@ -19,7 +19,7 @@ django-cors-headers>=4.3,<5.0
 # is committed and gated by the CI schema-drift check. A floating version means CI
 # can resolve a newer release than the one used to generate the committed schema,
 # producing spurious drift. Bump deliberately + regenerate via `make codegen`.
-drf-spectacular==0.29.0
+drf-spectacular==0.30.0
 
 # Environment
 python-dotenv>=1.2.2,<2.0
