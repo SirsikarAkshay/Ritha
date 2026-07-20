@@ -54,7 +54,7 @@ firebase-admin>=6.5,<7.0
 
 # ML — lightweight pieces used on lazy paths (the heavy torch/sklearn stack
 # lives in requirements.txt, not here).
-pandas>=2.0
+pandas>=3.0.3
 numpy>=1.24
 joblib>=1.3
 
