@@ -2165,7 +2165,6 @@ export interface components {
             rule_type: components["schemas"]["RuleTypeEnum"];
             description: string;
             severity?: components["schemas"]["SeverityEnum"];
-            /** Format: uri */
             source_url?: string;
             /** Format: date-time */
             readonly created_at: string;
@@ -2269,7 +2268,6 @@ export interface components {
             readonly handle: string;
             display_name?: string;
             bio?: string;
-            /** Format: uri */
             avatar_url?: string;
             visibility?: components["schemas"]["VisibilityEnum"];
             /** Format: date-time */
@@ -2635,7 +2633,6 @@ export interface components {
         PatchedMyProfileRequest: {
             display_name?: string;
             bio?: string;
-            /** Format: uri */
             avatar_url?: string;
             visibility?: components["schemas"]["VisibilityEnum"];
         };
@@ -3005,13 +3002,11 @@ export interface components {
             source_label: string;
             /** Format: int64 */
             source_year?: number | null;
-            /** Format: uri */
             source_url?: string;
             confidence?: components["schemas"]["ConfidenceEnum"];
             is_default?: boolean;
             is_opt_in?: boolean;
             opt_in_group?: string;
-            /** Format: uri */
             preview_image_url?: string;
             /** Format: int64 */
             sort_order?: number;

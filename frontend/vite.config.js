@@ -20,8 +20,11 @@ export default defineConfig(({ mode }) => ({
     sourcemap: mode === 'production' ? 'hidden' : true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
+        // Function form (object form was dropped by Vite 8's Rolldown bundler).
+        manualChunks(id) {
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom)\//.test(id)) {
+            return 'react'
+          }
         },
       },
     },

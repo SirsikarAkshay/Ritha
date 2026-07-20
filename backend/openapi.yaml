@@ -3387,9 +3387,12 @@ components:
         severity:
           $ref: '#/components/schemas/SeverityEnum'
         source_url:
-          type: string
-          format: uri
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         created_at:
           type: string
           format: date-time
@@ -3611,9 +3614,12 @@ components:
           type: string
           maxLength: 280
         avatar_url:
-          type: string
-          format: uri
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         visibility:
           $ref: '#/components/schemas/VisibilityEnum'
         handle_changed_at:
@@ -4265,9 +4271,12 @@ components:
           type: string
           maxLength: 280
         avatar_url:
-          type: string
-          format: uri
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         visibility:
           $ref: '#/components/schemas/VisibilityEnum'
     PatchedOutfitRecommendationRequest:
@@ -4962,9 +4971,12 @@ components:
           format: int64
           nullable: true
         source_url:
-          type: string
-          format: uri
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         confidence:
           $ref: '#/components/schemas/ConfidenceEnum'
         is_default:
@@ -4975,9 +4987,12 @@ components:
           type: string
           maxLength: 40
         preview_image_url:
-          type: string
-          format: uri
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         sort_order:
           type: integer
           maximum: 9223372036854775807
