@@ -130,9 +130,7 @@ class _PackingCapacityScreenState extends State<PackingCapacityScreen> {
 
   void _snack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Future<void> _saveToTrip() async {
@@ -153,7 +151,9 @@ class _PackingCapacityScreenState extends State<PackingCapacityScreen> {
     }
     if (!mounted) return;
     if (trips.isEmpty) {
-      _snack('Create a trip first (Trips tab), then save your packing list to it.');
+      _snack(
+        'Create a trip first (Trips tab), then save your packing list to it.',
+      );
       return;
     }
     final trip = await showModalBottomSheet<Map>(
