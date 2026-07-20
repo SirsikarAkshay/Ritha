@@ -12,20 +12,20 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@sentry/react": "^10.63.0",
+    "@sentry/react": "^10.65.0",
     "date-fns": "^3.6.0",
-    "posthog-js": "^1.398.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.24.1"
+    "posthog-js": "^1.399.4",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
+    "@types/react": "^19.2.3",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
     "openapi-typescript": "^7.4.0",
-    "typescript": "^5.5.0",
-    "vite": "^5.3.1"
+    "typescript": "^5.9.3",
+    "vite": "^8.1.5"
   }
 }

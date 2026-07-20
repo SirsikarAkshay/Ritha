@@ -4,10 +4,10 @@
 
 # Core
 Django>=5.2,<6.0
-djangorestframework>=3.15,<4.0
+djangorestframework>=3.17.1,<4.0
 djangorestframework-simplejwt>=5.3,<6.0
 django-cors-headers>=4.3,<5.0
-drf-spectacular==0.29.0   # pinned: codegen tool, see requirements-ci.txt
+drf-spectacular==0.30.0   # pinned: codegen tool, see requirements-ci.txt
 
 # ASGI server (WebSocket support)
 daphne>=4.1,<5.0
@@ -43,7 +43,7 @@ msal>=1.28,<2.0
 caldav>=1.3,<2.0
 icalendar>=5.0,<6.0
 cryptography>=42.0,<44.0
-python-dateutil>=2.9,<3.0
+python-dateutil>=2.9.0.post0,<3.0
 pytz>=2024.1
 
 # Push notifications
@@ -54,7 +54,7 @@ celery>=5.3,<6.0
 django-celery-beat>=2.7,<3.0
 
 # Transactional email (Resend via Anymail)
-django-anymail[resend]>=10.0,<13.0
+django-anymail[resend]>=15.0,<16.0
 
 # Error monitoring
 sentry-sdk>=2.64.0,<3.0

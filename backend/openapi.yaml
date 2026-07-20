@@ -1947,6 +1947,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/OutfitRecommendation'
           description: ''
+  /api/referrals/stats/:
+    get:
+      operationId: referrals_stats_retrieve
+      description: 'Owner-only: signups generated per influencer code.'
+      summary: Referral signup counts per code (admin only)
+      tags:
+      - referrals
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/referrals/validate/:
+    get:
+      operationId: referrals_validate_retrieve
+      description: |-
+        Public: does ``?ref=CODE`` point at a live influencer? Lets the signup
+        page show "Referred by <name>" before the account exists.
+      summary: Validate a referral code (public)
+      tags:
+      - referrals
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/shared-wardrobes/:
     get:
       operationId: shared_wardrobes_retrieve
@@ -3361,9 +3387,12 @@ components:
         severity:
           $ref: '#/components/schemas/SeverityEnum'
         source_url:
-          type: string
-          format: uri
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         created_at:
           type: string
           format: date-time
@@ -3585,9 +3614,12 @@ components:
           type: string
           maxLength: 280
         avatar_url:
-          type: string
-          format: uri
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         visibility:
           $ref: '#/components/schemas/VisibilityEnum'
         handle_changed_at:
@@ -4239,9 +4271,12 @@ components:
           type: string
           maxLength: 280
         avatar_url:
-          type: string
-          format: uri
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         visibility:
           $ref: '#/components/schemas/VisibilityEnum'
     PatchedOutfitRecommendationRequest:
@@ -4607,6 +4642,10 @@ components:
         timezone:
           type: string
           maxLength: 64
+        referral_code:
+          type: string
+          writeOnly: true
+          maxLength: 32
       required:
       - email
       - password
@@ -4932,9 +4971,12 @@ components:
           format: int64
           nullable: true
         source_url:
-          type: string
-          format: uri
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         confidence:
           $ref: '#/components/schemas/ConfidenceEnum'
         is_default:
@@ -4945,9 +4987,12 @@ components:
           type: string
           maxLength: 40
         preview_image_url:
-          type: string
-          format: uri
-          maxLength: 200
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
         sort_order:
           type: integer
           maximum: 9223372036854775807
@@ -5184,6 +5229,9 @@ components:
         is_email_verified:
           type: boolean
           readOnly: true
+        is_staff:
+          type: boolean
+          readOnly: true
         has_completed_onboarding:
           type: boolean
           readOnly: true
@@ -5199,6 +5247,7 @@ components:
       - has_completed_onboarding
       - id
       - is_email_verified
+      - is_staff
       - outlook_calendar_connected
     UserGenderEnum:
       enum:

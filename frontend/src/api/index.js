@@ -15,6 +15,12 @@ export const auth = {
   resetPassword:  (data) => api.post('/auth/reset-password/', data),
 }
 
+// ── Referrals (influencer codes) ────────────────────────────────────────────
+export const referrals = {
+  validate: (code) => api.get(`/referrals/validate/?code=${encodeURIComponent(code)}`),
+  stats:    ()     => api.get('/referrals/stats/'),
+}
+
 // ── Wardrobe ──────────────────────────────────────────────────────────────
 export const wardrobe = {
   list:   (params = {}) => {
