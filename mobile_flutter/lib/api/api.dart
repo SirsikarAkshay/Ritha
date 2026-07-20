@@ -106,6 +106,19 @@ class ItineraryTripsApi {
       _api.delete('/itinerary/trips/$id/save-recommendation/');
   // Collaborative packing: ensure a shared wardrobe + get the crew join link.
   Future share(int id) => _api.post('/itinerary/trips/$id/share/', {});
+  // Turn a packing-list agent result into a trip's packing checklist.
+  Future fromPackingList(int tripId, List<int> itemIds) => _api.post(
+    '/itinerary/trips/from-packing-list/',
+    {'trip_id': tripId, 'item_ids': itemIds},
+  );
+}
+
+class ItineraryChecklistApi {
+  Future list({int? tripId}) =>
+      _api.get('/itinerary/checklist/${_qs({'trip_id': tripId})}');
+  Future update(int id, Map<String, dynamic> data) =>
+      _api.patch('/itinerary/checklist/$id/', data);
+  Future remove(int id) => _api.delete('/itinerary/checklist/$id/');
 }
 
 // "Remind me to buy this later" — persisted shopping suggestions.
@@ -123,6 +136,7 @@ class ItineraryApi {
   final events = ItineraryEventsApi();
   final trips = ItineraryTripsApi();
   final shoppingList = ItineraryShoppingListApi();
+  final checklist = ItineraryChecklistApi();
 }
 
 // ── Outfits ─────────────────────────────────────────────────────────────────

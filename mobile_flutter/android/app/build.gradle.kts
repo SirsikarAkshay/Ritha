@@ -1,11 +1,18 @@
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
-    id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// Firebase (push notifications) is optional. The google-services plugin fails
+// the build outright if google-services.json is missing, so apply it only when
+// that file is present. Run `flutterfire configure` (or drop in
+// google-services.json) to enable push. Without it the app still builds and
+// runs — push is simply disabled (see the try/catch around
+// Firebase.initializeApp in lib/main.dart).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 android {
