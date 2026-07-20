@@ -226,13 +226,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Track latest stable: pubspec requires Dart ^3.11.0, which only recent
-      # stable Flutter releases ship. (The previous 3.24.0 pin shipped Dart 3.5
-      # and failed `flutter pub get` resolution.) Pin an explicit version here
-      # once a Dart ≥3.11 stable tag is confirmed, for reproducibility.
+      # Pinned for reproducibility: `dart format` output is formatter-version
+      # dependent, so an unpinned `stable` reformats files the moment a newer
+      # Dart ships and breaks the format check. 3.41.1 ships Dart 3.11.0, which
+      # satisfies the pubspec's Dart ^3.11.0 constraint. Bump deliberately.
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: 3.41.1
           channel: stable
           cache: true
 

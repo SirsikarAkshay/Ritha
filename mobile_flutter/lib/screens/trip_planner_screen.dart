@@ -1447,7 +1447,8 @@ class _TripPackingDetailPageState extends State<_TripPackingDetailPage> {
                               : null,
                         ),
                       ),
-                      subtitle: (_items[i]['quantity'] is num &&
+                      subtitle:
+                          (_items[i]['quantity'] is num &&
                               (_items[i]['quantity'] as num) > 1)
                           ? Text(
                               '×${_items[i]['quantity']}',
