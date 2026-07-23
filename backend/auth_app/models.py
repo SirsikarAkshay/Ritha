@@ -68,6 +68,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     email_verification_token = models.CharField(max_length=64, blank=True)
     email_token_created_at = models.DateTimeField(null=True, blank=True)
 
+    # Social sign-in (Google/Apple) — the login identity, distinct from the
+    # Calendar OAuth fields above. auth_provider records how the account was
+    # first created; the *_sub fields are the provider's stable user id.
+    auth_provider = models.CharField(max_length=20, default="email")  # email | google | apple
+    google_sub = models.CharField(max_length=255, blank=True, default="", db_index=True)
+    apple_sub = models.CharField(max_length=255, blank=True, default="", db_index=True)
+
     # Password reset
     password_reset_token = models.CharField(max_length=64, blank=True)
     password_reset_created_at = models.DateTimeField(null=True, blank=True)

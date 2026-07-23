@@ -26,6 +26,7 @@ Fill the `sync:false` values in **Render → Env Groups → `ritha-config`** (se
 - [ ] `MISTRAL_API_KEY` — real AI vs stubbed AI. ⚙
 - [ ] `RESEND_API_KEY` (confirm `DEFAULT_FROM_EMAIL` uses `getritha.com`) — email verify & reset. ⚙
 - [ ] *Optional:* Google/Microsoft OAuth secrets, `SENTRY_DSN` — calendar sync + error monitoring. ⚙
+- [ ] *Optional:* **Sign in with Google/Apple** — set `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` (backend) + the `VITE_*` client IDs (frontend build). Full console + env steps: [`docs/social-login-setup.md`](social-login-setup.md). ⚙
 - [ ] `SEED_DEMO_USER=1` (+ a strong `DEMO_PASSWORD`) — auto-seeds the pre-verified demo account on deploy. ⚙
 
 ## 2 · First deploy

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
@@ -104,6 +105,228 @@ class RegisterView(generics.CreateAPIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+# ── Social sign-in (Google) ───────────────────────────────────────────────
+def _google_audiences():
+    # Comma-separated so the web client id and native (Android/iOS) client ids
+    # are all accepted as valid ID-token audiences.
+    raw = getattr(settings, "GOOGLE_CLIENT_ID", "")
+    return [a.strip() for a in raw.split(",") if a.strip()]
+
+
+class GoogleSocialLoginView(APIView):
+    """Sign in / sign up with a Google ID token.
+
+    The client obtains an ID token from Google Identity Services and POSTs it as
+    ``{"credential": "<jwt>"}`` (GSI's field name; ``id_token`` also accepted). We
+    verify it against our Google client id, find-or-create the user (linking by
+    the Google-verified email), and return our own ``{access, refresh}`` pair —
+    bypassing the password + email-verification login path entirely.
+    """
+
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    @extend_schema(summary="Sign in with a Google ID token", responses={200: None})
+    def post(self, request):
+        token = request.data.get("credential") or request.data.get("id_token") or ""
+        if not token:
+            return Response(
+                {"error": {"code": "missing_token", "message": "No Google credential provided."}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        audiences = _google_audiences()
+        if not audiences:
+            return Response(
+                {"error": {"code": "google_not_configured", "message": "Google sign-in is not configured."}},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        try:
+            from google.auth.transport import requests as google_requests
+            from google.oauth2 import id_token as google_id_token
+
+            # Verify signature + issuer + expiry; the audience is checked against
+            # our allowlist below so web + native client IDs are all accepted.
+            payload = google_id_token.verify_oauth2_token(token, google_requests.Request())
+        except Exception:
+            return Response(
+                {
+                    "error": {
+                        "code": "invalid_token",
+                        "message": "Could not verify your Google sign-in. Please try again.",
+                    }
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if payload.get("aud") not in audiences:
+            return Response(
+                {
+                    "error": {
+                        "code": "invalid_token",
+                        "message": "Could not verify your Google sign-in. Please try again.",
+                    }
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Google sets email_verified on real accounts; refuse anything else.
+        if not payload.get("email") or not payload.get("email_verified", False):
+            return Response(
+                {"error": {"code": "email_unverified", "message": "Your Google account email is not verified."}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        email = payload["email"].lower()
+        sub = payload.get("sub", "")
+
+        # Link by verified email: reuse an existing account if one matches.
+        user = User.objects.filter(email__iexact=email).first()
+        created = user is None
+        if created:
+            user = User.objects.create_user(
+                email=email,
+                password=None,  # unusable password — social-only account
+                first_name=payload.get("given_name", ""),
+                last_name=payload.get("family_name", ""),
+            )
+            user.auth_provider = "google"
+
+        # Google verified the email for us, so the account is trusted.
+        if not user.google_sub:
+            user.google_sub = sub
+        user.is_email_verified = True
+        user.save()
+
+        refresh = RefreshToken.for_user(user)
+        return Response({"access": str(refresh.access_token), "refresh": str(refresh), "created": created})
+
+
+# ── Social sign-in (Apple) ────────────────────────────────────────────────
+# Apple's public keys are served as a JWKS; PyJWKClient caches them internally,
+# so keep one client for the process.
+_apple_jwk_client = None
+
+
+def _get_apple_jwk_client():
+    global _apple_jwk_client
+    if _apple_jwk_client is None:
+        from jwt import PyJWKClient
+
+        _apple_jwk_client = PyJWKClient("https://appleid.apple.com/auth/keys")
+    return _apple_jwk_client
+
+
+def _apple_audiences():
+    # Comma-separated so web (Services ID) and, later, a native app (bundle ID)
+    # can both be accepted as valid token audiences.
+    raw = getattr(settings, "APPLE_CLIENT_ID", "")
+    return [a.strip() for a in raw.split(",") if a.strip()]
+
+
+def _verify_apple_token(token, audiences):
+    """Verify an Apple ID token (RS256) against Apple's JWKS. Patch point in tests."""
+    import jwt
+
+    signing_key = _get_apple_jwk_client().get_signing_key_from_jwt(token)
+    return jwt.decode(
+        token,
+        signing_key.key,
+        algorithms=["RS256"],
+        audience=audiences,
+        issuer="https://appleid.apple.com",
+    )
+
+
+class AppleSocialLoginView(APIView):
+    """Sign in / sign up with an Apple ID token.
+
+    The client runs Sign in with Apple, then POSTs ``{"id_token": "<jwt>"}`` (plus
+    optional ``first_name``/``last_name`` — Apple only returns the name on the
+    *first* authorization, so the web client forwards it then). We verify the
+    token against Apple's JWKS, find-or-create the user (matching by the
+    Apple-verified email, or the stable Apple ``sub``), and return our own
+    ``{access, refresh}`` — bypassing the password + email-verification path.
+    """
+
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    @extend_schema(summary="Sign in with an Apple ID token", responses={200: None})
+    def post(self, request):
+        token = request.data.get("id_token") or request.data.get("credential") or ""
+        if not token:
+            return Response(
+                {"error": {"code": "missing_token", "message": "No Apple credential provided."}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        audiences = _apple_audiences()
+        if not audiences:
+            return Response(
+                {"error": {"code": "apple_not_configured", "message": "Apple sign-in is not configured."}},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        try:
+            payload = _verify_apple_token(token, audiences)
+        except Exception:
+            return Response(
+                {
+                    "error": {
+                        "code": "invalid_token",
+                        "message": "Could not verify your Apple sign-in. Please try again.",
+                    }
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        sub = payload.get("sub", "")
+        email = (payload.get("email") or "").lower()
+
+        # Match by the Apple-verified email if present, else by the stable sub
+        # (a returning user who chose "Hide My Email" still has a constant sub).
+        user = None
+        if email:
+            user = User.objects.filter(email__iexact=email).first()
+        if user is None and sub:
+            user = User.objects.filter(apple_sub=sub).first()
+
+        created = user is None
+        if created:
+            if not email:
+                return Response(
+                    {
+                        "error": {
+                            "code": "no_email",
+                            "message": "Apple didn't share an email for this account. Sign up with email first.",
+                        }
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            user = User.objects.create_user(
+                email=email,
+                password=None,  # unusable password — social-only account
+                first_name=request.data.get("first_name", ""),
+                last_name=request.data.get("last_name", ""),
+            )
+            user.auth_provider = "apple"
+
+        if not user.apple_sub:
+            user.apple_sub = sub
+        # Backfill a name Apple only provides on the first sign-in.
+        if not user.first_name and request.data.get("first_name"):
+            user.first_name = request.data["first_name"]
+        if not user.last_name and request.data.get("last_name"):
+            user.last_name = request.data["last_name"]
+        user.is_email_verified = True
+        user.save()
+
+        refresh = RefreshToken.for_user(user)
+        return Response({"access": str(refresh.access_token), "refresh": str(refresh), "created": created})
 
 
 # ── Verify email ──────────────────────────────────────────────────────────

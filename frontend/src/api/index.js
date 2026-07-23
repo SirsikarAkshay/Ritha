@@ -6,6 +6,8 @@ import { api } from './client.js'
 export const auth = {
   register:       (data) => api.post('/auth/register/', data),
   login:          (data) => api.post('/auth/login/', data),
+  socialGoogle:   (data) => api.post('/auth/social/google/', data),
+  socialApple:    (data) => api.post('/auth/social/apple/', data),
   logout:         (refresh) => api.post('/auth/logout/', { refresh }),
   me:             ()     => api.get('/auth/me/'),
   updateMe:       (data) => api.patch('/auth/me/', data),

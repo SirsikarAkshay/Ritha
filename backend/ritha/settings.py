@@ -388,6 +388,11 @@ GOOGLE_CALENDAR_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
 ]
 
+# ── Sign in with Apple ─────────────────────────────────────────────────────────
+# Accepted token audiences: the web Services ID (and, later, a native app bundle
+# ID). Comma-separated. Used to verify the `aud` claim of Apple ID tokens.
+APPLE_CLIENT_ID = os.getenv("APPLE_CLIENT_ID", "")
+
 # ── Apple Calendar (CalDAV) ─────────────────────────────────────────────────────
 # Credentials are provided by the user (Apple ID + App-Specific Password)
 # Apple CalDAV endpoint — no OAuth, uses basic auth
