@@ -376,6 +376,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/social/google/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign in with a Google ID token
+         * @description Sign in / sign up with a Google ID token.
+         *
+         *     The client obtains an ID token from Google Identity Services and POSTs it as
+         *     ``{"credential": "<jwt>"}`` (GSI's field name; ``id_token`` also accepted). We
+         *     verify it against our Google client id, find-or-create the user (linking by
+         *     the Google-verified email), and return our own ``{access, refresh}`` pair —
+         *     bypassing the password + email-verification login path entirely.
+         */
+        post: operations["auth_social_google_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/verify-email/": {
         parameters: {
             query?: never;
@@ -3662,6 +3688,24 @@ export interface operations {
         };
     };
     auth_reset_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_social_google_create: {
         parameters: {
             query?: never;
             header?: never;

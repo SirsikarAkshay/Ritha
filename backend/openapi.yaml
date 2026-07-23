@@ -481,6 +481,25 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/auth/social/google/:
+    post:
+      operationId: auth_social_google_create
+      description: |-
+        Sign in / sign up with a Google ID token.
+
+        The client obtains an ID token from Google Identity Services and POSTs it as
+        ``{"credential": "<jwt>"}`` (GSI's field name; ``id_token`` also accepted). We
+        verify it against our Google client id, find-or-create the user (linking by
+        the Google-verified email), and return our own ``{access, refresh}`` pair —
+        bypassing the password + email-verification login path entirely.
+      summary: Sign in with a Google ID token
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/auth/verify-email/:
     post:
       operationId: auth_verify_email_create

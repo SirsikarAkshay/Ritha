@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
@@ -104,6 +105,84 @@ class RegisterView(generics.CreateAPIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+# ── Social sign-in (Google) ───────────────────────────────────────────────
+class GoogleSocialLoginView(APIView):
+    """Sign in / sign up with a Google ID token.
+
+    The client obtains an ID token from Google Identity Services and POSTs it as
+    ``{"credential": "<jwt>"}`` (GSI's field name; ``id_token`` also accepted). We
+    verify it against our Google client id, find-or-create the user (linking by
+    the Google-verified email), and return our own ``{access, refresh}`` pair —
+    bypassing the password + email-verification login path entirely.
+    """
+
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    @extend_schema(summary="Sign in with a Google ID token", responses={200: None})
+    def post(self, request):
+        token = request.data.get("credential") or request.data.get("id_token") or ""
+        if not token:
+            return Response(
+                {"error": {"code": "missing_token", "message": "No Google credential provided."}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        client_id = getattr(settings, "GOOGLE_CLIENT_ID", "")
+        if not client_id:
+            return Response(
+                {"error": {"code": "google_not_configured", "message": "Google sign-in is not configured."}},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        try:
+            from google.auth.transport import requests as google_requests
+            from google.oauth2 import id_token as google_id_token
+
+            payload = google_id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
+        except Exception:
+            return Response(
+                {
+                    "error": {
+                        "code": "invalid_token",
+                        "message": "Could not verify your Google sign-in. Please try again.",
+                    }
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Google sets email_verified on real accounts; refuse anything else.
+        if not payload.get("email") or not payload.get("email_verified", False):
+            return Response(
+                {"error": {"code": "email_unverified", "message": "Your Google account email is not verified."}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        email = payload["email"].lower()
+        sub = payload.get("sub", "")
+
+        # Link by verified email: reuse an existing account if one matches.
+        user = User.objects.filter(email__iexact=email).first()
+        created = user is None
+        if created:
+            user = User.objects.create_user(
+                email=email,
+                password=None,  # unusable password — social-only account
+                first_name=payload.get("given_name", ""),
+                last_name=payload.get("family_name", ""),
+            )
+            user.auth_provider = "google"
+
+        # Google verified the email for us, so the account is trusted.
+        if not user.google_sub:
+            user.google_sub = sub
+        user.is_email_verified = True
+        user.save()
+
+        refresh = RefreshToken.for_user(user)
+        return Response({"access": str(refresh.access_token), "refresh": str(refresh), "created": created})
 
 
 # ── Verify email ──────────────────────────────────────────────────────────
