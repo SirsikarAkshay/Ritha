@@ -45,7 +45,7 @@ caldav>=1.3,<2.0
 icalendar>=5.0,<6.0
 cryptography>=42.0,<44.0
 python-dateutil>=2.9.0.post0,<3.0
-pytz>=2024.1
+pytz>=2026.2
 
 # AI — uncomment to activate live agents
 mistralai>=1.0,<2.0
