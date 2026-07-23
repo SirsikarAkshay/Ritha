@@ -376,6 +376,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/social/apple/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign in with an Apple ID token
+         * @description Sign in / sign up with an Apple ID token.
+         *
+         *     The client runs Sign in with Apple, then POSTs ``{"id_token": "<jwt>"}`` (plus
+         *     optional ``first_name``/``last_name`` — Apple only returns the name on the
+         *     *first* authorization, so the web client forwards it then). We verify the
+         *     token against Apple's JWKS, find-or-create the user (matching by the
+         *     Apple-verified email, or the stable Apple ``sub``), and return our own
+         *     ``{access, refresh}`` — bypassing the password + email-verification path.
+         */
+        post: operations["auth_social_apple_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/social/google/": {
         parameters: {
             query?: never;
@@ -3688,6 +3715,24 @@ export interface operations {
         };
     };
     auth_reset_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_social_apple_create: {
         parameters: {
             query?: never;
             header?: never;

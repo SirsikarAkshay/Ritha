@@ -50,6 +50,21 @@ export function AuthProvider({ children }) {
     return me
   }
 
+  // Exchange an Apple ID token (from Sign in with Apple) for our JWT. Name is
+  // forwarded because Apple only returns it on the first authorization.
+  const loginWithApple = async (idToken, firstName = '', lastName = '') => {
+    const data = await authApi.socialApple({
+      id_token: idToken,
+      first_name: firstName,
+      last_name: lastName,
+    })
+    api.setTokens(data.access, data.refresh)
+    const me = await authApi.me()
+    setUser(me)
+    analytics.capture('user_logged_in', { method: 'apple' })
+    return me
+  }
+
   const register = async (email, password, firstName) => {
     await authApi.register({ email, password, first_name: firstName })
     // After registration, user needs to verify email - don't auto-login
@@ -76,7 +91,7 @@ export function AuthProvider({ children }) {
   const updateUser = (updates) => setUser(u => ({ ...u, ...updates }))
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, logout, register, forgotPassword, resetPassword, updateUser, reload: loadUser }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, loginWithApple, logout, register, forgotPassword, resetPassword, updateUser, reload: loadUser }}>
       {children}
     </AuthContext.Provider>
   )

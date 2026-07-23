@@ -481,6 +481,26 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/auth/social/apple/:
+    post:
+      operationId: auth_social_apple_create
+      description: |-
+        Sign in / sign up with an Apple ID token.
+
+        The client runs Sign in with Apple, then POSTs ``{"id_token": "<jwt>"}`` (plus
+        optional ``first_name``/``last_name`` — Apple only returns the name on the
+        *first* authorization, so the web client forwards it then). We verify the
+        token against Apple's JWKS, find-or-create the user (matching by the
+        Apple-verified email, or the stable Apple ``sub``), and return our own
+        ``{access, refresh}`` — bypassing the password + email-verification path.
+      summary: Sign in with an Apple ID token
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/auth/social/google/:
     post:
       operationId: auth_social_google_create

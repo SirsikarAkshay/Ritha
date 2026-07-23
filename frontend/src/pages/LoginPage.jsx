@@ -6,6 +6,7 @@ import { useTheme } from '../hooks/useTheme.jsx'
 import { auth as authApi, referrals as referralsApi } from '../api/index.js'
 import Logo from '../components/Logo.jsx'
 import GoogleSignInButton from '../components/GoogleSignInButton.jsx'
+import AppleSignInButton from '../components/AppleSignInButton.jsx'
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams()
@@ -272,15 +273,18 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Social sign-in. Whole block renders only when Google is configured. */}
-          {import.meta.env?.VITE_GOOGLE_CLIENT_ID && (
+          {/* Social sign-in. Whole block renders only when a provider is configured. */}
+          {(import.meta.env?.VITE_GOOGLE_CLIENT_ID || import.meta.env?.VITE_APPLE_CLIENT_ID) && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
                 <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
                 <span style={{ fontSize: '0.75rem', color: 'var(--cream-dim)' }}>or</span>
                 <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
               </div>
-              <GoogleSignInButton onError={setError} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <GoogleSignInButton onError={setError} />
+                <AppleSignInButton onError={setError} />
+              </div>
             </>
           )}
 
