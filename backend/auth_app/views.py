@@ -108,6 +108,13 @@ class RegisterView(generics.CreateAPIView):
 
 
 # ── Social sign-in (Google) ───────────────────────────────────────────────
+def _google_audiences():
+    # Comma-separated so the web client id and native (Android/iOS) client ids
+    # are all accepted as valid ID-token audiences.
+    raw = getattr(settings, "GOOGLE_CLIENT_ID", "")
+    return [a.strip() for a in raw.split(",") if a.strip()]
+
+
 class GoogleSocialLoginView(APIView):
     """Sign in / sign up with a Google ID token.
 
@@ -130,8 +137,8 @@ class GoogleSocialLoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        client_id = getattr(settings, "GOOGLE_CLIENT_ID", "")
-        if not client_id:
+        audiences = _google_audiences()
+        if not audiences:
             return Response(
                 {"error": {"code": "google_not_configured", "message": "Google sign-in is not configured."}},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -141,8 +148,21 @@ class GoogleSocialLoginView(APIView):
             from google.auth.transport import requests as google_requests
             from google.oauth2 import id_token as google_id_token
 
-            payload = google_id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
+            # Verify signature + issuer + expiry; the audience is checked against
+            # our allowlist below so web + native client IDs are all accepted.
+            payload = google_id_token.verify_oauth2_token(token, google_requests.Request())
         except Exception:
+            return Response(
+                {
+                    "error": {
+                        "code": "invalid_token",
+                        "message": "Could not verify your Google sign-in. Please try again.",
+                    }
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if payload.get("aud") not in audiences:
             return Response(
                 {
                     "error": {

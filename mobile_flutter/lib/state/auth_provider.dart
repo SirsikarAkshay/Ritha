@@ -59,6 +59,40 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> loginWithGoogle(String idToken) async {
+    final data =
+        await authApi.socialGoogle({'id_token': idToken})
+            as Map<String, dynamic>;
+    await ApiClient.instance.setTokens(
+      data['access'] as String,
+      data['refresh'] as String,
+    );
+    _user = await authApi.me() as Map<String, dynamic>;
+    _syncSentryUser();
+    notifyListeners();
+  }
+
+  Future<void> loginWithApple(
+    String idToken, {
+    String firstName = '',
+    String lastName = '',
+  }) async {
+    final data =
+        await authApi.socialApple({
+              'id_token': idToken,
+              'first_name': firstName,
+              'last_name': lastName,
+            })
+            as Map<String, dynamic>;
+    await ApiClient.instance.setTokens(
+      data['access'] as String,
+      data['refresh'] as String,
+    );
+    _user = await authApi.me() as Map<String, dynamic>;
+    _syncSentryUser();
+    notifyListeners();
+  }
+
   Future<void> register(String email, String password, String firstName) async {
     await authApi.register({
       'email': email,

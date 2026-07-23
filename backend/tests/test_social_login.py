@@ -14,11 +14,12 @@ URL = "/api/auth/social/google/"
 VERIFY = "google.oauth2.id_token.verify_oauth2_token"
 
 
-def _payload(email="new@ritha.com", sub="google-123", verified=True, **extra):
+def _payload(email="new@ritha.com", sub="google-123", verified=True, aud="test-client-id", **extra):
     p = {
         "email": email,
         "email_verified": verified,
         "sub": sub,
+        "aud": aud,
         "given_name": "Sam",
         "family_name": "Lee",
     }
@@ -78,6 +79,19 @@ class TestGoogleLogin:
             r = client.post(URL, {"credential": "tok"}, content_type="application/json")
         assert r.status_code == 401
         assert r.json()["error"]["code"] == "invalid_token"
+
+    def test_audience_not_in_allowlist_rejected(self, client):
+        with patch(VERIFY, return_value=_payload(aud="some-other-app")):
+            r = client.post(URL, {"credential": "tok"}, content_type="application/json")
+        assert r.status_code == 401
+
+    def test_native_client_audience_accepted(self, client, settings):
+        # Mobile ID tokens carry a native client id as aud — accepted via the
+        # comma-separated allowlist.
+        settings.GOOGLE_CLIENT_ID = "web-client,android-client.apps.googleusercontent.com"
+        with patch(VERIFY, return_value=_payload(aud="android-client.apps.googleusercontent.com")):
+            r = client.post(URL, {"credential": "tok"}, content_type="application/json")
+        assert r.status_code == 200
 
 
 @pytest.mark.django_db

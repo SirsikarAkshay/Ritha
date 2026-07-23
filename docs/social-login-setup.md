@@ -155,10 +155,52 @@ new user, linking, case-insensitivity, Apple sub-matching, and every error path)
 
 ---
 
-## Later: native mobile
+## Native mobile (Flutter)
 
-The Flutter app will need the `google_sign_in` + `sign_in_with_apple` plugins, an
-Android OAuth client (SHA-1 fingerprint), and the mobile client/bundle IDs added
-to the backend audience allowlists (`GOOGLE_CLIENT_ID` accepts one; extend to a
-list, and add the bundle ID to the comma-separated `APPLE_CLIENT_ID`). The
-backend endpoints and `{access, refresh}` contract are already mobile-ready.
+The Flutter app has "Continue with Google/Apple" buttons on the login screen
+(`google_sign_in` + `sign_in_with_apple` plugins). They call the **same**
+backend endpoints; the buttons render only when the dart-defines below are set.
+
+> ⚠️ Untested in CI — there's no Flutter engine in the dev sandbox, so build the
+> APK and drive both flows on a device.
+
+### Backend — audiences 🤖⚙
+
+`GOOGLE_CLIENT_ID` is a **comma-separated allowlist** of accepted token
+audiences. Native Google Sign-In is configured with the **web** client id as its
+`serverClientId`, so the returned ID token's `aud` is the web client id — already
+in the allowlist, **no backend change needed**. For Apple, add the app's bundle
+id to the comma-separated `APPLE_CLIENT_ID` (a native iOS token's `aud` is the
+bundle id, not the Services ID).
+
+### dart-defines (passed at build) ⚙
+
+| Define | Value |
+|---|---|
+| `GOOGLE_SERVER_CLIENT_ID` | your **web** Google client id (same as `VITE_GOOGLE_CLIENT_ID`) |
+| `APPLE_SERVICES_ID` | your Apple Services ID (Android uses Apple's web flow) |
+| `APPLE_REDIRECT_URI` | the Apple return URL that bounces back to the app |
+
+```
+flutter build apk \
+  --dart-define=API_BASE_URL=https://ritha-api.onrender.com/api \
+  --dart-define=GOOGLE_SERVER_CLIENT_ID=<web-client-id> \
+  --dart-define=APPLE_SERVICES_ID=com.getritha.web \
+  --dart-define=APPLE_REDIRECT_URI=https://ritha-api.onrender.com/auth/apple/callback
+```
+
+### Android console setup ⚙
+
+- **Google:** in GCP, create an **Android** OAuth client for the app's package
+  name + signing **SHA-1** fingerprint (`keytool -list -v -keystore …`). This
+  registers the app; the `serverClientId` stays the web client id.
+- **Apple:** Android has no native Apple flow — `sign_in_with_apple` opens
+  Apple's web page and needs a redirect that returns to the app via an intent.
+  Follow the plugin's Android setup
+  (<https://pub.dev/packages/sign_in_with_apple#android>) to add the callback.
+
+### iOS console setup ⚙ (if/when you ship iOS)
+
+- **Google:** add the reversed-client-id URL scheme to `Info.plist`.
+- **Apple:** enable the *Sign in with Apple* capability; native tokens carry the
+  bundle id as `aud`, so add it to `APPLE_CLIENT_ID`.

@@ -15,6 +15,10 @@ class AuthApi {
   Future register(Map<String, dynamic> data) =>
       _api.post('/auth/register/', data);
   Future login(Map<String, dynamic> data) => _api.post('/auth/login/', data);
+  Future socialGoogle(Map<String, dynamic> data) =>
+      _api.post('/auth/social/google/', data);
+  Future socialApple(Map<String, dynamic> data) =>
+      _api.post('/auth/social/apple/', data);
   Future logout(String refresh) =>
       _api.post('/auth/logout/', {'refresh': refresh});
   Future me() => _api.get('/auth/me/');
