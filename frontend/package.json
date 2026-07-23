@@ -12,9 +12,9 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@sentry/react": "^10.65.0",
-    "date-fns": "^3.6.0",
-    "posthog-js": "^1.399.4",
+    "@sentry/react": "^10.67.0",
+    "date-fns": "^4.4.0",
+    "posthog-js": "^1.405.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1"
