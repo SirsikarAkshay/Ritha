@@ -108,6 +108,10 @@ services:
         value: https://ritha-api.onrender.com/api
       - key: VITE_WS_BASE_URL
         value: wss://ritha-api.onrender.com
+      # Sign in with Google — the public web OAuth client id (same value as the
+      # backend GOOGLE_CLIENT_ID). Set it on the ritha-web service in the dashboard.
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
       # Observability (set the secrets in the dashboard; host can stay as-is).
       - key: VITE_SENTRY_DSN
         sync: false
