@@ -26,7 +26,8 @@ Fill the `sync:false` values in **Render → Env Groups → `ritha-config`** (se
 - [ ] `MISTRAL_API_KEY` — real AI vs stubbed AI. ⚙
 - [ ] `RESEND_API_KEY` (confirm `DEFAULT_FROM_EMAIL` uses `getritha.com`) — email verify & reset. ⚙
 - [ ] *Optional:* Google/Microsoft OAuth secrets, `SENTRY_DSN` — calendar sync + error monitoring. ⚙
-- [ ] *Optional:* **Sign in with Google/Apple** — set `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` (backend) + the `VITE_*` client IDs (frontend build). Full console + env steps: [`docs/social-login-setup.md`](social-login-setup.md). ⚙
+- [ ] **Sign in with Google** (built) — set `VITE_GOOGLE_CLIENT_ID` on `ritha-web` + add your web origin to the GCP OAuth client's JS origins (`GOOGLE_CLIENT_ID` is already set for Calendar). Mobile: add an Android OAuth client (SHA-1) + the `GOOGLE_SERVER_CLIENT_ID` dart-define. Steps: [`docs/social-login-setup.md`](social-login-setup.md). ⚙
+- [ ] *Optional:* **Sign in with Apple** (built) — needs an Apple Developer account + Services ID + domain verification; same doc. ⚙
 - [ ] `SEED_DEMO_USER=1` (+ a strong `DEMO_PASSWORD`) — auto-seeds the pre-verified demo account on deploy. ⚙
 
 ## 2 · First deploy
@@ -61,6 +62,7 @@ Fill the `sync:false` values in **Render → Env Groups → `ritha-config`** (se
   ```
 
 - [ ] **Manual pass:** register → onboard → plan a trip. Confirm the email arrives (Resend), the region wardrobe appears, and a trip returns packing + places + a per-place outfit. ⚙
+- [ ] **Test social login** — "Continue with Google" signs in; a Google email that already has a password account links to the *same* account (no duplicate). Apple once its provider config is done. Build the APK to confirm the mobile flows too. ⚙
 
 ## 5 · Domain & launch
 
