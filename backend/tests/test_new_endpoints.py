@@ -213,7 +213,9 @@ class TestLocationPreference:
                 "temp_max_c": 22,
             }
 
-        with patch("agents.services._get_weather", side_effect=mock_get_weather):
+        # `run_daily_look` lives in the `daily` submodule and looks up `_get_weather`
+        # in its own namespace, so patch it there (it re-exports from `_common`).
+        with patch("agents.services.daily._get_weather", side_effect=mock_get_weather):
             client.post("/api/agents/daily-look/", {}, content_type="application/json", **h)
 
         assert any("Tokyo" in loc for loc in captured_location), (

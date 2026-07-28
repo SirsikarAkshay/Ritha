@@ -288,7 +288,11 @@ def _deduplicate_gaps(gaps: list) -> list:
 
 
 def _fetch_weather(input_data: dict, destination: str) -> dict:
-    from ritha.services.weather import get_weather, get_weather_for_location
+    # Thin cache wrapper around the shared resolver: the fetch-priority logic
+    # (weather dict > lat/lon > location > fallback) lives in
+    # `weather.resolve_from_input`; here we only add a short-lived per-key cache
+    # so the parallel multi-day fan-out doesn't re-hit Open-Meteo.
+    from ritha.services.weather import resolve_from_input
 
     if "weather" in input_data and isinstance(input_data["weather"], dict) and input_data["weather"]:
         return input_data["weather"]
@@ -298,19 +302,13 @@ def _fetch_weather(input_data: dict, destination: str) -> dict:
         lat = round(float(input_data["lat"]), 2)
         lon = round(float(input_data["lon"]), 2)
         key = _cache_key("weather_ll", lat, lon, date_bucket)
-        hit = cache.get(key)
-        if hit is not None:
-            return hit
-        result = get_weather(input_data["lat"], input_data["lon"])
-        cache.set(key, result, _WEATHER_TTL)
-        return result
+    else:
+        key = _cache_key("weather_loc", input_data.get("location", destination), date_bucket)
 
-    location = input_data.get("location", destination)
-    key = _cache_key("weather_loc", location, date_bucket)
     hit = cache.get(key)
     if hit is not None:
         return hit
-    result = get_weather_for_location(location)
+    result = resolve_from_input(input_data, default_location=destination)
     cache.set(key, result, _WEATHER_TTL)
     return result
 
@@ -775,27 +773,10 @@ def _get_user_item_scores(user) -> dict:
 
 
 def _get_wardrobe(user) -> list:
-    from wardrobe.images import attach_image_urls
-    from wardrobe.models import ClothingItem
-
-    items = list(
-        ClothingItem.objects.filter(user=user, is_active=True).values(
-            "id",
-            "name",
-            "category",
-            "formality",
-            "season",
-            "colors",
-            "tags",
-            "weight_grams",
-            "material",
-            "brand",
-            "image",
-            "embedding",
-        )
-    )
     # `image_url` lets wardrobe_matches render the real garment photo in the UI.
-    return attach_image_urls(items)
+    from ritha.services.wardrobe_query import ENGINE_FIELDS, fetch_wardrobe
+
+    return fetch_wardrobe(user, ENGINE_FIELDS)
 
 
 def _match_wardrobe(

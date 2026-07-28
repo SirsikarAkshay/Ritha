@@ -493,3 +493,34 @@ def _fallback(reason: str, date: datetime.date) -> dict:
         "source": "estimated",
         "note": reason,
     }
+
+
+def resolve_from_input(input_data: dict, default_location: str | None = None) -> dict:
+    """Resolve a WeatherSnapshot from a request's input dict.
+
+    Shared priority logic used by both the destination recommender and the agent
+    services (each previously reimplemented it). Order:
+      1. an explicit non-empty `weather` dict passed in `input_data` (test / override)
+      2. `lat`/`lon` coordinates            → Open-Meteo by coordinates
+      3. a `location` string (or `default_location`) → geocode then Open-Meteo
+      4. seasonal `_fallback` when nothing usable was provided
+
+    This helper does no caching — callers that want to memoise the result wrap it
+    (e.g. the recommendation engine keys a short-lived cache around it).
+    """
+    snap = input_data.get("weather")
+    if isinstance(snap, dict) and snap:  # allow empty dict to trigger auto-fetch
+        return snap
+
+    if "lat" in input_data and "lon" in input_data:
+        return get_weather(input_data["lat"], input_data["lon"])
+
+    # Membership (not truthiness) so an explicit empty-string location behaves
+    # exactly as the two call sites did before this was extracted. `default_location`
+    # is only consulted when no `location` key is present at all.
+    if "location" in input_data:
+        return get_weather_for_location(input_data["location"])
+    if default_location is not None:
+        return get_weather_for_location(default_location)
+
+    return _fallback("No location provided", datetime.date.today())
