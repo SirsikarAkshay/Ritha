@@ -13,15 +13,15 @@ dependencies:
   http: ^1.2.2
   flutter_secure_storage: ^10.3.1
   provider: ^6.1.2
-  go_router: ^17.3.0
+  go_router: ^17.5.0
   web_socket_channel: ^3.0.1
   image_picker: ^1.2.3
   intl: ^0.20.3
   url_launcher: ^6.3.1
   device_calendar: ^4.3.3
   permission_handler: ^12.0.3
-  firebase_core: ^4.12.1
-  firebase_messaging: ^16.4.1
+  firebase_core: ^4.13.0
+  firebase_messaging: ^16.5.0
   shared_preferences: ^2.3.0
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^6.1.3
