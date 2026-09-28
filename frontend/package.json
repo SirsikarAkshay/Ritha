@@ -14,18 +14,18 @@
   "dependencies": {
     "@sentry/react": "^10.65.0",
     "date-fns": "^3.6.0",
-    "posthog-js": "^1.399.4",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "react-router-dom": "^7.18.1"
+    "posthog-js": "^1.434.14",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
-    "@types/react": "^19.2.3",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.3",
+    "@playwright/test": "^1.63.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
     "openapi-typescript": "^7.4.0",
     "typescript": "^5.9.3",
-    "vite": "^8.1.5"
+    "vite": "^8.3.1"
   }
 }
